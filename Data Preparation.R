@@ -219,7 +219,7 @@ panel <- left_join(panel, tariff,
                           "year" = "year"))
 
 rm(tariff)
-save(panel, file = "Data/panel.Rdata")
+save(panel, file = "Data/Panel/panel.Rdata")
 
 
 
@@ -296,4 +296,4 @@ panel <- panel %>%
   filter(!duplicated(panel$id))
 rm(duplicates)
 
-save(panel, file = "Data/panel.Rdata")
+save(panel, file = "Data/Panel/panel.Rdata")

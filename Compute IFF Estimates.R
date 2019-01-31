@@ -40,7 +40,7 @@ library(tidyverse)
 ## ## ## ## ## ## ## ## ## ## ##
 
 #source("Scripts/Data Preparation.R")
-load("Data/panel.Rdata")
+load("Data/Panel/panel.Rdata")
 
 length(unique(panel$id)) == nrow(panel)
 # TRUE, 20864314 obs
@@ -97,7 +97,7 @@ nrow(panel)
 panel <- panel %>%
   mutate(dist.sq = I(dist^2))
 
-save(panel, file = "Data/panel_clean.Rdata")
+save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
 
@@ -519,7 +519,7 @@ save(panel, file = "Results/Intermediate/panel_2nd_stage_A1.Rdata")
 # ## ## ## ## ## ## ## ## ## ## ##
 # 
 # rm(panel)
-# load("Data/panel_clean.Rdata")
+# load("Data/Panel/panel_clean.Rdata")
 # 
 # 
 # # .. For mis-invoiced imports ####
@@ -656,7 +656,7 @@ save(panel, file = "Results/Intermediate/panel_2nd_stage_A1.Rdata")
 # 
 # # .. For mis-invoiced exports ####
 # rm(panel)
-# load("Data/panel_clean.Rdata")
+# load("Data/Panel/panel_clean.Rdata")
 # 
 # 
 # # .... Estimate first stage ####
