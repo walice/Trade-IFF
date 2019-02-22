@@ -8,6 +8,7 @@
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
 # Create Predictors
+# .. Exploratory data analysis
 # Approach 1
 # .. Estimate first stage
 # .. Identify and remove outliers
@@ -97,6 +98,43 @@ nrow(panel)
 panel <- panel %>%
   mutate(dist.sq = I(dist^2))
 
+
+# .. Exploratory data analysis ####
+summary(panel$ratio_CIF)
+hist(panel$ln.ratio_CIF)
+hist(panel$FutImport_misrep)
+hist(log(panel$FutImport_misrep))
+hist(panel$ReExport_misrep)
+hist(log(panel$ReExport_misrep))
+hist(panel$tariff)
+hist(log(panel$tariff))
+hist(panel$dist)
+hist(panel$dist.sq)
+
+ihs <- function(x){
+  x <- log(x + sqrt(x^2 + 1))
+  return(x)
+}
+
+# Check whethert there are zeros in the data
+summary(log(panel$FutImport_misrep))
+# Fine to log
+summary(log(panel$ReExport_misrep))
+# Need inverse hyperbolic sine transformation
+summary(log(panel$tariff))
+# Need inverse hyperbolic sine transformation
+
+panel <- panel %>%
+  mutate(ln.FutImport_misrep = log(FutImport_misrep),
+         ihs.ReExport_misrep = ihs(ReExport_misrep),
+         ihs.tariff = ihs(tariff))
+hist(panel$ln.FutImport_misrep)
+hist(panel$ihs.ReExport_misrep)
+hist(panel$ihs.tariff)
+summary(panel$ReExport_misrep)
+summary(panel$ihs.ReExport_misrep)
+summary(panel$ihs.tariff)
+
 save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
@@ -106,15 +144,14 @@ save(panel, file = "Data/Panel/panel_clean.Rdata")
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Estimate first stage ####
-options(contrasts = rep ("contr.treatment", 2))
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
-            FutImport_misrep +
-            ReExport_misrep +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            tariff,
+            ihs.tariff,
           data = panel)
 summary(fit)
 max(panel$ratio_CIF)
@@ -133,102 +170,112 @@ while(max(panel$CD) > 2){
               contig + 
               rLandlocked +
               pLandlocked +
-              FutImport_misrep +
-              ReExport_misrep +
+              ln.FutImport_misrep +
+              ihs.ReExport_misrep +
               ln.ratio_CIF_lag +
-              tariff,
+              ihs.tariff,
             data = panel)
   panel$CD <- cooks.distance(fit)
 }
 nrow(panel)
-# 1295353
+# 1295364
 summary(panel$CD)
 
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 753961.1
+# 832599.8
 mean(panel$ratio_CIF)
-# 2197.824
+# 2197.805
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 40.27702
+# 40.82972
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
-            FutImport_misrep +
-            ReExport_misrep +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            tariff,
+            ihs.tariff,
           data = panel)
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 3578.59
+# 6153.952
 mean(panel$ratio_CIF)
-# 40.27702
+# 40.82972
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 36.83849
+# 35.35996
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
-            FutImport_misrep +
-            ReExport_misrep +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            tariff,
+            ihs.tariff,
           data = panel)
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 2625.254
+# 3836.826
 mean(panel$ratio_CIF)
-# 36.83849
+# 35.35996
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 36.10613
+# 34.45271
 
 rm(Bonferonni.out, outliers, obs)
 
-summary(panel$ratio_CIF)
-panel %>% filter(ratio_CIF > 10^4) %>% nrow
-# 439
-panel <- panel %>% 
-  filter(ratio_CIF < 10^4)
+max(panel$ratio_CIF)
+# 3268221
 nrow(panel)
-# 1289588
+# 1290545
+
+# .. Censor the data-set
+panel %>% filter(ratio_CIF > 1.8) %>% nrow
+# 314835
+panel %>% filter(ratio_CIF < 0.8) %>% nrow
+# 375321
+panel %>% filter(ratio_CIF > 1.8 | ratio_CIF < 0.8) %>% nrow
+# 690156
+panel <- panel %>% 
+  filter(ratio_CIF <= 1.8) %>% filter(ratio_CIF >= 0.8)
+nrow(panel)
+# 600389
 mean(panel$ratio_CIF)
-# 13.13475
+# 1.166327
 summary(panel$ratio_CIF)
+plot(density(panel$ratio_CIF))
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
-            FutImport_misrep +
-            ReExport_misrep +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            tariff,
+            ihs.tariff,
           data = panel)
 summary(fit)
 
 
 # .. Compute fitted values when non-IFF predictors are 0 ####
-fit_IFF <- lm(ratio_CIF ~ - 1 + tariff,
+fit_IFF <- lm(ln.ratio_CIF ~ - 1 + ihs.tariff,
               data = panel)
 panel$fitted_IFF_lm <- predict(fit_IFF)
 
 coef <- coef(fit)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit)["tariff"]
+  if (names(coef[v]) == "ihs.tariff"){
+    coef[v] <- coef(fit)["ihs.tariff"]
   } else {
     coef[v] <- 0
   }
@@ -244,10 +291,10 @@ panel$fitted_IFF_pred <- exp(predict(update(fit, . ~ . - 1),
                                                           contig = "0",
                                                           rLandlocked = "0",
                                                           pLandlocked = "0",
-                                                          FutImport_misrep = 0,
-                                                          ReExport_misrep = 0,
+                                                          ln.FutImport_misrep = 0,
+                                                          ihs.ReExport_misrep = 0,
                                                           ln.ratio_CIF_lag = 0,
-                                                          tariff = panel$tariff)))
+                                                          ihs.tariff = panel$ihs.tariff)))
 
 summary(panel$fitted_IFF_lm)
 summary(panel$fitted_IFF_man)
@@ -282,7 +329,7 @@ panel <- panel %>%
   mutate(rep_dist = abs(log(pNetExport/FOB_Import))) %>%
   filter(is.finite(rep_dist))
 nrow(panel)
-# 1200218
+# 600389
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -468,9 +515,9 @@ GER_Year_Africa_A1 <- GER_Orig_Year_Africa_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa_A1, file = "Results/Approach 1/GER_Orig_Year_Africa_A1.csv",
+write.csv(GER_Orig_Year_Africa_A1, file = "Results/Approach 1/GER_Orig_Year_Africa_A2.csv",
           row.names = F)
-write.csv(GER_Year_Africa_A1, file = "Results/Approach 1/GER_Year_Africa_A1.csv",
+write.csv(GER_Year_Africa_A1, file = "Results/Approach 1/GER_Year_Africa_A2.csv",
           row.names = F)
 
 
@@ -505,12 +552,25 @@ Net_Year_Africa_A1 <- Net_Orig_Year_Africa_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa_A1, file = "Results/Approach 1/Net_Orig_Year_Africa_A1.csv",
+write.csv(Net_Orig_Year_Africa_A1, file = "Results/Approach 1/Net_Orig_Year_Africa_A2.csv",
           row.names = F)
-write.csv(Net_Year_Africa_A1, file = "Results/Approach 1/Net_Year_Africa_A1.csv",
+write.csv(Net_Year_Africa_A1, file = "Results/Approach 1/Net_Year_Africa_A2.csv",
           row.names = F)
 
-save(panel, file = "Results/Intermediate/panel_2nd_stage_A1.Rdata")
+save(panel, file = "Results/Intermediate/panel_2nd_stage_A2.Rdata")
+
+
+###########
+fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag +
+            ihs.tariff,
+          data = panel)
+summary(fit)
 
 
 
