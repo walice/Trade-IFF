@@ -90,7 +90,7 @@ comtrade$id <- paste(comtrade$reporter.ISO,
 comtrade <- comtrade %>% 
   gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO", "partner", "partner.ISO", "commodity.code", "id"))%>% 
   unite(temp, flow, variable) %>% 
-  spread(temp, value, fill = 0)
+  spread(temp, value)
 colnames(comtrade)[colnames(comtrade) == "Re-Export_value"] <- "ReExport_value"
 colnames(comtrade)[colnames(comtrade) == "Re-Export_quantity"] <- "ReExport_quantity"
 
