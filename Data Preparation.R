@@ -59,7 +59,7 @@ comtrade <- comtrade %>%
   select(-c(Aggregate.Level, Commodity)) %>%
   rename_all(tolower) %>%
   rename(reporter.ISO = reporter.iso, partner.ISO = partner.iso,
-         value = trade.value..us.., flow = trade.flow)
+         value = trade.value..us.., flow = trade.flow, quantity = qty)
 
 noreporter <- subset(comtrade, reporter.ISO == "")
 noreporter %>% distinct(reporter)
@@ -87,8 +87,12 @@ comtrade$id <- paste(comtrade$reporter.ISO,
 
 
 # .. Convert to wide ####
-comtrade <- spread(comtrade, flow, value, fill = 0)
-colnames(comtrade)[colnames(comtrade) == "Re-Export"] <- "ReExport"
+comtrade <- comtrade %>% 
+  gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO", "partner", "partner.ISO", "commodity.code", "id"))%>% 
+  unite(temp, flow, variable) %>% 
+  spread(temp, value, fill = 0)
+colnames(comtrade)[colnames(comtrade) == "Re-Export_value"] <- "ReExport_value"
+colnames(comtrade)[colnames(comtrade) == "Re-Export_quantity"] <- "ReExport_quantity"
 
 
 # .. Create mirror variables ####
@@ -105,9 +109,12 @@ comtrade_mirror$id <- paste(comtrade_mirror$partner.ISO,
                             comtrade_mirror$year, sep = "_")
 
 comtrade_mirror <- comtrade_mirror %>% 
-  rename(pImport = Import,
-         pExport = Export,
-         pReExport = ReExport)
+  rename(pImport_value = Import_value,
+         pImport_quantity = Import_quantity,
+         pExport_value = Export_value,
+         pExport_quantity = Export_quantity,
+         pReExport_value = ReExport_value,
+         pReExport_quantity = ReExport_quantity)
 
 comtrade <- full_join(comtrade, comtrade_mirror,
                       by = c("id" = "id",
@@ -280,13 +287,16 @@ rm(codes, noreporter, nopartner)
 
 panel <- panel %>%
   select(id, reporter.ISO, partner.ISO, commodity.code, year,
-         Export, Import, ReExport, pExport, pImport, pReExport,
+         Import_value, Export_value, ReExport_value,
+         Import_quantity, Export_quantity, ReExport_quantity,
+         pImport_value, pExport_value, pReExport_value,
+         pImport_quantity, pExport_quantity, pReExport_quantity,
          contig, dist, rLandlocked, pLandlocked, tariff,
          reporter, partner, rRegion, rIncome, pRegion, pIncome)
 
 missing <- panel %>% 
-  filter(is.na(Export) & is.na(Import) & is.na(ReExport) &
-           is.na(pExport) & is.na(pImport) & is.na(pReExport))
+  filter(is.na(Import_value) & is.na(Export_value) & is.na(ReExport_value) &
+           is.na(pImport_value) & is.na(pExport_value) & is.na(pReExport_value))
 rm(missing)
 
 duplicates <- panel %>%
