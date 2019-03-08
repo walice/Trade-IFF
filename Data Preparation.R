@@ -126,6 +126,44 @@ comtrade <- full_join(comtrade, comtrade_mirror,
                              "commodity.code" = "commodity.code"))
 
 rm(comtrade_mirror)
+save(comtrade, file = "Data/Comtrade/comtrade_clean.Rdata")
+
+
+# .. Checking coverage of quantities ####
+Import_quantity <- comtrade %>% 
+  filter(!is.na(Import_quantity) & Import_quantity != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(Import_quantity)
+# 783
+levels(Import_quantity$reporter)
+# "China, Macao SAR", "Czechia", "Hungary", "Poland", "Sweden"
+range(Import_quantity$year)
+# 2000 2012
+
+Export_quantity <- comtrade %>% 
+  filter(!is.na(Export_quantity) & Export_quantity != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(Export_quantity)
+# 1161
+levels(Export_quantity$reporter)
+# "China, Macao SAR", "Czechia", "Hungary", "Poland", "Sweden"
+range(Export_quantity$year)
+# 2000 2012
+
+ReExport_quantity <- comtrade %>% 
+  filter(!is.na(ReExport_quantity) & ReExport_quantity != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(ReExport_quantity)
+# 110
+levels(ReExport_quantity$reporter)
+# "China, Macao SAR"
+range(ReExport_quantity$year)
+# 2012
+
+rm(Import_quantity, Export_quantity, ReExport_quantity)
 
 
 
