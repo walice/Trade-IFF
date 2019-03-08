@@ -29,133 +29,133 @@ library(tidyverse)
 yr1999 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow1999 <- nrow(yr1999)
 yr1999 <- yr1999 %>% filter(Aggregate.Level == 2)
 
-yr2000 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2000_freq-A_px-HS_pub-20180115_fmt-csv_ex-20180225.csv",
+yr2000 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2000 <- nrow(yr2000)
 yr2000 <- yr2000 %>% filter(Aggregate.Level == 2)
 
-yr2001 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2001_freq-A_px-HS_pub-20180115_fmt-csv_ex-20180225.csv",
+yr2001 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2001 <- nrow(yr2001)
 yr2001 <- yr2001 %>% filter(Aggregate.Level == 2)
 
-yr2002 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2002_freq-A_px-HS_pub-20180115_fmt-csv_ex-20180225.csv",
+yr2002 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2002 <- nrow(yr2002)
 yr2002 <- yr2002 %>% filter(Aggregate.Level == 2)
 
-yr2003 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2003_freq-A_px-HS_pub-20180113_fmt-csv_ex-20180225.csv",
+yr2003 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2003 <- nrow(yr2003)
 yr2003 <- yr2003 %>% filter(Aggregate.Level == 2)
 
-yr2004 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2004_freq-A_px-HS_pub-20180112_fmt-csv_ex-20180225.csv",
+yr2004 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2004 <- nrow(yr2004)
 yr2004 <- yr2004 %>% filter(Aggregate.Level == 2)
 
-yr2005 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2005_freq-A_px-HS_pub-20180109_fmt-csv_ex-20180225.csv",
+yr2005 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2005 <- nrow(yr2005)
 yr2005 <- yr2005 %>% filter(Aggregate.Level == 2)
 
-yr2006 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2006_freq-A_px-HS_pub-20171212_fmt-csv_ex-20171229.csv",
+yr2006 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2006 <- nrow(yr2006)
 yr2006 <- yr2006 %>% filter(Aggregate.Level == 2)
 
-yr2007 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2007_freq-A_px-HS_pub-20171212_fmt-csv_ex-20171229.csv",
+yr2007 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2007 <- nrow(yr2007)
 yr2007 <- yr2007 %>% filter(Aggregate.Level == 2)
 
-yr2008 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2008_freq-A_px-HS_pub-20180726_fmt-csv_ex-20180828.csv",
+yr2008 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2008 <- nrow(yr2008)
 yr2008 <- yr2008 %>% filter(Aggregate.Level == 2)
 
-yr2009 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2009_freq-A_px-HS_pub-20180726_fmt-csv_ex-20180828.csv",
+yr2009 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2009 <- nrow(yr2009)
 yr2009 <- yr2009 %>% filter(Aggregate.Level == 2)
 
-yr2010 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2010_freq-A_px-HS_pub-20181226_fmt-csv_ex-20190116.csv",
+yr2010 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2010 <- nrow(yr2010)
 yr2010 <- yr2010 %>% filter(Aggregate.Level == 2)
 
-yr2011 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2011_freq-A_px-HS_pub-20181115_fmt-csv_ex-20181127.csv",
+yr2011 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2011 <- nrow(yr2011)
 yr2011 <- yr2011 %>% filter(Aggregate.Level == 2)
 
-yr2012 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2012_freq-A_px-HS_pub-20181220_fmt-csv_ex-20181221.csv",
+yr2012 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2012 <- nrow(yr2012)
 yr2012 <- yr2012 %>% filter(Aggregate.Level == 2)
 
-yr2013 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2013_freq-A_px-HS_pub-20181231_fmt-csv_ex-20190116.csv",
+yr2013 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2013 <- nrow(yr2013)
 yr2013 <- yr2013 %>% filter(Aggregate.Level == 2)
 
-yr2014 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2014_freq-A_px-HS_pub-20181226_fmt-csv_ex-20190117.csv",
+yr2014 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2014 <- nrow(yr2014)
 yr2014 <- yr2014 %>% filter(Aggregate.Level == 2)
 
-yr2015 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2015_freq-A_px-HS_pub-20181116_fmt-csv_ex-20181127.csv",
+yr2015 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2015 <- nrow(yr2015)
 yr2015 <- yr2015 %>% filter(Aggregate.Level == 2)
 
-yr2016 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2016_freq-A_px-HS_pub-20190109_fmt-csv_ex-20190116.csv",
+yr2016 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
  nrow2016 <- nrow(yr2016)
 yr2016 <- yr2016 %>% filter(Aggregate.Level == 2)
 
-yr2017 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2017_freq-A_px-HS_pub-20181220_fmt-csv_ex-20181221.csv",
+yr2017 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-1999_freq-A_px-HS_pub-20051228_fmt-csv_ex-20151115.csv",
                      sep = ",", header = TRUE, quote = "\"", fill = TRUE,
                      colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
-                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, "NULL", NA, "NULL"))
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
 nrow2017 <- nrow(yr2017)
 yr2017 <- yr2017 %>% filter(Aggregate.Level == 2)
 
