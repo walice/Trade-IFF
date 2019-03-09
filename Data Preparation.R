@@ -12,6 +12,7 @@
 # .. Generate unique identifier
 # .. Convert to wide
 # .. Create mirror variables
+# .. Checking coverage of quantities and weights
 # Import CEPII
 # .. Merge dyadic distance and contiguity data
 # .. Merge country geographic data
@@ -33,6 +34,7 @@
 
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
 setwd("/home/alice/IFFe/") # Virtual server
+library(data.table)
 library(stringr)
 library(tidyverse)
 library(xlsx)
@@ -59,18 +61,20 @@ comtrade <- comtrade %>%
   select(-c(Aggregate.Level, Commodity)) %>%
   rename_all(tolower) %>%
   rename(reporter.ISO = reporter.iso, partner.ISO = partner.iso,
-         value = trade.value..us.., flow = trade.flow, quantity = qty)
+         value = trade.value..us.., flow = trade.flow, quantity = qty, weight = netweight..kg.)
 
 noreporter <- subset(comtrade, reporter.ISO == "")
 noreporter %>% distinct(reporter)
 # Other Asia, nes
 nopartner <- subset(comtrade, partner.ISO == "")
 nopartner %>% distinct(partner)
-# Other Asia, nes; Areas, nes; Other Europe, nes;
-# Free Zones; Bunkers; Other Africa, nes;
-# Oceania, nes; Special Categories; LAIA, nes;
-# North America and Central America, nes; Neutral Zone; US Misc. Pacific Isds
-# Br. Antarctic Terr.; Europe EU, nes
+# Areas, nes; US Misc. Pacific Isds; Neutral Zone;
+# Other Asia, nes; Free Zones; Other Europe, nes;
+# Oceania, nes; Caribbean, nes; Other Africa, nes;
+# Special Categories; Bunkers; Europe EU, nes;
+# LAIA, nes; Rest of America, nes; Br. Antarctic Terr.;
+# Western Asia, nes; CACM, nes; Northern Africa, nes;
+# Eastern Europe, nes; North America and Central America, nes;
 rm(noreporter, nopartner)
 comtrade <- subset(comtrade,
                    reporter.ISO != "" & partner.ISO != "")
@@ -87,12 +91,19 @@ comtrade$id <- paste(comtrade$reporter.ISO,
 
 
 # .. Convert to wide ####
+# comtrade2 <- dcast(setDT(comtrade), id ~ flow,
+#                    value.var = c("value", "weight", "quantity"))
+#comtrade <- comtrade %>% select(-weight)
+
 comtrade <- comtrade %>% 
-  gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO", "partner", "partner.ISO", "commodity.code", "id"))%>% 
+  gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO", "partner", "partner.ISO", "commodity.code", "id")) %>% 
   unite(temp, flow, variable) %>% 
   spread(temp, value, fill = 0)
 colnames(comtrade)[colnames(comtrade) == "Re-Export_value"] <- "ReExport_value"
 colnames(comtrade)[colnames(comtrade) == "Re-Export_quantity"] <- "ReExport_quantity"
+colnames(comtrade)[colnames(comtrade) == "Re-Export_weight"] <- "ReExport_weight"
+nrow(comtrade)
+# 16486069
 
 
 # .. Create mirror variables ####
@@ -111,10 +122,13 @@ comtrade_mirror$id <- paste(comtrade_mirror$partner.ISO,
 comtrade_mirror <- comtrade_mirror %>% 
   rename(pImport_value = Import_value,
          pImport_quantity = Import_quantity,
+         pImport_weight = Import_weight,
          pExport_value = Export_value,
          pExport_quantity = Export_quantity,
+         pExport_weight = Export_weight,
          pReExport_value = ReExport_value,
-         pReExport_quantity = ReExport_quantity)
+         pReExport_quantity = ReExport_quantity,
+         pReExport_weight = ReExport_weight)
 
 comtrade <- full_join(comtrade, comtrade_mirror,
                       by = c("id" = "id",
@@ -125,11 +139,13 @@ comtrade <- full_join(comtrade, comtrade_mirror,
                              "year" = "year",
                              "commodity.code" = "commodity.code"))
 
+nrow(comtrade)
+# 21463108
 rm(comtrade_mirror)
 save(comtrade, file = "Data/Comtrade/comtrade_clean.Rdata")
 
 
-# .. Checking coverage of quantities ####
+# .. Checking coverage of quantities and weights ####
 Import_quantity <- comtrade %>% 
   filter(!is.na(Import_quantity) & Import_quantity != 0) %>%
   mutate_at(vars(reporter:commodity.code),
@@ -163,7 +179,41 @@ levels(ReExport_quantity$reporter)
 range(ReExport_quantity$year)
 # 2012
 
-rm(Import_quantity, Export_quantity, ReExport_quantity)
+Import_weight <- comtrade %>% 
+  filter(!is.na(Import_weight) & Import_weight != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(Import_weight)
+# 1189
+levels(Import_weight$reporter)
+# "China, Macao SAR", "Czechia", "Hungary", "Poland", "Sweden"
+range(Import_weight$year)
+# 2000 2012
+
+Export_weight <- comtrade %>% 
+  filter(!is.na(Export_weight) & Export_weight != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(Export_weight)
+# 1551
+levels(Export_weight$reporter)
+# "China, Macao SAR", "Czechia", "Hungary", "Poland", "Sweden"
+range(Export_weight$year)
+# 2000 2012
+
+ReExport_weight <- comtrade %>% 
+  filter(!is.na(ReExport_weight) & ReExport_weight != 0) %>%
+  mutate_at(vars(reporter:commodity.code),
+            funs(as.factor))
+nrow(ReExport_weight)
+# 148
+levels(ReExport_weight$reporter)
+# "China, Macao SAR"
+range(ReExport_weight$year)
+# 2012
+
+rm(Import_quantity, Export_quantity, ReExport_quantity,
+   Import_weight, Export_weight, ReExport_weight)
 
 
 
@@ -327,8 +377,10 @@ panel <- panel %>%
   select(id, reporter.ISO, partner.ISO, commodity.code, year,
          Import_value, Export_value, ReExport_value,
          Import_quantity, Export_quantity, ReExport_quantity,
+         Import_weight, Export_weight, ReExport_weight,
          pImport_value, pExport_value, pReExport_value,
          pImport_quantity, pExport_quantity, pReExport_quantity,
+         pImport_weight, pExport_weight, pReExport_weight,
          contig, dist, rLandlocked, pLandlocked, tariff,
          reporter, partner, rRegion, rIncome, pRegion, pIncome)
 
