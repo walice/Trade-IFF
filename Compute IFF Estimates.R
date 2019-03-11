@@ -427,9 +427,9 @@ panel <- panel %>%
          resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_adj,
-         FOB_Import_IFF_hi = Import_value / (resid_adj + fitted_IFF),
-         FOB_Import_IFF_lo = Import_value / fitted_IFF)
+  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid_adj),
+         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid_adj + fitted_IFF)),
+         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * fitted_IFF))
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -642,9 +642,9 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_Import-div-fit-const-0.csv",
+write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_pExp-mul-resid-const-0.csv",
           row.names = F)
-write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_Import-div-fit-const-0.csv",
+write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_pExp-mul-resid-const-0.csv",
           row.names = F)
 
 
@@ -679,9 +679,9 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_Import-div-fit-const-0.csv",
+write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_pExp-mul-resid-const-0.csv",
           row.names = F)
-write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_Import-div-fit-const-0.csv",
+write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_pExp-mul-resid-const-0.csv",
           row.names = F)
 
 save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
@@ -703,7 +703,7 @@ g <- ggplot(GER_Year_Africa %>%
        subtitle = "Gross Excluding Reversals, constant set to 0",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER_Africa_Import_Import-div-fit-const-0.png",
+       file = "Figures/GER_Africa_Import_pExp-mul-resid-const-0.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -717,5 +717,5 @@ g <- ggplot(Net_Year_Africa %>%
        subtitle = "Net, constant set to 0",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/Net_Africa_Import_Import-div-fit-const-0.png",
+       file = "Figures/Net_Africa_Import_pExp-mul-resid-const-0.png",
        width = 6, height = 5, units = "in")
