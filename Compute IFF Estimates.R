@@ -395,7 +395,7 @@ coef
 # coef["(Intercept)"] <- coef(fit)["(Intercept)"]
 # coef
 
-panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
+panel$fitted_IFF_man <- as.numeric((model.matrix(fit) %*% coef))
 
 panel$fitted_IFF_pred <- exp(predict(fit,
                                      newdata = data.frame(dist = 0,
@@ -417,30 +417,38 @@ panel$fitted_IFF <- panel$fitted_IFF_man
 
 coef <- coef(fit)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff" | names(coef[v]) == "(Intercept)"){
+  if (names(coef[v]) == "tariff"){
     coef[v] <- 0 
   }
   
 }
 coef
 
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+panel$fitted_nonIFF <- as.numeric((model.matrix(fit) %*% coef))
 rm(coef, v)
 
 
 # .. Compute adjusted FOB imports ####
-panel$fitted <- exp(fitted(fit))
-panel$resid <- exp(resid(fit))
-summary(panel$fitted)
+panel$fitted <- (fitted(fit))
+panel$resid <- (resid(fit))
 
-# panel <- panel %>%
-#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-#          resid_adj = ratio_CIF - fitted_adj)
+summary(panel$fitted)
+summary(panel$fitted_IFF)
+summary(panel$fitted_nonIFF)
 
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid),
-         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid + fitted_IFF)),
-         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * fitted_IFF))
+  mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
+sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
+# TRUE
+
+panel <- panel %>%
+  mutate(fitted_adj = ifelse(exp(fitted) < 1, 1, exp(fitted)),
+         resid_adj = ratio_CIF - exp(fitted_adj))
+
+panel <- panel %>%
+  mutate(FOB_Import = pNetExport_value + (pNetExport_value * exp(resid_adj)),
+         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * exp(resid_adj + fitted_IFF)),
+         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * exp(fitted_IFF)))
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -653,9 +661,9 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_pExp-mul-resid-const-0.csv",
+write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_pExp-mul-resid-fixexp.csv",
           row.names = F)
-write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_pExp-mul-resid-const-0.csv",
+write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_pExp-mul-resid-fixexp.csv",
           row.names = F)
 
 
@@ -690,9 +698,9 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_pExp-mul-resid-const-0.csv",
+write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_pExp-mul-resid-fixexp.csv",
           row.names = F)
-write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_pExp-mul-resid-const-0.csv",
+write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_pExp-mul-resid-fixexp.csv",
           row.names = F)
 
 save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
@@ -711,10 +719,10 @@ g <- ggplot(GER_Year_Africa %>%
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Gross Excluding Reversals, constant set to 0",
+       subtitle = "Gross Excluding Reversals",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER_Africa_Import_pExp-mul-resid-const-0.png",
+       file = "Figures/GER_Africa_Import_pExp-mul-resid-fixexp.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -725,8 +733,8 @@ g <- ggplot(Net_Year_Africa %>%
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Net, constant set to 0",
+       subtitle = "Net",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/Net_Africa_Import_pExp-mul-resid-const-0.png",
+       file = "Figures/Net_Africa_Import_pExp-mul-resid-fixexp.png",
        width = 6, height = 5, units = "in")
