@@ -15,7 +15,7 @@
 # .. Estimate regression
 # .. Identify and remove outliers
 # .. Censor the data-set (not used)
-# .. Compute fitted values when non-IFF predictors are 0
+# .. Compute fitted values when predictors are 0
 # .. Compute adjusted FOB imports
 # Second Stage
 # .. Estimate fixed effects regression
@@ -373,7 +373,7 @@ summary(fit_censor)
 rm(fit_censor, panel_censor)
 
 
-# .. Compute fitted values when non-IFF predictors are 0 ####
+# .. Compute fitted values when predictors are 0 ####
 fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
               data = panel)
 summary(fit_IFF)
@@ -396,7 +396,6 @@ coef
 # coef
 
 panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
-rm(coef, v)
 
 panel$fitted_IFF_pred <- exp(predict(fit,
                                      newdata = data.frame(dist = 0,
@@ -416,19 +415,31 @@ summary(panel$fitted_IFF_pred)
 
 panel$fitted_IFF <- panel$fitted_IFF_man
 
+coef <- coef(fit)
+for (v in 1:length(coef)){
+  if (names(coef[v]) == "tariff" | names(coef[v]) == "(Intercept)"){
+    coef[v] <- 0 
+  }
+  
+}
+coef
+
+panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+rm(coef, v)
+
 
 # .. Compute adjusted FOB imports ####
 panel$fitted <- exp(fitted(fit))
 panel$resid <- exp(resid(fit))
 summary(panel$fitted)
 
-panel <- panel %>%
-  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-         resid_adj = ratio_CIF - fitted_adj)
+# panel <- panel %>%
+#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+#          resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid_adj),
-         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid_adj + fitted_IFF)),
+  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid),
+         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid + fitted_IFF)),
          FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * fitted_IFF))
 
 panel <- panel %>%
