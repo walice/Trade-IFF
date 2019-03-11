@@ -7,20 +7,24 @@
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
-# Create Predictors
-# .. Exploratory data analysis
-# Approach 1
-# .. Estimate first stage
+# Create Variables
+# .. Implement weighting by quantities (not used)
+# .. Create dependent variable and predictors
+# .. Variable transformation
+# First Stage
+# .. Estimate regression
 # .. Identify and remove outliers
+# .. Censor the data-set (not used)
 # .. Compute fitted values when non-IFF predictors are 0
 # .. Compute adjusted FOB imports
-# .. Estimate second stage
+# Second Stage
+# .. Estimate fixed effects regression
 # .. Harmonization procedure
 # .. Compute IFF
 # .. Move export IFF to mirror
+# Aggregate Results
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
-# Alternative Approach
 
 
 
@@ -37,7 +41,7 @@ library(tidyverse)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# CREATE PREDICTORS         ####
+# CREATE VARIABLES          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 #source("Scripts/Data Preparation.R")
@@ -47,59 +51,122 @@ length(unique(panel$id)) == nrow(panel)
 # TRUE, 20864314 obs
 
 panel %>%
-  filter(is.finite(pExport) & is.na(pReExport)) %>% nrow
-# There is no case where a mirrored Re-Export is missing while
-# the mirrored Export exists.
+  filter(pExport_value == 0 & is.na(pReExport_value)) %>% nrow
+# There is no case where a mirrored Re-Export value is missing while
+# the mirrored Export value exists.
+
+panel %>%
+  filter(pExport_quantity == 0 & is.na(pReExport_quantity)) %>% nrow
+# There is no case where a mirrored Re-Export quantity is missing while
+# the mirrored Export quantity exists.
+
+panel %>%
+  filter(pExport_weight == 0 & is.na(pReExport_weight)) %>% nrow
+# There is no case where a mirrored Re-Export weight is missing while
+# the mirrored Export weight exists.
+
+
+# .. Implement weighting by quantities (not used) ####
+panel <- panel %>%
+  mutate(pNetExport_value = pExport_value - pReExport_value,
+         pNetExport_quantity = pExport_quantity - pReExport_quantity,
+         pNetExport_weight = pExport_weight - pReExport_weight)
+
+summary(panel$Import_quantity)
+summary(panel$pNetExport_quantity)
+summary(panel$Import_weight)
+summary(panel$pNetExport_weight)
 
 panel <- panel %>%
-  mutate(NetExport = Export - ReExport,
-         pNetExport = pExport - pReExport,
-         ratio_CIF = Import/pNetExport,
-         ratio_FOB = NetExport/pImport,
-         ln.ratio_CIF = log(ratio_CIF),
-         ln.ratio_FOB = log(ratio_FOB)) %>%
-  filter(is.finite(ln.ratio_CIF) & is.finite(ln.ratio_FOB))
-nrow(panel)
-# 4298652
+  mutate(Import_U = Import_value / Import_quantity,
+         pNetExport_U = pNetExport_value / pNetExport_quantity)
+summary(panel$Import_U)
+summary(panel$pNetExport_U)
+panel %>% filter(is.finite(Import_U) & is.finite(pNetExport_U)) %>% nrow
+# 0
 
+panel <- panel %>%
+  mutate(Import_U = Import_value / Import_weight,
+         pNetExport_U = pNetExport_value / pNetExport_weight)
+summary(panel$Import_U)
+summary(panel$pNetExport_U)
+panel %>% filter(is.finite(Import_U) & is.finite(pNetExport_U)) %>% nrow
+# 0
+
+panel <- panel %>%
+  mutate(Import_w = ifelse(pNetExport_quantity < Import_quantity,
+                           Import_value - (Import_quantity - pNetExport_quantity) * Import_U,
+                           Import_value),
+         pNetExport_w = ifelse(pNetExport_quantity > Import_quantity,
+                               pNetExport_value - (pNetExport_quantity - Import_quantity) * pNetExport_U,
+                               pNetExport_value))
+
+summary(panel$Import_w)
+# Inf
+summary(panel$pNetExport_w)
+# Inf
+
+# It is not possible to implement the weighting by quantities.
+# There is simply not enough data.
+
+panel <- panel %>%
+  select(-ends_with("quantity"), -ends_with("weight"), -ends_with("_U"), -ends_with("_w"))
+
+
+# .. Create dependent variable and predictors ####
+panel <- panel %>% 
+  mutate(ratio_CIF = Import_value / pNetExport_value) %>%
+  filter(is.finite(ratio_CIF))
+nrow(panel)
+# 8080386
+
+summary(panel$ratio_CIF)
+hist(panel$ratio_CIF)
+
+panel <- panel %>%
+  mutate(ln.ratio_CIF = log(ratio_CIF)) %>%
+  filter(is.finite(ln.ratio_CIF))
+nrow(panel)
+# 7605946
+
+summary(panel$year)
 panel <- panel %>% 
   group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(ln.ratio_CIF_lag = dplyr::lag(ln.ratio_CIF, n = 1),
-         ln.ratio_FOB_lag = dplyr::lag(ln.ratio_FOB, n = 1)) %>%
+  mutate(ln.ratio_CIF_lag = dplyr::lag(ln.ratio_CIF, n = 1)) %>%
   ungroup() %>%
-  filter(is.finite(ln.ratio_CIF_lag) & is.finite(ln.ratio_FOB_lag))
+  filter(is.finite(ln.ratio_CIF_lag))
 nrow(panel)
-# 3841854
+# 6812396
+summary(panel$year)
 
 panel <- panel %>% 
   group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(Import_fut = dplyr::lead(Import, n = 1),
-         NetExport_fut = dplyr::lead(NetExport, n = 1)) %>%
-  ungroup()
-
-panel <- panel %>%
-  mutate(FutImport_misrep = Import_fut/Import,
-         FutExport_misrep = NetExport_fut/NetExport,
-         ReExport_misrep = pReExport/Import) %>%
-  filter(is.finite(FutImport_misrep) &
-           is.finite(FutExport_misrep) &
-           is.finite(ReExport_misrep))
+  mutate(Import_fut = dplyr::lead(Import_value, n = 1)) %>%
+  ungroup() %>%
+  filter(is.finite(Import_fut))
 nrow(panel)
-# 3462595
+# 6147496
+summary(panel$year)
 
 panel <- panel %>%
-  filter(complete.cases(ratio_CIF, ratio_FOB, 
+  mutate(FutImport_misrep = Import_fut / Import_value,
+         ReExport_misrep = pReExport_value / Import_value) %>%
+  filter(is.finite(FutImport_misrep) & is.finite(ReExport_misrep))
+nrow(panel)
+# 6147496
+
+panel <- panel %>%
+  filter(complete.cases(ratio_CIF, ln.ratio_CIF, ln.ratio_CIF_lag,
                         dist, contig, rLandlocked, pLandlocked, tariff,
-                        FutImport_misrep, FutExport_misrep, ReExport_misrep,
-                        ln.ratio_CIF_lag, ln.ratio_FOB_lag))
+                        FutImport_misrep, ReExport_misrep))
 nrow(panel)
-# 1295364
+# 2641583
 
 panel <- panel %>%
   mutate(dist.sq = I(dist^2))
 
 
-# .. Exploratory data analysis ####
+# .. Variable transformation ####
 summary(panel$ratio_CIF)
 hist(panel$ln.ratio_CIF)
 hist(panel$FutImport_misrep)
@@ -116,7 +183,7 @@ ihs <- function(x){
   return(x)
 }
 
-# Check whethert there are zeros in the data
+# Check whether there are zeros in the data
 summary(log(panel$FutImport_misrep))
 # Fine to log
 summary(log(panel$ReExport_misrep))
@@ -131,19 +198,16 @@ panel <- panel %>%
 hist(panel$ln.FutImport_misrep)
 hist(panel$ihs.ReExport_misrep)
 hist(panel$ihs.tariff)
-summary(panel$ReExport_misrep)
-summary(panel$ihs.ReExport_misrep)
-summary(panel$ihs.tariff)
 
 save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# APPROACH 1                ####
+# FIRST STAGE               ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Estimate first stage ####
+# .. Estimate regression ####
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
@@ -151,17 +215,19 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             ln.FutImport_misrep +
             ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            ihs.tariff,
+            tariff,
           data = panel)
 summary(fit)
+# tariff -0.00137197537000
 max(panel$ratio_CIF)
 # 1124495105
 mean(panel$ratio_CIF)
-# 2197.805
+# 1504.118
 
 
 # .. Identify and remove outliers ####
 panel$CD <- cooks.distance(fit)
+summary(panel$CD)
 
 while(max(panel$CD) > 2){
   panel <- panel %>%
@@ -173,24 +239,24 @@ while(max(panel$CD) > 2){
               ln.FutImport_misrep +
               ihs.ReExport_misrep +
               ln.ratio_CIF_lag +
-              ihs.tariff,
+              tariff,
             data = panel)
   panel$CD <- cooks.distance(fit)
 }
 nrow(panel)
-# 1295364
+# 2641583
 summary(panel$CD)
 
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 832599.8
+# 958317.8
 mean(panel$ratio_CIF)
-# 2197.805
+# 1504.118
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 40.82972
+# 84.67892
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
@@ -199,18 +265,18 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             ln.FutImport_misrep +
             ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            ihs.tariff,
+            tariff,
           data = panel)
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 6153.952
+# 75641.59
 mean(panel$ratio_CIF)
-# 40.82972
+# 84.67892
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 35.35996
+# 60.32255
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
@@ -219,73 +285,117 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             ln.FutImport_misrep +
             ihs.ReExport_misrep +
             ln.ratio_CIF_lag +
-            ihs.tariff,
+            tariff,
           data = panel)
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 3836.826
+# 8641.641
 mean(panel$ratio_CIF)
-# 35.35996
+# 60.32255
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 34.45271
+# 59.77251
 
+fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag +
+            tariff,
+          data = panel)
+Bonferonni.out <- outlierTest(fit, n.max = 10000)
+obs <- as.numeric(names(Bonferonni.out[[1]]))
+outliers <- panel[c(obs), ]
+mean(outliers$ratio_CIF)
+# 6003.939
+mean(panel$ratio_CIF)
+# 59.77251
+panel <- panel[-c(obs),]
+mean(panel$ratio_CIF)
+# 59.70939
+
+fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag +
+            tariff,
+          data = panel)
 rm(Bonferonni.out, outliers, obs)
 
 max(panel$ratio_CIF)
-# 3268221
+# 6786522
 nrow(panel)
-# 1290545
-
-# .. Censor the data-set
-panel %>% filter(ratio_CIF > 1.8) %>% nrow
-# 314835
-panel %>% filter(ratio_CIF < 0.8) %>% nrow
-# 375321
-panel %>% filter(ratio_CIF > 1.8 | ratio_CIF < 0.8) %>% nrow
-# 690156
-panel <- panel %>% 
-  filter(ratio_CIF <= 1.8) %>% filter(ratio_CIF >= 0.8)
-nrow(panel)
-# 600389
-mean(panel$ratio_CIF)
-# 1.166327
-summary(panel$ratio_CIF)
-plot(density(panel$ratio_CIF))
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            ihs.tariff,
-          data = panel)
+# 2636623
 summary(fit)
+# tariff -0.00138910768362
+
+save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
+
+
+# .. Censor the data-set (not used) ####
+panel %>% filter(ratio_CIF > 2) %>% nrow
+# 661691
+panel %>% filter(ratio_CIF < 0.5) %>% nrow
+# 516181
+panel %>% filter(ratio_CIF > 2 | ratio_CIF < 0.5) %>% nrow
+# 1177872
+panel_censor <- panel %>% 
+  filter(ratio_CIF <= 2) %>% filter(ratio_CIF >= 0.5)
+nrow(panel_censor)
+# 1458751
+mean(panel_censor$ratio_CIF)
+# 1.103012
+summary(panel_censor$ratio_CIF)
+plot(density(panel_censor$ratio_CIF))
+
+fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
+                   contig + 
+                   rLandlocked +
+                   pLandlocked +
+                   ln.FutImport_misrep +
+                   ihs.ReExport_misrep +
+                   ln.ratio_CIF_lag +
+                   tariff,
+                 data = panel_censor)
+summary(fit_censor)
+# tariff -0.000346419516116
+
+rm(fit_censor, panel_censor)
 
 
 # .. Compute fitted values when non-IFF predictors are 0 ####
-fit_IFF <- lm(ln.ratio_CIF ~ - 1 + ihs.tariff,
+fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
               data = panel)
-panel$fitted_IFF_lm <- predict(fit_IFF)
+summary(fit_IFF)
+# tariff 0.0016312
+panel$fitted_IFF_lm <- exp(predict(fit_IFF))
+rm(fit_IFF)
+# This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
+# Rather, this gives the unconditional effect of tariffs on the discrepancy.
 
 coef <- coef(fit)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "ihs.tariff"){
-    coef[v] <- coef(fit)["ihs.tariff"]
+if (names(coef[v]) == "tariff"){
+    coef[v] <- coef(fit)["tariff"]
   } else {
     coef[v] <- 0
   }
 }
 coef
-panel$fitted_IFF_man <- exp(model.matrix(fit) %*% coef)
-attr(panel$fitted_IFF_man, "dimnames") <- NULL
+# coef["(Intercept)"] <- coef(fit)["(Intercept)"]
+# coef
+
+panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
 rm(coef, v)
 
-panel$fitted_IFF_pred <- exp(predict(update(fit, . ~ . - 1),
+panel$fitted_IFF_pred <- exp(predict(fit,
                                      newdata = data.frame(dist = 0,
                                                           dist.sq = 0,
                                                           contig = "0",
@@ -294,42 +404,51 @@ panel$fitted_IFF_pred <- exp(predict(update(fit, . ~ . - 1),
                                                           ln.FutImport_misrep = 0,
                                                           ihs.ReExport_misrep = 0,
                                                           ln.ratio_CIF_lag = 0,
-                                                          ihs.tariff = panel$ihs.tariff)))
+                                                          tariff = panel$tariff)))
 
 summary(panel$fitted_IFF_lm)
 summary(panel$fitted_IFF_man)
 summary(panel$fitted_IFF_pred)
+# fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
 
-panel$fitted_IFF <- panel$fitted_IFF_man
+panel$fitted_IFF <- panel$fitted_IFF_pred
 
 
 # .. Compute adjusted FOB imports ####
 panel$fitted <- exp(fitted(fit))
 panel$resid <- exp(resid(fit))
+summary(panel$fitted)
 
 panel <- panel %>%
   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
          resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport + pNetExport * (resid_adj),
-         FOB_Import_IFF_hi = pNetExport + pNetExport * (resid_adj + fitted_IFF),
-         FOB_Import_IFF_lo = pNetExport + pNetExport * (fitted_IFF))
+  mutate(FOB_Import = Import_value / fitted_adj,
+         FOB_Import_IFF_hi = Import_value / (resid_adj + fitted_IFF),
+         FOB_Import_IFF_lo = Import_value / fitted_IFF)
 
 panel <- panel %>%
-  mutate(FOB_Import_AL = Import/fitted,
-         FOB_Import_WD = pNetExport + (pNetExport * resid / fitted))
-panel$FOB_Import_AL == panel$FOB_Import_WD
+  mutate(FOB_Import_AL = Import_value/fitted,
+         FOB_Import_WD = (pNetExport_value + (pNetExport_value * resid ))/ fitted)
+sum(panel$FOB_Import_AL == panel$FOB_Import_WD)
+panel$FOB_Import_AL <- NULL
+panel$FOB_Import_WD <- NULL
 
-save(panel, file = "Results/Intermediate/panel_1st_stage_A1.Rdata")
+save(panel, file = "Results/Intermediate/panel_1st_stage_A3.Rdata")
 
 
-# .. Estimate second stage ####
+
+## ## ## ## ## ## ## ## ## ## ##
+# SECOND STAGE              ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Estimate fixed effects regression ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(pNetExport/FOB_Import))) %>%
+  mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
   filter(is.finite(rep_dist))
 nrow(panel)
-# 600389
+# 2636623
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -379,15 +498,15 @@ panel <- panel %>%
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV = w_X*pNetExport + w_M*FOB_Import)
+  mutate(RV = w_X*pNetExport_value + w_M*FOB_Import)
 
 
 # .. Compute IFF ####
 panel <- panel %>%
   mutate(Imp_IFF_hi = FOB_Import_IFF_hi - RV,
-         Exp_IFF_hi = RV - pNetExport,
+         Exp_IFF_hi = RV - pNetExport_value,
          Imp_IFF_lo = FOB_Import_IFF_lo - RV,
-         Exp_IFF_lo = RV - pNetExport)
+         Exp_IFF_lo = RV - pNetExport_value)
 summary(panel$Imp_IFF_hi)
 summary(panel$Exp_IFF_hi)
 summary(panel$Imp_IFF_lo)
@@ -429,8 +548,13 @@ panel %>%
 rm(panel_mirror)
 
 
+
+## ## ## ## ## ## ## ## ## ## ##
+# AGGREGATE RESULTS         ####
+## ## ## ## ## ## ## ## ## ## ##
+
 # .. Aggregate results using Gross Excluding Reversals ####
-GER_Imp_A1_hi <- panel %>%
+GER_Imp_hi <- panel %>%
   filter(Imp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
@@ -438,7 +562,7 @@ GER_Imp_A1_hi <- panel %>%
   summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-GER_Imp_A1_lo <- panel %>%
+GER_Imp_lo <- panel %>%
   filter(Imp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
@@ -446,18 +570,18 @@ GER_Imp_A1_lo <- panel %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
-GER_Imp_A1 <- full_join(GER_Imp_A1_lo, GER_Imp_A1_hi,
-                        by = c("reporter" = "reporter",
-                               "reporter.ISO" = "reporter.ISO",
-                               "rRegion" = "rRegion",
-                               "rIncome" = "rIncome",
-                               "partner" = "partner",
-                               "partner.ISO" = "partner.ISO",
-                               "pRegion" = "pRegion",
-                               "pIncome" = "pIncome",
-                               "year" = "year"))
+GER_Imp <- full_join(GER_Imp_lo, GER_Imp_hi,
+                     by = c("reporter" = "reporter",
+                            "reporter.ISO" = "reporter.ISO",
+                            "rRegion" = "rRegion",
+                            "rIncome" = "rIncome",
+                            "partner" = "partner",
+                            "partner.ISO" = "partner.ISO",
+                            "pRegion" = "pRegion",
+                            "pIncome" = "pIncome",
+                            "year" = "year"))
 
-GER_Exp_A1_hi <- panel %>%
+GER_Exp_hi <- panel %>%
   filter(pExp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
@@ -465,7 +589,7 @@ GER_Exp_A1_hi <- panel %>%
   summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-GER_Exp_A1_lo <- panel %>%
+GER_Exp_lo <- panel %>%
   filter(pExp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
@@ -473,29 +597,29 @@ GER_Exp_A1_lo <- panel %>%
   summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
-GER_Exp_A1 <- full_join(GER_Exp_A1_lo, GER_Exp_A1_hi,
-                        by = c("reporter" = "reporter",
-                               "reporter.ISO" = "reporter.ISO",
-                               "rRegion" = "rRegion",
-                               "rIncome" = "rIncome",
-                               "partner" = "partner",
-                               "partner.ISO" = "partner.ISO",
-                               "pRegion" = "pRegion",
-                               "pIncome" = "pIncome",
-                               "year" = "year"))
+GER_Exp <- full_join(GER_Exp_lo, GER_Exp_hi,
+                     by = c("reporter" = "reporter",
+                            "reporter.ISO" = "reporter.ISO",
+                            "rRegion" = "rRegion",
+                            "rIncome" = "rIncome",
+                            "partner" = "partner",
+                            "partner.ISO" = "partner.ISO",
+                            "pRegion" = "pRegion",
+                            "pIncome" = "pIncome",
+                            "year" = "year"))
 
-GER_Orig_Dest_Year_A1 <- full_join(GER_Imp_A1, GER_Exp_A1,
-                                  by = c("reporter" = "reporter",
-                                         "reporter.ISO" = "reporter.ISO",
-                                         "rRegion" = "rRegion",
-                                         "rIncome" = "rIncome",
-                                         "partner" = "partner",
-                                         "partner.ISO" = "partner.ISO",
-                                         "pRegion" = "pRegion",
-                                         "pIncome" = "pIncome",
-                                         "year" = "year"))
+GER_Orig_Dest_Year <- full_join(GER_Imp, GER_Exp,
+                                by = c("reporter" = "reporter",
+                                       "reporter.ISO" = "reporter.ISO",
+                                       "rRegion" = "rRegion",
+                                       "rIncome" = "rIncome",
+                                       "partner" = "partner",
+                                       "partner.ISO" = "partner.ISO",
+                                       "pRegion" = "pRegion",
+                                       "pIncome" = "pIncome",
+                                       "year" = "year"))
 
-GER_Orig_Year_A1 <- GER_Orig_Dest_Year_A1 %>%
+GER_Orig_Year <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -503,11 +627,11 @@ GER_Orig_Year_A1 <- GER_Orig_Dest_Year_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-GER_Orig_Year_Africa_A1 <- GER_Orig_Year_A1 %>%
+GER_Orig_Year_Africa <- GER_Orig_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-GER_Year_Africa_A1 <- GER_Orig_Year_Africa_A1 %>%
+GER_Year_Africa <- GER_Orig_Year_Africa %>%
   group_by(year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -515,14 +639,14 @@ GER_Year_Africa_A1 <- GER_Orig_Year_Africa_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa_A1, file = "Results/Approach 1/GER_Orig_Year_Africa_A2.csv",
+write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa.csv",
           row.names = F)
-write.csv(GER_Year_Africa_A1, file = "Results/Approach 1/GER_Year_Africa_A2.csv",
+write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa.csv",
           row.names = F)
 
 
 # .. Aggregate results using Net Aggregation ####
-Net_Orig_Dest_Year_A1 <- panel %>%
+Net_Orig_Dest_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
@@ -532,7 +656,7 @@ Net_Orig_Dest_Year_A1 <- panel %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-Net_Orig_Year_A1 <- Net_Orig_Dest_Year_A1 %>%
+Net_Orig_Year <- Net_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -540,11 +664,11 @@ Net_Orig_Year_A1 <- Net_Orig_Dest_Year_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-Net_Orig_Year_Africa_A1 <- Net_Orig_Year_A1 %>%
+Net_Orig_Year_Africa <- Net_Orig_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-Net_Year_Africa_A1 <- Net_Orig_Year_Africa_A1 %>%
+Net_Year_Africa <- Net_Orig_Year_Africa %>%
   group_by(year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -552,382 +676,9 @@ Net_Year_Africa_A1 <- Net_Orig_Year_Africa_A1 %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa_A1, file = "Results/Approach 1/Net_Orig_Year_Africa_A2.csv",
+write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa.csv",
           row.names = F)
-write.csv(Net_Year_Africa_A1, file = "Results/Approach 1/Net_Year_Africa_A2.csv",
+write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa.csv",
           row.names = F)
 
-save(panel, file = "Results/Intermediate/panel_2nd_stage_A2.Rdata")
-
-
-###########
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            ihs.tariff,
-          data = panel)
-summary(fit)
-
-
-
-# ## ## ## ## ## ## ## ## ## ## ##
-# # ALTERNATIVE APPROACH      ####
-# ## ## ## ## ## ## ## ## ## ## ##
-# 
-# rm(panel)
-# load("Data/Panel/panel_clean.Rdata")
-# 
-# 
-# # .. For mis-invoiced imports ####
-# 
-# # .... Estimate first stage ####
-# fit.CIF <- lm(ln.ratio_CIF ~ dist + I(dist^2) + 
-#                 contig + 
-#                 rLandlocked +
-#                 pLandlocked +
-#                 FutImport_misrep +
-#                 ReExport_misrep,
-#               data = panel)
-# summary(fit.CIF)
-# 
-# 
-# # .... Identify and remove outliers ####
-# Bonferonni.out <- outlierTest(fit.CIF, n.max = 100)
-# obs <- as.numeric(names(Bonferonni.out[[1]]))
-# outliers <- panel[c(obs), ]
-# mean(outliers$ratio_CIF)
-# # 187749367
-# mean(panel$ratio_CIF)
-# # 3315.328
-# panel <- panel[-c(obs),]
-# rm(Bonferonni.out, outliers, obs)
-# mean(panel$ratio_CIF)
-# # 327.4577
-# 
-# panel %>% filter(ratio_CIF > 10^4) %>% nrow
-# # 5902
-# panel <- panel %>% 
-#   filter(ratio_CIF < 10^4)
-# nrow(panel)
-# # 3764261
-# mean(panel$ratio_CIF)
-# # 21.923
-# 
-# fit.CIF <- lm(ln.ratio_CIF ~ dist + I(dist^2) + 
-#                 contig + 
-#                 rLandlocked +
-#                 pLandlocked +
-#                 FutImport_misrep +
-#                 ReExport_misrep,
-#               data = panel)
-# summary(fit.CIF)
-# 
-# 
-# # .... Compute FOB imports ####
-# panel$fitted_CIF <- exp(fitted(fit.CIF))
-# 
-# panel <- panel %>%
-#   mutate(FOB_Import = fitted_CIF * pNetExport)
-# 
-# save(panel, file = "Results/Intermediate/panel_1st_stage_Imp.Rdata")
-# 
-# 
-# # .... Estimate second stage ####
-# panel <- panel %>%
-#   mutate(rep_dist = abs(log(pNetExport/FOB_Import))) %>%
-#   filter(is.finite(rep_dist))
-# nrow(panel)
-# # 3764248
-# 
-# panel <- panel %>%
-#   filter(year > 1999)
-# nrow(panel)
-# # 3612787
-# 
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             funs(as.factor(.)))
-# 
-# FE.out <- felm(rep_dist ~ 0| reporter.ISO +
-#                  partner.ISO + year,
-#                data = panel)
-# FE_Imp <- getfe(FE.out, se = T)
-# 
-# options(contrasts = rep ("contr.sum", 2))
-# X <- model.matrix(~ -1 + panel$reporter.ISO +
-#                     panel$partner.ISO +
-#                     panel$year)
-# attr(X,"contrasts")
-# FE.out2 <- solve(t(X) %*% X) %*% t(X) %*% panel$rep_dist
-# 
-# FE_Imp <- FE_Imp %>%
-#   group_by(fe) %>%
-#   mutate(min = min(effect)) %>%
-#   ungroup()
-# 
-# FE_Imp$sigma <- pi/2*(FE_Imp$effect - (FE_Imp$min + 2*FE_Imp$se))
-# 
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             funs(as.character(.)))
-# 
-# 
-# # .... Harmonization procedure ####
-# panel <- left_join(panel, FE_Imp %>% 
-#                      filter(fe == "reporter.ISO") %>%
-#                      select(idx, sigma) %>%
-#                      mutate(idx = as.character(idx)),
-#                    by = c("reporter.ISO" = "idx")) %>%
-#   rename(rSigma = sigma)
-# 
-# panel <- left_join(panel, FE_Imp %>% 
-#                      filter(fe == "partner.ISO") %>%
-#                      select(idx, sigma) %>%
-#                      mutate(idx = as.character(idx)),
-#                    by = c("partner.ISO" = "idx")) %>%
-#   rename(pSigma = sigma)
-# 
-# panel <- panel %>%
-#   mutate(w_M = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-#          w_X = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-# summary(panel$w_M)
-# summary(panel$w_X)
-# 
-# panel <- panel %>%
-#   mutate(w = w_M + w_X)
-# summary(panel$w)
-# 
-# panel <- panel %>%
-#   mutate(RV = w_M*FOB_Import + w_X*pNetExport)
-# 
-# 
-# # .... Compute mis-invoiced import ####
-# panel <- panel %>%
-#   mutate(Imp_IFF = Import - RV)
-# summary(panel$Imp_IFF)
-# 
-# panel_Imp <- panel
-# test_alternate_Imp <- panel %>% filter(id == "CAN_HKG_94_2012")
-# 
-# 
-# # .. For mis-invoiced exports ####
-# rm(panel)
-# load("Data/Panel/panel_clean.Rdata")
-# 
-# 
-# # .... Estimate first stage ####
-# fit.FOB <- lm(ln.ratio_FOB ~ dist + I(dist^2) + 
-#                 contig + 
-#                 rLandlocked +
-#                 pLandlocked +
-#                 FutExport_misrep,
-#               data = panel)
-# summary(fit.FOB)
-# 
-# 
-# # .... Identify and remove outliers ####
-# Bonferonni.out <- outlierTest(fit.FOB, n.max = 100)
-# obs <- as.numeric(names(Bonferonni.out[[1]]))
-# outliers <- panel[c(obs), ]
-# mean(outliers$ratio_FOB)
-# # 7586215
-# mean(panel$ratio_FOB)
-# # 265.6377 
-# panel <- panel[-c(obs),]
-# rm(Bonferonni.out, outliers, obs)
-# mean(panel$ratio_FOB)
-# # 64.4255
-# 
-# panel %>% filter(ratio_FOB > 10^4) %>% nrow
-# # 2756
-# panel <- panel %>% 
-#   filter(ratio_FOB < 10^4)
-# nrow(panel)
-# # 3767368
-# mean(panel$ratio_FOB)
-# # 13.39388
-# 
-# fit.FOB <- lm(ln.ratio_FOB ~ dist + I(dist^2) + 
-#                 contig + 
-#                 rLandlocked +
-#                 pLandlocked +
-#                 FutExport_misrep,
-#               data = panel)
-# summary(fit.FOB)
-# 
-# 
-# # .... Compute CIF exports ####
-# panel$fitted_FOB <- exp(fitted(fit.FOB))
-# 
-# panel <- panel %>%
-#   mutate(CIF_Export = fitted_FOB * pImport)
-# 
-# save(panel, file = "Results/Intermediate/panel_1st_stage_Exp.Rdata")
-# 
-# 
-# # .... Estimate second stage ####
-# panel <- panel %>%
-#   mutate(rep_dist = abs(log(pImport/CIF_Export))) %>%
-#   filter(is.finite(rep_dist))
-# nrow(panel)
-# # 3767365
-# 
-# panel <- panel %>%
-#   filter(year > 1999)
-# nrow(panel)
-# # 3615900
-# 
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             funs(as.factor(.)))
-# 
-# FE.out <- felm(rep_dist ~ 0| reporter.ISO +
-#                  partner.ISO + year,
-#                data = panel)
-# FE_Exp <- getfe(FE.out, se = T)
-# 
-# # options(contrasts = rep ("contr.sum", 2))
-# # X <- model.matrix(~ -1 + panel$reporter.ISO + 
-# #                     panel$partner.ISO + 
-# #                     panel$year)
-# # attr(X,"contrasts")
-# # FE.out <- solve(t(X) %*% X) %*% t(X) %*% panel$rep_dist
-# 
-# FE_Exp <- FE_Exp %>%
-#   group_by(fe) %>%
-#   mutate(min = min(effect)) %>%
-#   ungroup()
-# 
-# FE_Exp$sigma <- pi/2*(FE_Exp$effect - (FE_Exp$min + 2*FE_Exp$se))
-# 
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             funs(as.character(.)))
-# 
-# 
-# # .... Harmonization procedure ####
-# panel <- left_join(panel, FE_Exp %>% 
-#                      filter(fe == "reporter.ISO") %>%
-#                      select(idx, sigma) %>%
-#                      mutate(idx = as.character(idx)),
-#                    by = c("reporter.ISO" = "idx")) %>%
-#   rename(rSigma = sigma)
-# 
-# panel <- left_join(panel, FE_Exp %>% 
-#                      filter(fe == "partner.ISO") %>%
-#                      select(idx, sigma) %>%
-#                      mutate(idx = as.character(idx)),
-#                    by = c("partner.ISO" = "idx")) %>%
-#   rename(pSigma = sigma)
-# 
-# panel <- panel %>%
-#   mutate(w_X = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-#          w_M = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-# summary(panel$w_M)
-# summary(panel$w_X)
-# 
-# panel <- panel %>%
-#   mutate(w = w_M + w_X)
-# summary(panel$w)
-# 
-# panel <- panel %>%
-#   mutate(RV = w_M*pImport + w_X*CIF_Export)
-# 
-# 
-# # .... Compute mis-invoiced exports ####
-# panel <- panel %>%
-#   mutate(Exp_IFF = RV - NetExport)
-# summary(panel$Exp_IFF)
-# 
-# panel_Exp <- panel
-# test_alternate_Exp <- panel %>% filter(id == "CAN_HKG_94_2012")
-# 
-# 
-# # .. Merge IFF for imports and exports ####
-# panel <- full_join(panel_Imp %>%
-#                      select(reporter, reporter.ISO, rRegion, rIncome,
-#                             partner, partner.ISO, pRegion, pIncome,
-#                             year, commodity.code, Imp_IFF),
-#                    panel_Exp %>%
-#                      select(reporter, reporter.ISO, rRegion, rIncome,
-#                             partner, partner.ISO, pRegion, pIncome,
-#                             year, commodity.code, Exp_IFF),
-#                    by = c("reporter" = "reporter",
-#                           "reporter.ISO" = "reporter.ISO",
-#                           "rRegion" = "rRegion",
-#                           "rIncome" = "rIncome",
-#                           "partner" = "partner",
-#                           "partner.ISO" = "partner.ISO",
-#                           "pRegion" = "pRegion",
-#                           "pIncome" = "pIncome",
-#                           "year" = "year",
-#                           "commodity.code" = "commodity.code"))
-# 
-# panel$id <- paste(panel$reporter.ISO, 
-#                   panel$partner.ISO, 
-#                   panel$commodity.code, 
-#                   panel$year, sep = "_")
-# 
-# panel %>%
-#   filter(duplicated(panel$id)) %>% nrow
-# # 0
-# 
-# test_alternate <- left_join(test_alternate_Imp, test_alternate_Exp %>%
-#                               select(id, Exp_IFF),
-#                             by = c("id" = "id"))
-# 
-# 
-# # .. Aggregate results using Gross Excluding Reversals ####
-# 
-# GER_Imp_alt <- panel %>%
-#   filter(Imp_IFF > 0) %>%
-#   group_by(reporter, reporter.ISO, rRegion, rIncome,
-#            partner, partner.ISO, pRegion, pIncome,
-#            year) %>%
-#   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T)) %>%
-#   ungroup()
-# 
-# GER_Exp_alt <- panel %>%
-#   filter(Exp_IFF > 0) %>%
-#   group_by(reporter, reporter.ISO, rRegion, rIncome,
-#            partner, partner.ISO, pRegion, pIncome,
-#            year) %>%
-#   summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
-#   ungroup()
-# 
-# Orig_Dest_Year_alt <- full_join(GER_Imp_alt, GER_Exp_alt,
-#                             by = c("reporter" = "reporter",
-#                                    "reporter.ISO" = "reporter.ISO",
-#                                    "rRegion" = "rRegion",
-#                                    "rIncome" = "rIncome",
-#                                    "partner" = "partner",
-#                                    "partner.ISO" = "partner.ISO",
-#                                    "pRegion" = "pRegion",
-#                                    "pIncome" = "pIncome",
-#                                    "year" = "year"))
-# 
-# Orig_Year_alt <- Orig_Dest_Year_alt %>%
-#   group_by(reporter, reporter.ISO, rRegion, year) %>%
-#   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-#             Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
-#   ungroup()
-# 
-# Africa_alternate <- Orig_Year_alt %>%
-#   filter(rRegion == "Africa") %>%
-#   select(-rRegion)
-# 
-# Africa_agg_alt <- Africa_alternate %>%
-#   group_by(year) %>%
-#   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-#             Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
-#   ungroup()
-# 
-# save(Africa_alternate, file = "Results/Africa_alternate.Rdata")
-# write.csv(Africa_alternate, file = "Results/Africa_alternate approach.csv",
-#           row.names = F)
-# write.csv(Africa_agg_alt, file = "Results/Africa_agg_alternate approach.csv",
-#           row.names = F)
+save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
