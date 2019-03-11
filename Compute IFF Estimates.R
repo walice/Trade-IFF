@@ -36,6 +36,8 @@
 setwd("/home/alice/IFFe/") # Virtual server
 library(car)
 library(lfe)
+library(reshape2)
+library(scales)
 library(tidyverse)
 
 
@@ -682,3 +684,31 @@ write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa.csv",
           row.names = F)
 
 save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# FIGURES                   ####
+## ## ## ## ## ## ## ## ## ## ##
+
+ggplot(GER_Year_Africa %>% 
+         melt(id.vars = "year") %>%
+         filter(str_detect(variable, "Imp")), 
+       aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Illicit Financial Flows in Africa",
+       subtitle = "Gross Excluding Reversals",
+       x = "Year", y = "Illicit flow in billion USD")
+
+ggplot(Net_Year_Africa %>% 
+         melt(id.vars = "year") %>%
+         filter(str_detect(variable, "Imp")), 
+       aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Illicit Financial Flows in Africa",
+       subtitle = "Net",
+       x = "Year", y = "Illicit flow in billion USD")
