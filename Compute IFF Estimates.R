@@ -395,7 +395,7 @@ coef
 # coef["(Intercept)"] <- coef(fit)["(Intercept)"]
 # coef
 
-panel$fitted_IFF_man <- as.numeric((model.matrix(fit) %*% coef))
+panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
 
 panel$fitted_IFF_pred <- exp(predict(fit,
                                      newdata = data.frame(dist = 0,
@@ -424,13 +424,13 @@ for (v in 1:length(coef)){
 }
 coef
 
-panel$fitted_nonIFF <- as.numeric((model.matrix(fit) %*% coef))
+panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
 rm(coef, v)
 
 
 # .. Compute adjusted FOB imports ####
-panel$fitted <- (fitted(fit))
-panel$resid <- (resid(fit))
+panel$fitted <- exp(fitted(fit))
+panel$resid <- exp(resid(fit))
 
 summary(panel$fitted)
 summary(panel$fitted_IFF)
@@ -442,13 +442,13 @@ sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
 # TRUE
 
 panel <- panel %>%
-  mutate(fitted_adj = ifelse(exp(fitted) < 1, 1, exp(fitted)),
-         resid_adj = ratio_CIF - exp(fitted_adj))
+  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+         resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + (pNetExport_value * exp(resid_adj)),
-         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * exp(resid_adj + fitted_IFF)),
-         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * exp(fitted_IFF)))
+  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid_adj),
+         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid_adj + fitted_IFF)),
+         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * fitted_IFF))
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
