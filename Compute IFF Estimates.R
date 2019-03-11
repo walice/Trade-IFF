@@ -201,6 +201,7 @@ hist(panel$ln.FutImport_misrep)
 hist(panel$ihs.ReExport_misrep)
 hist(panel$ihs.tariff)
 
+rm(ihs)
 save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
@@ -413,7 +414,7 @@ summary(panel$fitted_IFF_man)
 summary(panel$fitted_IFF_pred)
 # fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
 
-panel$fitted_IFF <- panel$fitted_IFF_pred
+panel$fitted_IFF <- panel$fitted_IFF_man
 
 
 # .. Compute adjusted FOB imports ####
@@ -641,9 +642,9 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa.csv",
+write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_Import-div-fit-const-0.csv",
           row.names = F)
-write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa.csv",
+write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_Import-div-fit-const-0.csv",
           row.names = F)
 
 
@@ -678,9 +679,9 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa.csv",
+write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_Import-div-fit-const-0.csv",
           row.names = F)
-write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa.csv",
+write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_Import-div-fit-const-0.csv",
           row.names = F)
 
 save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
@@ -691,7 +692,7 @@ save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
 # FIGURES                   ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-ggplot(GER_Year_Africa %>% 
+g <- ggplot(GER_Year_Africa %>% 
          melt(id.vars = "year") %>%
          filter(str_detect(variable, "Imp")), 
        aes(x = year, y = value, fill = variable)) +
@@ -699,10 +700,13 @@ ggplot(GER_Year_Africa %>%
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Gross Excluding Reversals",
+       subtitle = "Gross Excluding Reversals, constant set to 0",
        x = "Year", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/GER_Africa_Import_Import-div-fit-const-0.png",
+       width = 6, height = 5, units = "in")
 
-ggplot(Net_Year_Africa %>% 
+g <- ggplot(Net_Year_Africa %>% 
          melt(id.vars = "year") %>%
          filter(str_detect(variable, "Imp")), 
        aes(x = year, y = value, fill = variable)) +
@@ -710,5 +714,8 @@ ggplot(Net_Year_Africa %>%
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Net",
+       subtitle = "Net, constant set to 0",
        x = "Year", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/Net_Africa_Import_Import-div-fit-const-0.png",
+       width = 6, height = 5, units = "in")
