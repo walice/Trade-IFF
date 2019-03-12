@@ -25,6 +25,7 @@
 # Aggregate Results
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
+# Figures
 
 
 
@@ -321,6 +322,9 @@ panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
 # 59.70939
 
+rm(Bonferonni.out, outliers, obs)
+save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
+
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
@@ -330,16 +334,12 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             ln.ratio_CIF_lag +
             tariff,
           data = panel)
-rm(Bonferonni.out, outliers, obs)
-
 max(panel$ratio_CIF)
 # 6786522
 nrow(panel)
 # 2636623
 summary(fit)
 # tariff -0.00138910768362
-
-save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
 
 # .. Censor the data-set (not used) ####
@@ -468,7 +468,7 @@ panel <- panel %>%
   mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
   filter(is.finite(rep_dist))
 nrow(panel)
-# 2636623
+# 2376875
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -659,9 +659,9 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(GER_Orig_Year_Africa, file = "Results/Approach 2/GER_Orig_Year_Africa_pExp-mul-resid-fixexp.csv",
+write.csv(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.csv",
           row.names = F)
-write.csv(GER_Year_Africa, file = "Results/Approach 2/GER_Year_Africa_pExp-mul-resid-fixexp.csv",
+write.csv(GER_Year_Africa, file = "Results/Current Version/GER_Year_Africa.csv",
           row.names = F)
 
 
@@ -696,9 +696,9 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_pExp-mul-resid-fixexp.csv",
+write.csv(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.csv",
           row.names = F)
-write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_pExp-mul-resid-fixexp.csv",
+write.csv(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.csv",
           row.names = F)
 
 
@@ -718,7 +718,7 @@ g <- ggplot(GER_Year_Africa %>%
        subtitle = "Gross Excluding Reversals",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER_Africa_Import_pExp-mul-resid-fixexp.png",
+       file = "Figures/Current Version/GER_Africa_Import.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -732,5 +732,5 @@ g <- ggplot(Net_Year_Africa %>%
        subtitle = "Net",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/Net_Africa_Import_pExp-mul-resid-fixexp.png",
+       file = "Figures/Current Version/Net_Africa_Import.png",
        width = 6, height = 5, units = "in")
