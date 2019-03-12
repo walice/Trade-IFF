@@ -370,6 +370,8 @@ fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
 summary(fit_censor)
 # tariff -0.000346419516116
 
+#panel <- panel_censor
+#fit <- fit_censor
 rm(fit_censor, panel_censor)
 
 
