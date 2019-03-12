@@ -457,8 +457,6 @@ sum(panel$FOB_Import_AL == panel$FOB_Import_WD)
 panel$FOB_Import_AL <- NULL
 panel$FOB_Import_WD <- NULL
 
-save(panel, file = "Results/Intermediate/panel_1st_stage_A3.Rdata")
-
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -702,8 +700,6 @@ write.csv(Net_Orig_Year_Africa, file = "Results/Approach 2/Net_Orig_Year_Africa_
           row.names = F)
 write.csv(Net_Year_Africa, file = "Results/Approach 2/Net_Year_Africa_pExp-mul-resid-fixexp.csv",
           row.names = F)
-
-save(panel, file = "Results/Intermediate/panel_2nd_stage_A3.Rdata")
 
 
 
