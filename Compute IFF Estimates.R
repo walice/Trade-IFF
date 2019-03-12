@@ -441,14 +441,14 @@ panel <- panel %>%
 sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
 # TRUE
 
-panel <- panel %>%
-  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-         resid_adj = ratio_CIF - fitted_adj)
+# panel <- panel %>%
+#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+#          resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + (pNetExport_value * resid_adj),
-         FOB_Import_IFF_hi = pNetExport_value + (pNetExport_value * (resid_adj + fitted_IFF)),
-         FOB_Import_IFF_lo = pNetExport_value + (pNetExport_value * fitted_IFF))
+  mutate(FOB_Import = Import_value / fitted_nonIFF,
+         FOB_Import_IFF_hi = Import_value / (resid + fitted_IFF),
+         FOB_Import_IFF_lo = Import_value / fitted_IFF)
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -721,6 +721,20 @@ ggsave(g,
        file = "Figures/Current Version/GER_Africa_Import.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot(GER_Year_Africa %>% 
+              melt(id.vars = "year") %>%
+              filter(str_detect(variable, "Exp")), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Illicit Financial Flows in Africa",
+       subtitle = "Gross Excluding Reversals",
+       x = "Year", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/Current Version/GER_Africa_Export.png",
+       width = 6, height = 5, units = "in")
+
 g <- ggplot(Net_Year_Africa %>% 
          melt(id.vars = "year") %>%
          filter(str_detect(variable, "Imp")), 
@@ -733,4 +747,18 @@ g <- ggplot(Net_Year_Africa %>%
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
        file = "Figures/Current Version/Net_Africa_Import.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(Net_Year_Africa %>% 
+              melt(id.vars = "year") %>%
+              filter(str_detect(variable, "Exp")), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Illicit Financial Flows in Africa",
+       subtitle = "Net",
+       x = "Year", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/Current Version/Net_Africa_Export.png",
        width = 6, height = 5, units = "in")
