@@ -1,3 +1,10 @@
+## ## ## ## ## ## ## ## ## ## ##
+# TOY EXAMPLE               ####
+## ## ## ## ## ## ## ## ## ## ##
+test <- panel %>% filter(id == "ARG_CHN_05_2000" | id == "CHN_ARG_05_2000")
+
+
+###############
 df <- data.frame(id = c("FRA_USA", "FRA_GBR", "FRA_ESP", "FRA_ETH", "FRA_AUS"),
                  Import = c(110, 325, 400, 1000, 500),
                  pNetExport = c(100, 300, 300, 500, 400),

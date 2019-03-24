@@ -71,7 +71,8 @@ panel %>%
 
 # .. Implement weighting by quantities (not used) ####
 panel <- panel %>%
-  mutate(pNetExport_value = pExport_value - pReExport_value,
+  mutate(NetExport_value = Export_value - ReExport_value,
+         pNetExport_value = pExport_value - pReExport_value,
          pNetExport_quantity = pExport_quantity - pReExport_quantity,
          pNetExport_weight = pExport_weight - pReExport_weight)
 
@@ -447,15 +448,15 @@ panel <- panel %>%
   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
          resid_adj = ratio_CIF - fitted_adj)
 
-panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
-         FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
-         FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
-
 # panel <- panel %>%
 #   mutate(FOB_Import = Import_value / fitted_nonIFF,
 #          FOB_Import_IFF_hi = Import_value / (resid_adj + fitted_IFF),
 #          FOB_Import_IFF_lo = Import_value / fitted_IFF)
+
+panel <- panel %>%
+  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+         FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
+         FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -609,7 +610,7 @@ GER_Imp <- full_join(GER_Imp_lo, GER_Imp_hi,
                             "year" = "year"))
 
 GER_Exp_hi <- panel %>%
-  filter(Exp_IFF_hi > 0) %>%
+  filter(pExp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
@@ -617,7 +618,7 @@ GER_Exp_hi <- panel %>%
   ungroup()
 
 GER_Exp_lo <- panel %>%
-  filter(Exp_IFF_lo > 0) %>%
+  filter(pExp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
