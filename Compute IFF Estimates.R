@@ -614,7 +614,7 @@ GER_Exp_hi <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
-  summarize(Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
+  summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_lo <- panel %>%
@@ -622,7 +622,7 @@ GER_Exp_lo <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
-  summarize(Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T)) %>%
+  summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
 GER_Exp <- full_join(GER_Exp_lo, GER_Exp_hi,
@@ -680,8 +680,8 @@ Net_Orig_Dest_Year <- panel %>%
            year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
-            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
-            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
+            Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 Net_Orig_Year <- Net_Orig_Dest_Year %>%
