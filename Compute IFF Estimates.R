@@ -370,8 +370,8 @@ fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
 summary(fit_censor)
 # tariff -0.000346419516116
 
-#panel <- panel_censor
-#fit <- fit_censor
+# panel <- panel_censor
+# fit <- fit_censor
 rm(fit_censor, panel_censor)
 
 
@@ -443,14 +443,19 @@ panel <- panel %>%
 sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
 # TRUE
 
-# panel <- panel %>%
-#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-#          resid_adj = ratio_CIF - fitted_adj)
+panel <- panel %>%
+  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+         resid_adj = ratio_CIF - fitted_adj)
 
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF_hi = Import_value / (resid + fitted_IFF),
-         FOB_Import_IFF_lo = Import_value / fitted_IFF)
+  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+         FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
+         FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
+
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / fitted_nonIFF,
+#          FOB_Import_IFF_hi = Import_value / (resid_adj + fitted_IFF),
+#          FOB_Import_IFF_lo = Import_value / fitted_IFF)
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -604,19 +609,19 @@ GER_Imp <- full_join(GER_Imp_lo, GER_Imp_hi,
                             "year" = "year"))
 
 GER_Exp_hi <- panel %>%
-  filter(pExp_IFF_hi > 0) %>%
+  filter(Exp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
-  summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+  summarize(Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_lo <- panel %>%
-  filter(pExp_IFF_lo > 0) %>%
+  filter(Exp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            partner, partner.ISO, pRegion, pIncome,
            year) %>%
-  summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
+  summarize(Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
 GER_Exp <- full_join(GER_Exp_lo, GER_Exp_hi,
