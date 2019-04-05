@@ -655,7 +655,19 @@ GER_Orig_Year <- GER_Orig_Dest_Year %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
+GER_Orig <- GER_Orig_Year %>%
+  group_by(reporter, reporter.ISO, rRegion) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup()
+  
 GER_Orig_Year_Africa <- GER_Orig_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+GER_Orig_Africa <- GER_Orig %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
@@ -667,9 +679,14 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
+save(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.Rdata")
 write.csv(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.csv",
           row.names = F)
+save(GER_Year_Africa, file = "Results/Current Version/GER_Year_Africa.Rdata")
 write.csv(GER_Year_Africa, file = "Results/Current Version/GER_Year_Africa.csv",
+          row.names = F)
+save(GER_Orig_Africa, file = "Results/Current Version/GER_Orig_Africa.Rdata")
+write.csv(GER_Orig_Africa, file = "Results/Current Version/GER_Orig_Africa.csv",
           row.names = F)
 
 
@@ -692,7 +709,19 @@ Net_Orig_Year <- Net_Orig_Dest_Year %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
+Net_Orig <- Net_Orig_Year %>%
+  group_by(reporter, reporter.ISO, rRegion) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup()
+
 Net_Orig_Year_Africa <- Net_Orig_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+Net_Orig_Africa <- Net_Orig %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
@@ -704,9 +733,14 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
+save(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.Rdata")
 write.csv(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.csv",
           row.names = F)
+save(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.Rdata")
 write.csv(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.csv",
+          row.names = F)
+save(Net_Orig_Africa, file = "Results/Current Version/Net_Orig_Africa.Rdata")
+write.csv(Net_Orig_Africa, file = "Results/Current Version/Net_Orig_Africa.csv",
           row.names = F)
 
 
