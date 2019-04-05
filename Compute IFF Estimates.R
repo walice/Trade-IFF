@@ -40,6 +40,7 @@ library(lfe)
 library(reshape2)
 library(scales)
 library(tidyverse)
+options(scipen = 999)
 
 
 
@@ -209,7 +210,7 @@ save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# FIRST STAGE               ####
+# REMOVE OUTLIERS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Estimate regression ####
@@ -326,24 +327,13 @@ mean(panel$ratio_CIF)
 rm(Bonferonni.out, outliers, obs)
 save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
-          data = panel)
-max(panel$ratio_CIF)
-# 6786522
-nrow(panel)
-# 2636623
-summary(fit)
-# tariff -0.00138910768362
 
 
-# .. Censor the data-set (not used) ####
+## ## ## ## ## ## ## ## ## ## ##
+# LOW ESTIMATES             ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Censor the data-set to get lower-bounds ####
 panel %>% filter(ratio_CIF > 2) %>% nrow
 # 661691
 panel %>% filter(ratio_CIF < 0.5) %>% nrow
@@ -371,16 +361,32 @@ fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
 summary(fit_censor)
 # tariff -0.000346419516116
 
-# panel <- panel_censor
-# fit <- fit_censor
+panel <- panel_censor
+fit <- fit_censor
 rm(fit_censor, panel_censor)
+
+fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag +
+            tariff,
+          data = panel)
+max(panel$ratio_CIF)
+# 2
+nrow(panel)
+# 1458751
+summary(fit)
+# tariff -0.000346419516116
 
 
 # .. Compute fitted values when predictors are 0 ####
 fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
               data = panel)
 summary(fit_IFF)
-# tariff 0.0016312
+# tariff 0.00085417
 panel$fitted_IFF_lm <- exp(predict(fit_IFF))
 rm(fit_IFF)
 # This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
@@ -448,15 +454,14 @@ panel <- panel %>%
   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
          resid_adj = ratio_CIF - fitted_adj)
 
-# panel <- panel %>%
-#   mutate(FOB_Import = Import_value / fitted_nonIFF,
-#          FOB_Import_IFF_hi = Import_value / (resid_adj + fitted_IFF),
-#          FOB_Import_IFF_lo = Import_value / fitted_IFF)
-
 panel <- panel %>%
-  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
-         FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
-         FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
+  mutate(FOB_Import = Import_value / fitted_nonIFF,
+         FOB_Import_IFF = Import_value / fitted_IFF)
+
+# panel <- panel %>%
+#   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+#          FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
+#          FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
 
 panel <- panel %>%
   mutate(FOB_Import_AL = Import_value/fitted,
@@ -466,17 +471,12 @@ panel$FOB_Import_AL <- NULL
 panel$FOB_Import_WD <- NULL
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# SECOND STAGE              ####
-## ## ## ## ## ## ## ## ## ## ##
-
 # .. Estimate fixed effects regression ####
 panel <- panel %>%
   mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
   filter(is.finite(rep_dist))
 nrow(panel)
-# 2376875
+# 1458751
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -531,12 +531,8 @@ panel <- panel %>%
 
 # .. Compute IFF ####
 panel <- panel %>%
-  mutate(Imp_IFF_hi = FOB_Import_IFF_hi - RV,
-         Exp_IFF_hi = RV - pNetExport_value,
-         Imp_IFF_lo = FOB_Import_IFF_lo - RV,
+  mutate(Imp_IFF_lo = FOB_Import_IFF - RV,
          Exp_IFF_lo = RV - pNetExport_value)
-summary(panel$Imp_IFF_hi)
-summary(panel$Exp_IFF_hi)
 summary(panel$Imp_IFF_lo)
 summary(panel$Exp_IFF_lo)
 
@@ -546,7 +542,7 @@ panel_mirror <- panel %>%
   select(reporter, reporter.ISO, rRegion, rIncome,
          partner, partner.ISO, pRegion, pIncome,
          commodity.code, year,
-         Exp_IFF_hi, Exp_IFF_lo)
+         Exp_IFF_lo)
 
 panel_mirror$id <- paste(panel_mirror$partner.ISO, 
                          panel_mirror$reporter.ISO, 
@@ -554,8 +550,220 @@ panel_mirror$id <- paste(panel_mirror$partner.ISO,
                          panel_mirror$year, sep = "_")
 
 panel_mirror <- panel_mirror %>% 
-  rename(pExp_IFF_hi = Exp_IFF_hi,
-         pExp_IFF_lo = Exp_IFF_lo)
+  rename(pExp_IFF_lo = Exp_IFF_lo)
+
+panel <- full_join(panel, panel_mirror,
+                   by = c("id" = "id",
+                          "reporter" = "partner",
+                          "reporter.ISO" = "partner.ISO",
+                          "rRegion" = "pRegion",
+                          "rIncome" = "pIncome",
+                          "partner.ISO" = "reporter.ISO",
+                          "partner" = "reporter",
+                          "pRegion" = "rRegion",
+                          "pIncome" = "rIncome",
+                          "year" = "year",
+                          "commodity.code" = "commodity.code"))
+
+panel %>%
+  filter(duplicated(panel$id)) %>% nrow
+# 0
+rm(panel_mirror)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# HIGH ESTIMATES            ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Data/Panel/panel_nooutliers.Rdata")
+
+fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag +
+            tariff,
+          data = panel)
+max(panel$ratio_CIF)
+# 6786522
+nrow(panel)
+# 2636623
+summary(fit)
+# tariff -0.00138910768362
+
+
+# .. Compute fitted values when predictors are 0 ####
+fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
+              data = panel)
+summary(fit_IFF)
+# tariff 0.0016312
+panel$fitted_IFF_lm <- exp(predict(fit_IFF))
+rm(fit_IFF)
+# This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
+# Rather, this gives the unconditional effect of tariffs on the discrepancy.
+
+coef <- coef(fit)
+for (v in 1:length(coef)){
+  if (names(coef[v]) == "tariff"){
+    coef[v] <- coef(fit)["tariff"]
+  } else {
+    coef[v] <- 0
+  }
+}
+coef
+# coef["(Intercept)"] <- coef(fit)["(Intercept)"]
+# coef
+
+panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
+
+panel$fitted_IFF_pred <- exp(predict(fit,
+                                     newdata = data.frame(dist = 0,
+                                                          dist.sq = 0,
+                                                          contig = "0",
+                                                          rLandlocked = "0",
+                                                          pLandlocked = "0",
+                                                          ln.FutImport_misrep = 0,
+                                                          ihs.ReExport_misrep = 0,
+                                                          ln.ratio_CIF_lag = 0,
+                                                          tariff = panel$tariff)))
+
+summary(panel$fitted_IFF_lm)
+summary(panel$fitted_IFF_man)
+summary(panel$fitted_IFF_pred)
+# fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
+
+panel$fitted_IFF <- panel$fitted_IFF_man
+
+coef <- coef(fit)
+for (v in 1:length(coef)){
+  if (names(coef[v]) == "tariff"){
+    coef[v] <- 0 
+  }
+  
+}
+coef
+
+panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+rm(coef, v)
+
+
+# .. Compute adjusted FOB imports ####
+panel$fitted <- exp(fitted(fit))
+panel$resid <- exp(resid(fit))
+
+summary(panel$fitted)
+summary(panel$fitted_IFF)
+summary(panel$fitted_nonIFF)
+
+panel <- panel %>%
+  mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
+sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
+# TRUE
+
+panel <- panel %>%
+  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+         resid_adj = ratio_CIF - fitted_adj)
+
+panel <- panel %>%
+  mutate(FOB_Import = Import_value / fitted_nonIFF,
+         FOB_Import_IFF = Import_value / fitted_IFF)
+
+# panel <- panel %>%
+#   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+#          FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
+#          FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
+
+panel <- panel %>%
+  mutate(FOB_Import_AL = Import_value/fitted,
+         FOB_Import_WD = (pNetExport_value + (pNetExport_value * resid ))/ fitted)
+sum(panel$FOB_Import_AL == panel$FOB_Import_WD)
+panel$FOB_Import_AL <- NULL
+panel$FOB_Import_WD <- NULL
+
+
+# .. Estimate fixed effects regression ####
+panel <- panel %>%
+  mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
+  filter(is.finite(rep_dist))
+nrow(panel)
+# 2636623
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.factor(.)))
+
+FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+                 partner.ISO + year,
+               data = panel)
+FE <- getfe(FE.out, se = T) 
+
+FE <- FE %>%
+  group_by(fe) %>%
+  mutate(min = min(effect)) %>%
+  ungroup()
+
+FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
+attr(FE$sigma, "extra") <- NULL
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.character(.)))
+
+
+# .. Harmonization procedure ####
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "reporter.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("reporter.ISO" = "idx")) %>%
+  rename(rSigma = sigma)
+
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "partner.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("partner.ISO" = "idx")) %>%
+  rename(pSigma = sigma)
+
+panel <- panel %>%
+  mutate(w_M = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
+         w_X = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
+summary(panel$w_M)
+summary(panel$w_X)
+
+panel <- panel %>%
+  mutate(w = w_M + w_X)
+summary(panel$w)
+
+panel <- panel %>%
+  mutate(RV = w_X*pNetExport_value + w_M*FOB_Import)
+
+
+# .. Compute IFF ####
+panel <- panel %>%
+  mutate(Imp_IFF_hi = FOB_Import_IFF - RV,
+         Exp_IFF_hi = RV - pNetExport_value)
+summary(panel$Imp_IFF_hi)
+summary(panel$Exp_IFF_hi)
+
+
+# .. Move export IFF to mirror ####
+panel_mirror <- panel %>%
+  select(reporter, reporter.ISO, rRegion, rIncome,
+         partner, partner.ISO, pRegion, pIncome,
+         commodity.code, year,
+         Exp_IFF_hi)
+
+panel_mirror$id <- paste(panel_mirror$partner.ISO, 
+                         panel_mirror$reporter.ISO, 
+                         panel_mirror$commodity.code,
+                         panel_mirror$year, sep = "_")
+
+panel_mirror <- panel_mirror %>% 
+  rename(pExp_IFF_hi = Exp_IFF_hi)
 
 panel <- full_join(panel, panel_mirror,
                    by = c("id" = "id",
@@ -755,10 +963,11 @@ g <- ggplot(GER_Year_Africa %>%
        aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Import IFF", labels = c("Low", "High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
        subtitle = "Gross Excluding Reversals",
-       x = "Year", y = "Illicit flow in billion USD")
+       x = "Year", y = "Illicit flow in billion USD") +
 ggsave(g,
        file = "Figures/Current Version/GER_Africa_Import.png",
        width = 6, height = 5, units = "in")
@@ -769,6 +978,7 @@ g <- ggplot(GER_Year_Africa %>%
             aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Export IFF", labels = c("Low", "High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
        subtitle = "Gross Excluding Reversals",
@@ -782,7 +992,8 @@ g <- ggplot(Net_Year_Africa %>%
          filter(str_detect(variable, "Imp")), 
        aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1))+
+  scale_fill_discrete(name = "Import IFF", labels = c("Low", "High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
        subtitle = "Net",
@@ -797,6 +1008,7 @@ g <- ggplot(Net_Year_Africa %>%
             aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Export IFF", labels = c("Low", "High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
        subtitle = "Net",
