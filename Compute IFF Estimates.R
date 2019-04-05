@@ -570,6 +570,9 @@ panel %>%
 # 0
 rm(panel_mirror)
 
+panel_lo <- panel
+save(panel_lo, file = "Results/panel_lo.Rdata")
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -783,6 +786,36 @@ panel %>%
 # 0
 rm(panel_mirror)
 
+panel_hi <- panel
+save(panel_hi, file = "Results/panel_hi.Rdata")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# MERGE RESULTS             ####
+## ## ## ## ## ## ## ## ## ## ##
+
+all <- full_join(panel_lo %>%
+                   select(id, reporter.ISO, partner.ISO, commodity.code, year,
+                          reporter, rRegion, rIncome,
+                          partner, pRegion, pIncome,
+                          Imp_IFF_lo, pExp_IFF_lo),
+                 panel_hi %>%
+                   select(id, reporter.ISO, partner.ISO, commodity.code, year,
+                          reporter, rRegion, rIncome,
+                          partner, pRegion, pIncome,
+                          Imp_IFF_hi, pExp_IFF_hi),
+                 by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
+                        "reporter", "rRegion", "rIncome",
+                        "partner", "pRegion", "pIncome"))
+
+# all <- all %>%
+#   filter(complete.cases(Imp_IFF_lo, pExp_IFF_lo, Imp_IFF_hi, pExp_IFF_hi))
+# nrow(all)
+# # 257294
+panel <- all
+# rm(all, FE, FE.out, fit, panel_censor)
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -967,7 +1000,7 @@ g <- ggplot(GER_Year_Africa %>%
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Illicit Financial Flows in Africa",
        subtitle = "Gross Excluding Reversals",
-       x = "Year", y = "Illicit flow in billion USD") +
+       x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
        file = "Figures/Current Version/GER_Africa_Import.png",
        width = 6, height = 5, units = "in")
