@@ -25,6 +25,7 @@
 # Aggregate Results
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
+# Pilot Country Results
 # Figures
 
 
@@ -454,9 +455,25 @@ panel <- panel %>%
   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
          resid_adj = ratio_CIF - fitted_adj)
 
+# Version 1
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / fitted_nonIFF,
+#          FOB_Import_IFF = Import_value / fitted_IFF)
+
+# Version 2
+# panel <- panel %>%
+#   mutate(FOB_Import = pNetExport_value + (pNetExport_value * fitted_nonIFF),
+#          FOB_Import_IFF = pNetExport_value + (pNetExport_value * fitted_IFF))
+
+# Version 3
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / resid_adj,
+#          FOB_Import_IFF = Import_value / (resid_adj + fitted_IFF))
+
+# Version 4
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+         FOB_Import_IFF = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF))
 
 # panel <- panel %>%
 #   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
@@ -670,9 +687,25 @@ panel <- panel %>%
   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
          resid_adj = ratio_CIF - fitted_adj)
 
+# Version 1
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / fitted_nonIFF,
+#          FOB_Import_IFF = Import_value / fitted_IFF)
+
+# Version 2
+# panel <- panel %>%
+#   mutate(FOB_Import = pNetExport_value + (pNetExport_value * fitted_nonIFF),
+#          FOB_Import_IFF = pNetExport_value + (pNetExport_value * fitted_IFF))
+
+# Version 3
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / resid_adj,
+#          FOB_Import_IFF = Import_value / (resid_adj + fitted_IFF))
+
+# Version 4
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+  mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
+         FOB_Import_IFF = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF))
 
 # panel <- panel %>%
 #   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
@@ -808,13 +841,15 @@ all <- full_join(panel_lo %>%
                  by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
                         "reporter", "rRegion", "rIncome",
                         "partner", "pRegion", "pIncome"))
+nrow(all)
+# 4564166
 
 # all <- all %>%
 #   filter(complete.cases(Imp_IFF_lo, pExp_IFF_lo, Imp_IFF_hi, pExp_IFF_hi))
 # nrow(all)
 # # 257294
 panel <- all
-# rm(all, FE, FE.out, fit, panel_censor)
+rm(all, FE, FE.out, fit)
 
 
 
@@ -894,7 +929,11 @@ GER_Orig_Year <- GER_Orig_Dest_Year %>%
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 
 GER_Orig <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion) %>%
@@ -902,7 +941,11 @@ GER_Orig <- GER_Orig_Year %>%
             Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
   
 GER_Orig_Year_Africa <- GER_Orig_Year %>%
   filter(rRegion == "Africa") %>%
@@ -918,7 +961,11 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 
 save(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.Rdata")
 write.csv(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.csv",
@@ -948,7 +995,11 @@ Net_Orig_Year <- Net_Orig_Dest_Year %>%
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 
 Net_Orig <- Net_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion) %>%
@@ -956,7 +1007,11 @@ Net_Orig <- Net_Orig_Year %>%
             Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 
 Net_Orig_Year_Africa <- Net_Orig_Year %>%
   filter(rRegion == "Africa") %>%
@@ -972,7 +1027,11 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 
 save(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.Rdata")
 write.csv(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.csv",
@@ -983,6 +1042,34 @@ write.csv(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.csv",
 save(Net_Orig_Africa, file = "Results/Current Version/Net_Orig_Africa.Rdata")
 write.csv(Net_Orig_Africa, file = "Results/Current Version/Net_Orig_Africa.csv",
           row.names = F)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# PILOT COUNTRY RESULTS     ####
+## ## ## ## ## ## ## ## ## ## ##
+
+net <- Net_Orig_Africa %>%
+  filter(reporter.ISO == "EGY" | 
+           reporter.ISO == "NGA" |
+           reporter.ISO == "SEN" |
+           reporter.ISO == "ZAF" |
+           reporter.ISO == "TUN" |
+           reporter.ISO == "TZA") %>%
+  select(-c(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn))
+kable(net, format = "rst")
+
+ger <- GER_Orig_Africa %>%
+  filter(reporter.ISO == "EGY" | 
+           reporter.ISO == "NGA" |
+           reporter.ISO == "SEN" |
+           reporter.ISO == "ZAF" |
+           reporter.ISO == "TUN" |
+           reporter.ISO == "TZA") %>%
+  select(-c(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn))
+kable(ger, format = "rst")
+
+rm(net, ger)
 
 
 
