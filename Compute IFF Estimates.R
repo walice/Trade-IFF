@@ -37,6 +37,7 @@
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
 setwd("/home/alice/IFFe/") # Virtual server
 library(car)
+library(kableExtra)
 library(lfe)
 library(reshape2)
 library(scales)
