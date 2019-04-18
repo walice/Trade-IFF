@@ -142,6 +142,11 @@ comtrade <- full_join(comtrade, comtrade_mirror,
 nrow(comtrade)
 # 21463108
 rm(comtrade_mirror)
+
+comtrade %>% distinct(reporter.ISO) %>% nrow
+# 237
+comtrade %>% distinct(partner.ISO) %>% nrow
+# 237
 save(comtrade, file = "Data/Comtrade/comtrade_clean.Rdata")
 
 
@@ -290,6 +295,11 @@ tariff %>%
 
 tariff <- tariff %>%
   filter(!is.na(reporter.ISO) & !is.na(partner.ISO))
+
+tariff %>% distinct(reporter.ISO) %>% nrow
+# 181
+tariff %>% distinct(partner.ISO) %>% nrow
+# 240
 
 
 # .. Generate unique identifier ####
