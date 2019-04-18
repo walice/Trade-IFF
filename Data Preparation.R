@@ -304,11 +304,9 @@ tariff$id <- paste(tariff$reporter.ISO,
 
 
 # .. Merge with panel ####
-panel <- left_join(panel, tariff,
+panel <- left_join(panel, tariff %>% select(-c(reporter, partner)),
                    by = c("id" = "id",
-                          "reporter" = "reporter",
                           "reporter.ISO" = "reporter.ISO",
-                          "partner" = "partner",
                           "partner.ISO" = "partner.ISO",
                           "commodity.code" = "commodity.code",
                           "year" = "year"))
