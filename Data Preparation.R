@@ -20,6 +20,8 @@
 # .. Import average tariff line data
 # .. Generate unique identifier
 # .. Merge with panel
+# Import HS Codes
+# Merge commodity and section codes
 # Import Groupings
 # .. Merge reporters
 # .. Merge partners
@@ -91,10 +93,6 @@ comtrade$id <- paste(comtrade$reporter.ISO,
 
 
 # .. Convert to wide ####
-# comtrade2 <- dcast(setDT(comtrade), id ~ flow,
-#                    value.var = c("value", "weight", "quantity"))
-#comtrade <- comtrade %>% select(-weight)
-
 comtrade <- comtrade %>% 
   gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO", "partner", "partner.ISO", "commodity.code", "id")) %>% 
   unite(temp, flow, variable) %>% 
@@ -327,6 +325,29 @@ save(panel, file = "Data/Panel/panel.Rdata")
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# IMPORT HS CODES           ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# Merge commodity and section codes ####
+HS <- read.xlsx2("Data/HS Commodity Codes.xlsx", sheetName = "Codes") %>%
+  mutate_all(as.character) %>%
+  rename_all(tolower)
+
+HS <- HS  %>%
+  mutate(chapter = str_pad(str_trim(chapter), 
+                           width = 2, side = "left", pad = "0"))
+
+panel <- left_join(panel, HS,
+                   by = c("commodity.code" = "chapter"))
+
+panel %>% filter(is.na(section.code)) %>% distinct(commodity.code)
+# 99
+
+rm(HS)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # IMPORT GROUPINGS          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -383,6 +404,7 @@ rm(codes, noreporter, nopartner)
 
 panel <- panel %>%
   select(id, reporter.ISO, partner.ISO, commodity.code, year,
+         section.code, section,
          Import_value, Export_value, ReExport_value,
          Import_quantity, Export_quantity, ReExport_quantity,
          Import_weight, Export_weight, ReExport_weight,
