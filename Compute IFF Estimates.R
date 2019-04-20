@@ -11,17 +11,30 @@
 # .. Implement weighting by quantities (not used)
 # .. Create dependent variable and predictors
 # .. Variable transformation
-# First Stage
+# Remove Outliers
+# .. Truncate panel and remove CIF ratios greater than 10,000
 # .. Estimate regression
 # .. Identify and remove outliers
-# .. Censor the data-set (not used)
+# Low Estimates
+# .. Censor the data-set to get lower-bounds
+# .. Estimate CIF rates
 # .. Compute fitted values when predictors are 0
-# .. Compute adjusted FOB imports
-# Second Stage
-# .. Estimate fixed effects regression
-# .. Harmonization procedure
+# .. Compute FOB imports
+# .. Estimate fixed effects regression for import discrepancy
+# .. Harmonization procedure for import discrepancy
+# .. Estimate fixed effects regression for export discrepancy
+# .. Harmonization procedure for export discrepancy
 # .. Compute IFF
-# .. Move export IFF to mirror
+# High Estimates
+# .. Estimate CIF rates
+# .. Compute fitted values when predictors are 0
+# .. Compute FOB imports
+# .. Estimate fixed effects regression for import discrepancy
+# .. Harmonization procedure for import discrepancy
+# .. Estimate fixed effects regression for export discrepancy
+# .. Harmonization procedure for export discrepancy
+# .. Compute IFF
+
 # Aggregate by Destination
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
@@ -123,66 +136,81 @@ panel <- panel %>%
   select(-ends_with("quantity"), -ends_with("weight"), -ends_with("_U"), -ends_with("_w"))
 
 
-# .. Create dependent variable and predictors ####
+# .. Create dependent variables and predictors ####
 panel <- panel %>% 
-  mutate(ratio_CIF = Import_value / pNetExport_value) %>%
-  filter(is.finite(ratio_CIF))
+  mutate(ratio_CIF_r = Import_value / pNetExport_value,
+         ratio_CIF_p = pImport_value / NetExport_value) %>%
+  filter(is.finite(ratio_CIF_r) & is.finite(ratio_CIF_p))
 nrow(panel)
-# 8080386
+# 5153343
 
-summary(panel$ratio_CIF)
-hist(panel$ratio_CIF)
+summary(panel$ratio_CIF_r)
+hist(panel$ratio_CIF_r)
+summary(panel$ratio_CIF_p)
+hist(panel$ratio_CIF_p)
 
 panel <- panel %>%
-  mutate(ln.ratio_CIF = log(ratio_CIF)) %>%
-  filter(is.finite(ln.ratio_CIF))
+  mutate(ln.ratio_CIF_r = log(ratio_CIF_r),
+         ln.ratio_CIF_p = log(ratio_CIF_p)) %>%
+  filter(is.finite(ln.ratio_CIF_r) & is.finite(ln.ratio_CIF_p))
 nrow(panel)
-# 7605946
+# 4298652
 
 summary(panel$year)
 panel <- panel %>% 
   group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(ln.ratio_CIF_lag = dplyr::lag(ln.ratio_CIF, n = 1)) %>%
+  mutate(ln.ratio_CIF_r_lag = dplyr::lag(ln.ratio_CIF_r, n = 1),
+         ln.ratio_CIF_p_lag = dplyr::lag(ln.ratio_CIF_p, n = 1)) %>%
   ungroup() %>%
-  filter(is.finite(ln.ratio_CIF_lag))
+  filter(is.finite(ln.ratio_CIF_r_lag) & is.finite(ln.ratio_CIF_p_lag))
 nrow(panel)
-# 6812396
+# 3841854
 summary(panel$year)
 
 panel <- panel %>% 
   group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(Import_fut = dplyr::lead(Import_value, n = 1)) %>%
+  mutate(Import_fut = dplyr::lead(Import_value, n = 1),
+         NetExport_fut = dplyr::lead(NetExport_value, n = 1)) %>%
   ungroup() %>%
-  filter(is.finite(Import_fut))
+  filter(is.finite(Import_fut) & is.finite(NetExport_fut))
 nrow(panel)
-# 6147496
+# 3462595
 summary(panel$year)
 
 panel <- panel %>%
   mutate(FutImport_misrep = Import_fut / Import_value,
-         ReExport_misrep = pReExport_value / Import_value) %>%
-  filter(is.finite(FutImport_misrep) & is.finite(ReExport_misrep))
+         ReExport_misrep_r = pReExport_value / Import_value,
+         FutExport_misrep = NetExport_fut / NetExport_value,
+         ReExport_misrep_p = ReExport_value / pImport_value) %>%
+  filter(is.finite(FutImport_misrep) & is.finite(ReExport_misrep_r) & is.finite(FutExport_misrep) & is.finite(ReExport_misrep_p))
 nrow(panel)
-# 6147496
+# 3462595
 
 panel <- panel %>%
-  filter(complete.cases(ratio_CIF, ln.ratio_CIF, ln.ratio_CIF_lag,
-                        dist, contig, rLandlocked, pLandlocked, tariff,
-                        FutImport_misrep, ReExport_misrep))
+  filter(complete.cases(ratio_CIF_r, ln.ratio_CIF_r, ln.ratio_CIF_r_lag,
+                        dist, contig, rLandlocked, pLandlocked,
+                        FutImport_misrep, ReExport_misrep_r)) %>%
+  filter(complete.cases(ratio_CIF_p, ln.ratio_CIF_p, ln.ratio_CIF_p_lag,
+                        dist, contig, rLandlocked, pLandlocked,
+                        FutExport_misrep, ReExport_misrep_p))
 nrow(panel)
-# 3673469
+# 3333021
 
 panel <- panel %>%
   mutate(dist.sq = I(dist^2))
 
 
 # .. Variable transformation ####
-summary(panel$ratio_CIF)
-hist(panel$ln.ratio_CIF)
+hist(panel$ln.ratio_CIF_r)
+hist(panel$ln.ratio_CIF_p)
 hist(panel$FutImport_misrep)
 hist(log(panel$FutImport_misrep))
-hist(panel$ReExport_misrep)
-hist(log(panel$ReExport_misrep))
+hist(panel$ReExport_misrep_r)
+hist(log(panel$ReExport_misrep_r))
+hist(panel$FutExport_misrep)
+hist(log(panel$FutExport_misrep))
+hist(panel$ReExport_misrep_p)
+hist(log(panel$ReExport_misrep_p))
 hist(panel$tariff)
 hist(log(panel$tariff))
 hist(panel$dist)
@@ -196,20 +224,30 @@ ihs <- function(x){
 # Check whether there are zeros in the data
 summary(log(panel$FutImport_misrep))
 # Fine to log
-summary(log(panel$ReExport_misrep))
+summary(log(panel$ReExport_misrep_r))
+# Need inverse hyperbolic sine transformation
+summary(log(panel$FutExport_misrep))
+# Fine to log
+summary(log(panel$ReExport_misrep_p))
 # Need inverse hyperbolic sine transformation
 summary(log(panel$tariff))
 # Need inverse hyperbolic sine transformation
 
 panel <- panel %>%
   mutate(ln.FutImport_misrep = log(FutImport_misrep),
-         ihs.ReExport_misrep = ihs(ReExport_misrep),
+         ihs.ReExport_misrep_r = ihs(ReExport_misrep_r),
+         ln.FutExport_misrep = log(FutExport_misrep),
+         ihs.ReExport_misrep_p = ihs(ReExport_misrep_p),
          ihs.tariff = ihs(tariff))
 hist(panel$ln.FutImport_misrep)
-hist(panel$ihs.ReExport_misrep)
+hist(panel$ihs.ReExport_misrep_r)
+hist(panel$ln.FutExport_misrep)
+hist(panel$ihs.ReExport_misrep_p)
 hist(panel$ihs.tariff)
 
 rm(ihs)
+nrow(panel)
+# 3333021
 save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
@@ -218,128 +256,162 @@ save(panel, file = "Data/Panel/panel_clean.Rdata")
 # REMOVE OUTLIERS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Estimate regression ####
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
-          data = panel)
-summary(fit)
-# tariff -0.00109230905948
-max(panel$ratio_CIF)
-# 2354224577
-mean(panel$ratio_CIF)
-# 2900.504
+# .. Truncate panel and remove CIF ratios greater than 10,000 ####
+summary(panel$ratio_CIF_r)
+summary(panel$ratio_CIF_p)
 
+panel <- panel %>%
+  filter(ratio_CIF_r < 10^4) %>%
+  filter(ratio_CIF_p < 10^4)
+nrow(panel)
+# 3323416
+
+panel %>% filter(ratio_CIF_r > 10^3) %>% nrow
+# 13888
+
+panel %>% filter(ratio_CIF_p > 10^3) %>% nrow
+# 13888
+
+
+# .. Estimate regression ####
+fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
+              contig + 
+              rLandlocked +
+              pLandlocked +
+              ln.FutImport_misrep +
+              ihs.ReExport_misrep_r +
+              ln.ratio_CIF_r_lag,
+            data = panel)
+summary(fit_r)
+mean(exp(fitted(fit_r)))
+# 2.968593
+max(panel$ratio_CIF_r)
+# 9988.626
+mean(panel$ratio_CIF_r)
+# 20.23745
+
+fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
+              contig + 
+              rLandlocked +
+              pLandlocked +
+              ln.FutExport_misrep +
+              ihs.ReExport_misrep_p +
+              ln.ratio_CIF_p_lag,
+            data = panel)
+summary(fit_p)
+mean(exp(fitted(fit_p)))
+# 3.274375
+max(panel$ratio_CIF_p)
+# 9988.626
+mean(panel$ratio_CIF_p)
+# 20.23745
 
 # .. Identify and remove outliers ####
-panel$CD <- cooks.distance(fit)
+panel$CD <- cooks.distance(fit_r)
 summary(panel$CD)
 
 while(max(panel$CD) > 2){
   panel <- panel %>%
     filter(CD <= 2)
-  fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+  fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
+                contig + 
+                rLandlocked +
+                pLandlocked +
+                ln.FutImport_misrep +
+                ihs.ReExport_misrep_r +
+                ln.ratio_CIF_r_lag,
+              data = panel)
+  panel$CD <- cooks.distance(fit_r)
+}
+nrow(panel)
+# 3323416
+summary(panel$CD)
+
+panel$CD <- cooks.distance(fit_p)
+summary(panel$CD)
+
+while(max(panel$CD) > 2){
+  panel <- panel %>%
+    filter(CD <= 2)
+  fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
+                contig + 
+                rLandlocked +
+                pLandlocked +
+                ln.FutExport_misrep +
+                ihs.ReExport_misrep_p +
+                ln.ratio_CIF_p_lag,
+              data = panel)
+  panel$CD <- cooks.distance(fit_p)
+}
+nrow(panel)
+# 3323416
+summary(panel$CD)
+
+Bonferonni.out <- outlierTest(fit_r, n.max = 10000)
+obs <- as.numeric(names(Bonferonni.out[[1]]))
+outliers <- panel[c(obs), ]
+mean(outliers$ratio_CIF_r)
+# 1661.298
+mean(panel$ratio_CIF_r)
+# 20.23745
+panel <- panel[-c(obs),]
+mean(panel$ratio_CIF_r)
+# 17.41505
+
+Bonferonni.out <- outlierTest(fit_p, n.max = 10000)
+obs <- as.numeric(names(Bonferonni.out[[1]]))
+outliers <- panel[c(obs), ]
+mean(outliers$ratio_CIF_p, na.rm = T)
+# 29.55437
+mean(panel$ratio_CIF_p)
+# 20.20212
+panel <- panel[-c(obs),]
+mean(panel$ratio_CIF_p)
+# 20.18645
+
+fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               contig + 
               rLandlocked +
               pLandlocked +
               ln.FutImport_misrep +
-              ihs.ReExport_misrep +
-              ln.ratio_CIF_lag +
-              tariff,
+              ihs.ReExport_misrep_r +
+              ln.ratio_CIF_r_lag,
             data = panel)
-  panel$CD <- cooks.distance(fit)
-}
-nrow(panel)
-# 3673469
-summary(panel$CD)
+Bonferonni.out <- outlierTest(fit_r, n.max = 10000)
+obs <- as.numeric(names(Bonferonni.out[[1]]))
+outliers <- panel[c(obs), ]
+mean(outliers$ratio_CIF_r)
+# 1169.871
+mean(panel$ratio_CIF_r)
+# 17.4097
+panel <- panel[-c(obs),]
+mean(panel$ratio_CIF_r)
+# 16.8663
 
+fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
+              contig + 
+              rLandlocked +
+              pLandlocked +
+              ln.FutExport_misrep +
+              ihs.ReExport_misrep_p +
+              ln.ratio_CIF_p_lag,
+            data = panel)
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 2091726
-mean(panel$ratio_CIF)
-# 2900.504
+mean(outliers$ratio_CIF_p)
+# 19.22762
+mean(panel$ratio_CIF_p)
+# 20.18072
 panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 105.3894
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 25048.84
-mean(panel$ratio_CIF)
-# 105.3894
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 98.45228
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 132929.9
-mean(panel$ratio_CIF)
-# 98.45228
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 92.83823
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 8293.587
-mean(panel$ratio_CIF)
-# 92.83823
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 92.78233
+mean(panel$ratio_CIF_p)
+# 20.18117
 
 rm(Bonferonni.out, outliers, obs)
+nrow(panel)
+# 3309037
 save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# NEW VERSION               ####
-## ## ## ## ## ## ## ## ## ## ##
-panel <- panel %>%
-  mutate(ln.ratio_CIF2 = log(pImport_value / NetExport_value)) %>%
-  filter(is.finite(ln.ratio_CIF2))
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -347,68 +419,55 @@ panel <- panel %>%
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Censor the data-set to get lower-bounds ####
-panel %>% filter(ratio_CIF > 2) %>% nrow
-# 938562
-panel %>% filter(ratio_CIF < 0.5) %>% nrow
-# 725720
-panel %>% filter(ratio_CIF > 2 | ratio_CIF < 0.5) %>% nrow
-# 1664282
+panel %>% filter(ratio_CIF_r > 2 | ratio_CIF_r < 0.5) %>% nrow
+# 1293383
+panel %>% filter(ratio_CIF_p > 2 | ratio_CIF_p < 0.5) %>% nrow
+# 1297137
 panel_censor <- panel %>% 
-  filter(ratio_CIF <= 2) %>% filter(ratio_CIF >= 0.5)
+  filter(ratio_CIF_r <= 2) %>% 
+  filter(ratio_CIF_r >= 0.5) %>%
+  filter(ratio_CIF_p <= 2) %>% 
+  filter(ratio_CIF_p >= 0.5)
 nrow(panel_censor)
-# 2003078
-mean(panel_censor$ratio_CIF)
-# 1.102118
-summary(panel_censor$ratio_CIF)
-plot(density(panel_censor$ratio_CIF))
+# 1298195
+mean(panel_censor$ratio_CIF_r)
+# 1.078477
+mean(panel_censor$ratio_CIF_p)
+# 1.078449
+plot(density(panel_censor$ratio_CIF_r))
+plot(density(panel_censor$ratio_CIF_p))
 
-# fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
-#                    contig + 
-#                    rLandlocked +
-#                    pLandlocked +
-#                    ln.FutImport_misrep +
-#                    ihs.ReExport_misrep +
-#                    ln.ratio_CIF_lag +
-#                    tariff,
-#                  data = panel_censor)
-fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
-                   contig + 
-                   rLandlocked +
-                   pLandlocked +
-                   ln.FutImport_misrep +
-                   ihs.ReExport_misrep +
-                   ln.ratio_CIF_lag,
-                 data = panel_censor)
-summary(fit_censor)
-# tariff -0.000243995980299
+
+# .. Estimate CIF rates ####
+fit_censor_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
+                     contig + 
+                     rLandlocked +
+                     pLandlocked +
+                     ln.FutImport_misrep +
+                     ihs.ReExport_misrep_r +
+                     ln.ratio_CIF_r_lag,
+                   data = panel_censor)
+summary(fit_censor_r)
+mean(exp(fitted(fit_censor_r)))
+# 1.03346
+
+fit_censor_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
+                     contig + 
+                     rLandlocked +
+                     pLandlocked +
+                     ln.FutExport_misrep +
+                     ihs.ReExport_misrep_p +
+                     ln.ratio_CIF_p_lag,
+                   data = panel_censor)
+summary(fit_censor_p)
+mean(exp(fitted(fit_censor_p)))
+# 1.033205
 
 panel <- panel_censor
-fit <- fit_censor
-rm(fit_censor, panel_censor)
+fit_r <- fit_censor_r
+fit_p <- fit_censor_p
 
-# fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-#             contig + 
-#             rLandlocked +
-#             pLandlocked +
-#             ln.FutImport_misrep +
-#             ihs.ReExport_misrep +
-#             ln.ratio_CIF_lag +
-#             tariff,
-#           data = panel)
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag,
-          data = panel)
-max(panel$ratio_CIF)
-# 2
-nrow(panel)
-# 2003078
-summary(fit)
-# tariff -0.000243995980299
+rm(fit_censor_r, fit_censor_p, panel_censor)
 
 
 # # .. Compute fitted values when predictors are 0 ####
@@ -463,32 +522,24 @@ summary(fit)
 # panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
 # rm(coef, v)
 
-fit2 <- lm(ln.ratio_CIF2 ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag,
-          data = panel)
-panel$fitted2 <- exp(fitted(fit2))
 
-# .. Compute adjusted FOB imports ####
-panel$fitted <- exp(fitted(fit))
-panel$resid <- exp(resid(fit))
+# .. Compute FOB imports ####
+panel$fitted_r <- exp(fitted(fit_r))
+panel$fitted_p <- exp(fitted(fit_p))
+panel$resid_r <- exp(resid(fit_r))
+panel$resid_p <- exp(resid(fit_p))
 
-summary(panel$fitted)
-summary(panel$fitted_IFF)
-summary(panel$fitted_nonIFF)
+summary(panel$fitted_r)
+summary(panel$fitted_p)
 
-panel <- panel %>%
-  mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
-sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
+# panel <- panel %>%
+#   mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
+# sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
 # TRUE
 
-panel <- panel %>%
-  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-         resid_adj = ratio_CIF - fitted_adj)
+# panel <- panel %>%
+#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+#          resid_adj = ratio_CIF - fitted_adj)
 
 # Version 1
 # panel <- panel %>%
@@ -512,22 +563,22 @@ panel <- panel %>%
 
 # Version 5
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted,
-         pFOB_Import = pImport_value / fitted2)
+  mutate(FOB_Import = Import_value / fitted_r,
+         pFOB_Import = pImport_value / fitted_p)
 
 
-# .. Estimate fixed effects regression ####
+# .. Estimate fixed effects regression for import discrepancy ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
-  filter(is.finite(rep_dist))
+  mutate(rep_dist_r = abs(log(pNetExport_value/FOB_Import))) %>%
+  filter(is.finite(rep_dist_r))
 nrow(panel)
-# 2003078
+# 1298195
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
             funs(as.factor(.)))
 
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+FE.out <- felm(rep_dist_r ~ 0| reporter.ISO + 
                  partner.ISO + year,
                data = panel)
 FE <- getfe(FE.out, se = T) 
@@ -545,24 +596,24 @@ panel <- panel %>%
             funs(as.character(.)))
 
 
-# .. Harmonization procedure ####
+# .. Harmonization procedure for import discrepancy ####
 panel <- left_join(panel, FE %>% 
                      filter(fe == "reporter.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma = sigma)
+  rename(rSigma_r = sigma)
 
 panel <- left_join(panel, FE %>% 
                      filter(fe == "partner.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma = sigma)
+  rename(pSigma_r = sigma)
 
 panel <- panel %>%
-  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
+  mutate(w_r = (exp(rSigma_r^2)*(exp(rSigma_r^2) - 1))/(exp(rSigma_r^2)*(exp(rSigma_r^2)- 1) + exp(pSigma_r^2)*(exp(pSigma_r^2) - 1)),
+         w_p = (exp(pSigma_r^2)*(exp(pSigma_r^2) - 1))/(exp(rSigma_r^2)*(exp(rSigma_r^2)- 1) + exp(pSigma_r^2)*(exp(pSigma_r^2) - 1)))
 summary(panel$w_r)
 summary(panel$w_p)
 
@@ -571,21 +622,21 @@ panel <- panel %>%
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
+  mutate(RV_I = w_r*FOB_Import + w_p*pNetExport_value)
 
 
-# .. Estimate fixed effects regression 2 ####
+# .. Estimate fixed effects regression for export discrepancy ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(pFOB_Import/NetExport_value))) %>%
-  filter(is.finite(rep_dist))
+  mutate(rep_dist_p = abs(log(pFOB_Import/NetExport_value))) %>%
+  filter(is.finite(rep_dist_p))
 nrow(panel)
-# 2003078
+# 3309037
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
             funs(as.factor(.)))
 
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+FE.out <- felm(rep_dist_p ~ 0| reporter.ISO + 
                  partner.ISO + year,
                data = panel)
 FE <- getfe(FE.out, se = T) 
@@ -603,24 +654,24 @@ panel <- panel %>%
             funs(as.character(.)))
 
 
-# .. Harmonization procedure ####
+# .. Harmonization procedure for export discrepancy ####
 panel <- left_join(panel, FE %>% 
                      filter(fe == "reporter.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma2 = sigma)
+  rename(rSigma_p = sigma)
 
 panel <- left_join(panel, FE %>% 
                      filter(fe == "partner.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma2 = sigma)
+  rename(pSigma_p = sigma)
 
 panel <- panel %>%
-  mutate(w_r = (exp(rSigma2^2)*(exp(rSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)),
-         w_p = (exp(pSigma2^2)*(exp(pSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)))
+  mutate(w_r = (exp(rSigma_p^2)*(exp(rSigma_p^2) - 1))/(exp(rSigma_p^2)*(exp(rSigma_p^2)- 1) + exp(pSigma_p^2)*(exp(pSigma_p^2) - 1)),
+         w_p = (exp(pSigma_p^2)*(exp(pSigma_p^2) - 1))/(exp(rSigma_p^2)*(exp(rSigma_p^2)- 1) + exp(pSigma_p^2)*(exp(pSigma_p^2) - 1)))
 summary(panel$w_r)
 summary(panel$w_p)
 
@@ -629,7 +680,7 @@ panel <- panel %>%
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV2 = w_r*NetExport_value + w_p*pFOB_Import)
+  mutate(RV_E = w_r*NetExport_value + w_p*pFOB_Import)
 
 
 # .. Compute IFF ####
@@ -640,8 +691,8 @@ panel <- panel %>%
 #   mutate(Imp_IFF_lo = FOB_Import - RV,
 #          Exp_IFF_lo = RV - pNetExport_value)
 panel <- panel %>%
-  mutate(Imp_IFF_lo = FOB_Import - RV,
-         Exp_IFF_lo = RV2 - NetExport_value)
+  mutate(Imp_IFF_lo = FOB_Import - RV_I,
+         Exp_IFF_lo = RV_E - NetExport_value)
 summary(panel$Imp_IFF_lo)
 summary(panel$Exp_IFF_lo)
 
@@ -691,38 +742,39 @@ save(panel_lo, file = "Results/panel_lo.Rdata")
 # HIGH ESTIMATES            ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+# .. Estimate CIF rates ####
 load("Data/Panel/panel_nooutliers.Rdata")
 
-## ## ## ## ## ## ## ## ## ## ##
-# NEW VERSION               ####
-## ## ## ## ## ## ## ## ## ## ##
-panel <- panel %>%
-  mutate(ln.ratio_CIF2 = log(pImport_value / NetExport_value)) %>%
-  filter(is.finite(ln.ratio_CIF2))
-
-# fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-#             contig + 
-#             rLandlocked +
-#             pLandlocked +
-#             ln.FutImport_misrep +
-#             ihs.ReExport_misrep +
-#             ln.ratio_CIF_lag +
-#             tariff,
-#           data = panel)
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag,
-          data = panel)
-max(panel$ratio_CIF)
-# 52568627
 nrow(panel)
-# 3667360
-summary(fit)
-# tariff -0.00110051892134
+# 3309037
+max(panel$ratio_CIF_r)
+#  9979.673
+max(panel$ratio_CIF_p)
+#  9988.626
+
+fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
+              contig + 
+              rLandlocked +
+              pLandlocked +
+              ln.FutImport_misrep +
+              ihs.ReExport_misrep_r +
+              ln.ratio_CIF_r_lag,
+            data = panel)
+summary(fit_r)
+mean(exp(fitted(fit_r)))
+# 3.05781
+
+fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
+              contig + 
+              rLandlocked +
+              pLandlocked +
+              ln.FutExport_misrep +
+              ihs.ReExport_misrep_p +
+              ln.ratio_CIF_p_lag,
+            data = panel)
+summary(fit_p)
+mean(exp(fitted(fit_p)))
+# 3.27754
 
 
 # # .. Compute fitted values when predictors are 0 ####
@@ -777,33 +829,24 @@ summary(fit)
 # panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
 # rm(coef, v)
 
-fit2 <- lm(ln.ratio_CIF2 ~ dist + dist.sq +
-             contig + 
-             rLandlocked +
-             pLandlocked +
-             ln.FutImport_misrep +
-             ihs.ReExport_misrep +
-             ln.ratio_CIF_lag,
-           data = panel)
-panel$fitted2 <- exp(fitted(fit2))
 
+# .. Compute FOB imports ####
+panel$fitted_r <- exp(fitted(fit_r))
+panel$fitted_p <- exp(fitted(fit_p))
+panel$resid_r <- exp(resid(fit_r))
+panel$resid_p <- exp(resid(fit_p))
 
-# .. Compute adjusted FOB imports ####
-panel$fitted <- exp(fitted(fit))
-panel$resid <- exp(resid(fit))
+summary(panel$fitted_r)
+summary(panel$fitted_p)
 
-summary(panel$fitted)
-summary(panel$fitted_IFF)
-summary(panel$fitted_nonIFF)
-
-panel <- panel %>%
-  mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
-sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
+# panel <- panel %>%
+#   mutate(fitted_all = exp( log(fitted_IFF) + log(fitted_nonIFF) ))
+# sum(round(panel$fitted, 5) == round(panel$fitted_all, 5)) == nrow(panel)
 # TRUE
 
-panel <- panel %>%
-  mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
-         resid_adj = ratio_CIF - fitted_adj)
+# panel <- panel %>%
+#   mutate(fitted_adj = ifelse(fitted < 1, 1, fitted),
+#          resid_adj = ratio_CIF - fitted_adj)
 
 # Version 1
 # panel <- panel %>%
@@ -827,22 +870,22 @@ panel <- panel %>%
 
 # Version 5
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted,
-         pFOB_Import = pImport_value / fitted2)
+  mutate(FOB_Import = Import_value / fitted_r,
+         pFOB_Import = pImport_value / fitted_p)
 
 
-# .. Estimate fixed effects regression ####
+# .. Estimate fixed effects regression for import discrepancy ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(pNetExport_value/FOB_Import))) %>%
-  filter(is.finite(rep_dist))
+  mutate(rep_dist_r = abs(log(pNetExport_value/FOB_Import))) %>%
+  filter(is.finite(rep_dist_r))
 nrow(panel)
-# 3667360
+# 3309037
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
             funs(as.factor(.)))
 
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+FE.out <- felm(rep_dist_r ~ 0| reporter.ISO + 
                  partner.ISO + year,
                data = panel)
 FE <- getfe(FE.out, se = T) 
@@ -860,24 +903,24 @@ panel <- panel %>%
             funs(as.character(.)))
 
 
-# .. Harmonization procedure ####
+# .. Harmonization procedure for import discrepancy ####
 panel <- left_join(panel, FE %>% 
                      filter(fe == "reporter.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma = sigma)
+  rename(rSigma_r = sigma)
 
 panel <- left_join(panel, FE %>% 
                      filter(fe == "partner.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma = sigma)
+  rename(pSigma_r = sigma)
 
 panel <- panel %>%
-  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
+  mutate(w_r = (exp(rSigma_r^2)*(exp(rSigma_r^2) - 1))/(exp(rSigma_r^2)*(exp(rSigma_r^2)- 1) + exp(pSigma_r^2)*(exp(pSigma_r^2) - 1)),
+         w_p = (exp(pSigma_r^2)*(exp(pSigma_r^2) - 1))/(exp(rSigma_r^2)*(exp(rSigma_r^2)- 1) + exp(pSigma_r^2)*(exp(pSigma_r^2) - 1)))
 summary(panel$w_r)
 summary(panel$w_p)
 
@@ -886,20 +929,21 @@ panel <- panel %>%
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
+  mutate(RV_I = w_r*FOB_Import + w_p*pNetExport_value)
 
-# .. Estimate fixed effects regression 2 ####
+
+# .. Estimate fixed effects regression for export discrepancy ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(pFOB_Import/NetExport_value))) %>%
-  filter(is.finite(rep_dist))
+  mutate(rep_dist_p = abs(log(pFOB_Import/NetExport_value))) %>%
+  filter(is.finite(rep_dist_p))
 nrow(panel)
-# 2003078
+# 1298195
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
             funs(as.factor(.)))
 
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+FE.out <- felm(rep_dist_p ~ 0| reporter.ISO + 
                  partner.ISO + year,
                data = panel)
 FE <- getfe(FE.out, se = T) 
@@ -917,24 +961,24 @@ panel <- panel %>%
             funs(as.character(.)))
 
 
-# .. Harmonization procedure ####
+# .. Harmonization procedure for export discrepancy ####
 panel <- left_join(panel, FE %>% 
                      filter(fe == "reporter.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma2 = sigma)
+  rename(rSigma_p = sigma)
 
 panel <- left_join(panel, FE %>% 
                      filter(fe == "partner.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma2 = sigma)
+  rename(pSigma_p = sigma)
 
 panel <- panel %>%
-  mutate(w_r = (exp(rSigma2^2)*(exp(rSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)),
-         w_p = (exp(pSigma2^2)*(exp(pSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)))
+  mutate(w_r = (exp(rSigma_p^2)*(exp(rSigma_p^2) - 1))/(exp(rSigma_p^2)*(exp(rSigma_p^2)- 1) + exp(pSigma_p^2)*(exp(pSigma_p^2) - 1)),
+         w_p = (exp(pSigma_p^2)*(exp(pSigma_p^2) - 1))/(exp(rSigma_p^2)*(exp(rSigma_p^2)- 1) + exp(pSigma_p^2)*(exp(pSigma_p^2) - 1)))
 summary(panel$w_r)
 summary(panel$w_p)
 
@@ -943,7 +987,7 @@ panel <- panel %>%
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV2 = w_r*NetExport_value + w_p*pFOB_Import)
+  mutate(RV_E = w_r*NetExport_value + w_p*pFOB_Import)
 
 
 # .. Compute IFF ####
@@ -954,8 +998,8 @@ panel <- panel %>%
 #   mutate(Imp_IFF_hi = FOB_Import - RV,
 #          Exp_IFF_hi = RV - pNetExport_value)
 panel <- panel %>%
-  mutate(Imp_IFF_hi = FOB_Import - RV,
-         Exp_IFF_hi = RV2 - NetExport_value)
+  mutate(Imp_IFF_hi = FOB_Import - RV_I,
+         Exp_IFF_hi = RV_E - NetExport_value)
 summary(panel$Imp_IFF_hi)
 summary(panel$Exp_IFF_hi)
 
@@ -1038,22 +1082,15 @@ all <- full_join(panel_lo %>%
                         "partner", "pRegion", "pIncome",
                         "section.code", "section"))
 nrow(all)
-# 6269074
+# 3309037
 
 # all <- all %>%
 #   filter(complete.cases(Imp_IFF_lo, pExp_IFF_lo, Imp_IFF_hi, pExp_IFF_hi))
 # nrow(all)
 panel <- all
-rm(all, FE, FE.out, fit)
+rm(all, FE, FE.out, fit_r, fit_p)
 rm(panel_hi, panel_lo)
 
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# NEW VERSION               ####
-## ## ## ## ## ## ## ## ## ## ##
-panel$pExp_IFF_lo <- panel$Exp_IFF_lo
-panel$pExp_IFF_hi <- panel$Exp_IFF_hi
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -1090,19 +1127,19 @@ GER_Imp_Dest <- full_join(GER_Imp_lo_Dest, GER_Imp_hi_Dest,
 rm(GER_Imp_lo_Dest, GER_Imp_hi_Dest)
 
 GER_Exp_lo_Dest <- panel %>%
-  filter(pExp_IFF_lo > 0) %>%
+  filter(Exp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            year,
            partner, partner.ISO, pRegion, pIncome) %>%
-  summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
+  summarize(Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_hi_Dest <- panel %>%
-  filter(pExp_IFF_hi > 0) %>%
+  filter(Exp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            year,
            partner, partner.ISO, pRegion, pIncome) %>%
-  summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+  summarize(Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_Dest <- full_join(GER_Exp_lo_Dest, GER_Exp_hi_Dest,
@@ -1264,8 +1301,8 @@ Net_Orig_Dest_Year <- panel %>%
            year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
-            Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T),
-            Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 Net_Orig_Year <- Net_Orig_Dest_Year %>%
@@ -1429,19 +1466,19 @@ GER_Imp_Sect <- full_join(GER_Imp_lo_Sect, GER_Imp_hi_Sect,
 rm(GER_Imp_lo_Sect, GER_Imp_hi_Sect)
 
 GER_Exp_lo_Sect <- panel %>%
-  filter(pExp_IFF_lo > 0) %>%
+  filter(Exp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            year, 
            section.code, section) %>%
-  summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
+  summarize(Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_hi_Sect <- panel %>%
-  filter(pExp_IFF_hi > 0) %>%
+  filter(Exp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome,
            year, 
            section.code, section) %>%
-  summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+  summarize(Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_Sect <- full_join(GER_Exp_lo_Sect, GER_Exp_hi_Sect,
@@ -1513,8 +1550,8 @@ Net_Orig_Sect_Year <- panel %>%
            year, section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
-            Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T),
-            Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
 Net_Orig_Sect <- Net_Orig_Sect_Year %>%
