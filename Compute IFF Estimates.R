@@ -354,14 +354,22 @@ mean(panel_censor$ratio_CIF)
 summary(panel_censor$ratio_CIF)
 plot(density(panel_censor$ratio_CIF))
 
+# fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
+#                    contig + 
+#                    rLandlocked +
+#                    pLandlocked +
+#                    ln.FutImport_misrep +
+#                    ihs.ReExport_misrep +
+#                    ln.ratio_CIF_lag +
+#                    tariff,
+#                  data = panel_censor)
 fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
                    contig + 
                    rLandlocked +
                    pLandlocked +
                    ln.FutImport_misrep +
                    ihs.ReExport_misrep +
-                   ln.ratio_CIF_lag +
-                   tariff,
+                   ln.ratio_CIF_lag,
                  data = panel_censor)
 summary(fit_censor)
 # tariff -0.000243995980299
@@ -370,14 +378,22 @@ panel <- panel_censor
 fit <- fit_censor
 rm(fit_censor, panel_censor)
 
+# fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+#             contig + 
+#             rLandlocked +
+#             pLandlocked +
+#             ln.FutImport_misrep +
+#             ihs.ReExport_misrep +
+#             ln.ratio_CIF_lag +
+#             tariff,
+#           data = panel)
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
             ln.FutImport_misrep +
             ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
+            ln.ratio_CIF_lag,
           data = panel)
 max(panel$ratio_CIF)
 # 2
@@ -387,57 +403,57 @@ summary(fit)
 # tariff -0.000243995980299
 
 
-# .. Compute fitted values when predictors are 0 ####
-fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
-              data = panel)
-summary(fit_IFF)
-# tariff 0.00068400
-panel$fitted_IFF_lm <- exp(predict(fit_IFF))
-rm(fit_IFF)
-# This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
-# Rather, this gives the unconditional effect of tariffs on the discrepancy.
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit)["tariff"]
-  } else {
-    coef[v] <- 0
-  }
-}
-coef
-
-panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
-
-panel$fitted_IFF_pred <- exp(predict(fit,
-                                     newdata = data.frame(dist = 0,
-                                                          dist.sq = 0,
-                                                          contig = "0",
-                                                          rLandlocked = "0",
-                                                          pLandlocked = "0",
-                                                          ln.FutImport_misrep = 0,
-                                                          ihs.ReExport_misrep = 0,
-                                                          ln.ratio_CIF_lag = 0,
-                                                          tariff = panel$tariff)))
-
-summary(panel$fitted_IFF_lm)
-summary(panel$fitted_IFF_man)
-summary(panel$fitted_IFF_pred)
-# fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
-
-panel$fitted_IFF <- panel$fitted_IFF_man
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- 0 
-  }
-  
-}
-coef
-
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-rm(coef, v)
+# # .. Compute fitted values when predictors are 0 ####
+# fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
+#               data = panel)
+# summary(fit_IFF)
+# # tariff 0.00068400
+# panel$fitted_IFF_lm <- exp(predict(fit_IFF))
+# rm(fit_IFF)
+# # This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
+# # Rather, this gives the unconditional effect of tariffs on the discrepancy.
+# 
+# coef <- coef(fit)
+# for (v in 1:length(coef)){
+# if (names(coef[v]) == "tariff"){
+#     coef[v] <- coef(fit)["tariff"]
+#   } else {
+#     coef[v] <- 0
+#   }
+# }
+# coef
+# 
+# panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
+# 
+# panel$fitted_IFF_pred <- exp(predict(fit,
+#                                      newdata = data.frame(dist = 0,
+#                                                           dist.sq = 0,
+#                                                           contig = "0",
+#                                                           rLandlocked = "0",
+#                                                           pLandlocked = "0",
+#                                                           ln.FutImport_misrep = 0,
+#                                                           ihs.ReExport_misrep = 0,
+#                                                           ln.ratio_CIF_lag = 0,
+#                                                           tariff = panel$tariff)))
+# 
+# summary(panel$fitted_IFF_lm)
+# summary(panel$fitted_IFF_man)
+# summary(panel$fitted_IFF_pred)
+# # fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
+# 
+# panel$fitted_IFF <- panel$fitted_IFF_man
+# 
+# coef <- coef(fit)
+# for (v in 1:length(coef)){
+#   if (names(coef[v]) == "tariff"){
+#     coef[v] <- 0 
+#   }
+#   
+# }
+# coef
+# 
+# panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+# rm(coef, v)
 
 
 # .. Compute adjusted FOB imports ####
@@ -458,9 +474,9 @@ panel <- panel %>%
          resid_adj = ratio_CIF - fitted_adj)
 
 # Version 1
-panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / fitted_nonIFF,
+#          FOB_Import_IFF = Import_value / fitted_IFF)
 
 # Version 2
 # panel <- panel %>%
@@ -477,17 +493,9 @@ panel <- panel %>%
 #   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
 #          FOB_Import_IFF = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF))
 
-# panel <- panel %>%
-#   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
-#          FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
-#          FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
-
+# Version 5
 panel <- panel %>%
-  mutate(FOB_Import_AL = Import_value/fitted,
-         FOB_Import_WD = (pNetExport_value + (pNetExport_value * resid ))/ fitted)
-sum(panel$FOB_Import_AL == panel$FOB_Import_WD)
-panel$FOB_Import_AL <- NULL
-panel$FOB_Import_WD <- NULL
+  mutate(FOB_Import = Import_value / fitted)
 
 
 # .. Estimate fixed effects regression ####
@@ -549,8 +557,11 @@ panel <- panel %>%
 
 
 # .. Compute IFF ####
+# panel <- panel %>%
+#   mutate(Imp_IFF_lo = FOB_Import_IFF - RV,
+#          Exp_IFF_lo = RV - pNetExport_value)
 panel <- panel %>%
-  mutate(Imp_IFF_lo = FOB_Import_IFF - RV,
+  mutate(Imp_IFF_lo = FOB_Import - RV,
          Exp_IFF_lo = RV - pNetExport_value)
 summary(panel$Imp_IFF_lo)
 summary(panel$Exp_IFF_lo)
@@ -603,14 +614,22 @@ save(panel_lo, file = "Results/panel_lo.Rdata")
 
 load("Data/Panel/panel_nooutliers.Rdata")
 
+# fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
+#             contig + 
+#             rLandlocked +
+#             pLandlocked +
+#             ln.FutImport_misrep +
+#             ihs.ReExport_misrep +
+#             ln.ratio_CIF_lag +
+#             tariff,
+#           data = panel)
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
             rLandlocked +
             pLandlocked +
             ln.FutImport_misrep +
             ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff,
+            ln.ratio_CIF_lag,
           data = panel)
 max(panel$ratio_CIF)
 # 52568627
@@ -620,57 +639,57 @@ summary(fit)
 # tariff -0.00110051892134
 
 
-# .. Compute fitted values when predictors are 0 ####
-fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
-              data = panel)
-summary(fit_IFF)
-# tariff 0.00095775
-panel$fitted_IFF_lm <- exp(predict(fit_IFF))
-rm(fit_IFF)
-# This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
-# Rather, this gives the unconditional effect of tariffs on the discrepancy.
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit)["tariff"]
-  } else {
-    coef[v] <- 0
-  }
-}
-coef
-
-panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
-
-panel$fitted_IFF_pred <- exp(predict(fit,
-                                     newdata = data.frame(dist = 0,
-                                                          dist.sq = 0,
-                                                          contig = "0",
-                                                          rLandlocked = "0",
-                                                          pLandlocked = "0",
-                                                          ln.FutImport_misrep = 0,
-                                                          ihs.ReExport_misrep = 0,
-                                                          ln.ratio_CIF_lag = 0,
-                                                          tariff = panel$tariff)))
-
-summary(panel$fitted_IFF_lm)
-summary(panel$fitted_IFF_man)
-summary(panel$fitted_IFF_pred)
-# fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
-
-panel$fitted_IFF <- panel$fitted_IFF_man
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- 0 
-  }
-  
-}
-coef
-
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-rm(coef, v)
+# # .. Compute fitted values when predictors are 0 ####
+# fit_IFF <- lm(ln.ratio_CIF ~ - 1 + tariff,
+#               data = panel)
+# summary(fit_IFF)
+# # tariff 0.00095775
+# panel$fitted_IFF_lm <- exp(predict(fit_IFF))
+# rm(fit_IFF)
+# # This does not give the marginal effect of IFF predictors given legitimate predictors of IFF.
+# # Rather, this gives the unconditional effect of tariffs on the discrepancy.
+# 
+# coef <- coef(fit)
+# for (v in 1:length(coef)){
+#   if (names(coef[v]) == "tariff"){
+#     coef[v] <- coef(fit)["tariff"]
+#   } else {
+#     coef[v] <- 0
+#   }
+# }
+# coef
+# 
+# panel$fitted_IFF_man <- as.numeric(exp(model.matrix(fit) %*% coef))
+# 
+# panel$fitted_IFF_pred <- exp(predict(fit,
+#                                      newdata = data.frame(dist = 0,
+#                                                           dist.sq = 0,
+#                                                           contig = "0",
+#                                                           rLandlocked = "0",
+#                                                           pLandlocked = "0",
+#                                                           ln.FutImport_misrep = 0,
+#                                                           ihs.ReExport_misrep = 0,
+#                                                           ln.ratio_CIF_lag = 0,
+#                                                           tariff = panel$tariff)))
+# 
+# summary(panel$fitted_IFF_lm)
+# summary(panel$fitted_IFF_man)
+# summary(panel$fitted_IFF_pred)
+# # fitted_IFF_pred is the same as fitted_IFF_man if the constant were not set to 0.
+# 
+# panel$fitted_IFF <- panel$fitted_IFF_man
+# 
+# coef <- coef(fit)
+# for (v in 1:length(coef)){
+#   if (names(coef[v]) == "tariff"){
+#     coef[v] <- 0 
+#   }
+#   
+# }
+# coef
+# 
+# panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+# rm(coef, v)
 
 
 # .. Compute adjusted FOB imports ####
@@ -691,9 +710,9 @@ panel <- panel %>%
          resid_adj = ratio_CIF - fitted_adj)
 
 # Version 1
-panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+# panel <- panel %>%
+#   mutate(FOB_Import = Import_value / fitted_nonIFF,
+#          FOB_Import_IFF = Import_value / fitted_IFF)
 
 # Version 2
 # panel <- panel %>%
@@ -710,17 +729,9 @@ panel <- panel %>%
 #   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
 #          FOB_Import_IFF = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF))
 
-# panel <- panel %>%
-#   mutate(FOB_Import = pNetExport_value + pNetExport_value * resid_adj,
-#          FOB_Import_IFF_hi = pNetExport_value + pNetExport_value * (resid_adj + fitted_IFF),
-#          FOB_Import_IFF_lo = pNetExport_value + pNetExport_value * fitted_IFF)
-
+# Version 5
 panel <- panel %>%
-  mutate(FOB_Import_AL = Import_value/fitted,
-         FOB_Import_WD = (pNetExport_value + (pNetExport_value * resid ))/ fitted)
-sum(panel$FOB_Import_AL == panel$FOB_Import_WD)
-panel$FOB_Import_AL <- NULL
-panel$FOB_Import_WD <- NULL
+  mutate(FOB_Import = Import_value / fitted)
 
 
 # .. Estimate fixed effects regression ####
@@ -782,8 +793,11 @@ panel <- panel %>%
 
 
 # .. Compute IFF ####
+# panel <- panel %>%
+#   mutate(Imp_IFF_hi = FOB_Import_IFF - RV,
+#          Exp_IFF_hi = RV - pNetExport_value)
 panel <- panel %>%
-  mutate(Imp_IFF_hi = FOB_Import_IFF - RV,
+  mutate(Imp_IFF_hi = FOB_Import - RV,
          Exp_IFF_hi = RV - pNetExport_value)
 summary(panel$Imp_IFF_hi)
 summary(panel$Exp_IFF_hi)
