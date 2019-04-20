@@ -34,7 +34,6 @@
 # .. Estimate fixed effects regression for export discrepancy
 # .. Harmonization procedure for export discrepancy
 # .. Compute IFF
-
 # Aggregate by Destination
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
@@ -260,10 +259,10 @@ save(panel, file = "Data/Panel/panel_clean.Rdata")
 summary(panel$ratio_CIF_r)
 summary(panel$ratio_CIF_p)
 
-panel <- panel %>%
-  filter(ratio_CIF_r < 10^4) %>%
-  filter(ratio_CIF_p < 10^4)
-nrow(panel)
+# panel <- panel %>%
+#   filter(ratio_CIF_r < 10^4) %>%
+#   filter(ratio_CIF_p < 10^4)
+# nrow(panel)
 # 3323416
 
 panel %>% filter(ratio_CIF_r > 10^3) %>% nrow
@@ -396,7 +395,7 @@ fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               ihs.ReExport_misrep_p +
               ln.ratio_CIF_p_lag,
             data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
+Bonferonni.out <- outlierTest(fit_p, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF_p)
@@ -410,6 +409,7 @@ mean(panel$ratio_CIF_p)
 rm(Bonferonni.out, outliers, obs)
 nrow(panel)
 # 3309037
+# 3310598 when not truncating ratios > 10^4
 save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
 
