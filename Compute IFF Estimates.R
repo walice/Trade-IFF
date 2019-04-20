@@ -543,17 +543,17 @@ panel <- left_join(panel, FE %>%
   rename(pSigma = sigma)
 
 panel <- panel %>%
-  mutate(w_M = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_X = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-summary(panel$w_M)
-summary(panel$w_X)
+  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
+         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
+summary(panel$w_r)
+summary(panel$w_p)
 
 panel <- panel %>%
-  mutate(w = w_M + w_X)
+  mutate(w = w_r + w_p)
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV = w_X*pNetExport_value + w_M*FOB_Import)
+  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
 
 
 # .. Compute IFF ####
@@ -779,17 +779,17 @@ panel <- left_join(panel, FE %>%
   rename(pSigma = sigma)
 
 panel <- panel %>%
-  mutate(w_M = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_X = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-summary(panel$w_M)
-summary(panel$w_X)
+  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
+         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
+summary(panel$w_r)
+summary(panel$w_p)
 
 panel <- panel %>%
-  mutate(w = w_M + w_X)
+  mutate(w = w_r + w_p)
 summary(panel$w)
 
 panel <- panel %>%
-  mutate(RV = w_X*pNetExport_value + w_M*FOB_Import)
+  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
 
 
 # .. Compute IFF ####
