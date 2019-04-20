@@ -335,6 +335,14 @@ save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# NEW VERSION               ####
+## ## ## ## ## ## ## ## ## ## ##
+panel <- panel %>%
+  mutate(ln.ratio_CIF2 = log(pImport_value / NetExport_value)) %>%
+  filter(is.finite(ln.ratio_CIF2))
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # LOW ESTIMATES             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -455,6 +463,15 @@ summary(fit)
 # panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
 # rm(coef, v)
 
+fit2 <- lm(ln.ratio_CIF2 ~ dist + dist.sq +
+            contig + 
+            rLandlocked +
+            pLandlocked +
+            ln.FutImport_misrep +
+            ihs.ReExport_misrep +
+            ln.ratio_CIF_lag,
+          data = panel)
+panel$fitted2 <- exp(fitted(fit2))
 
 # .. Compute adjusted FOB imports ####
 panel$fitted <- exp(fitted(fit))
@@ -495,7 +512,8 @@ panel <- panel %>%
 
 # Version 5
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted)
+  mutate(FOB_Import = Import_value / fitted,
+         pFOB_Import = pImport_value / fitted2)
 
 
 # .. Estimate fixed effects regression ####
@@ -556,52 +574,113 @@ panel <- panel %>%
   mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
 
 
+# .. Estimate fixed effects regression 2 ####
+panel <- panel %>%
+  mutate(rep_dist = abs(log(pFOB_Import/NetExport_value))) %>%
+  filter(is.finite(rep_dist))
+nrow(panel)
+# 2003078
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.factor(.)))
+
+FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+                 partner.ISO + year,
+               data = panel)
+FE <- getfe(FE.out, se = T) 
+
+FE <- FE %>%
+  group_by(fe) %>%
+  mutate(min = min(effect)) %>%
+  ungroup()
+
+FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
+attr(FE$sigma, "extra") <- NULL
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.character(.)))
+
+
+# .. Harmonization procedure ####
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "reporter.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("reporter.ISO" = "idx")) %>%
+  rename(rSigma2 = sigma)
+
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "partner.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("partner.ISO" = "idx")) %>%
+  rename(pSigma2 = sigma)
+
+panel <- panel %>%
+  mutate(w_r = (exp(rSigma2^2)*(exp(rSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)),
+         w_p = (exp(pSigma2^2)*(exp(pSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)))
+summary(panel$w_r)
+summary(panel$w_p)
+
+panel <- panel %>%
+  mutate(w = w_r + w_p)
+summary(panel$w)
+
+panel <- panel %>%
+  mutate(RV2 = w_r*NetExport_value + w_p*pFOB_Import)
+
+
 # .. Compute IFF ####
 # panel <- panel %>%
 #   mutate(Imp_IFF_lo = FOB_Import_IFF - RV,
 #          Exp_IFF_lo = RV - pNetExport_value)
+# panel <- panel %>%
+#   mutate(Imp_IFF_lo = FOB_Import - RV,
+#          Exp_IFF_lo = RV - pNetExport_value)
 panel <- panel %>%
   mutate(Imp_IFF_lo = FOB_Import - RV,
-         Exp_IFF_lo = RV - pNetExport_value)
+         Exp_IFF_lo = RV2 - NetExport_value)
 summary(panel$Imp_IFF_lo)
 summary(panel$Exp_IFF_lo)
 
 
-# .. Move export IFF to mirror ####
-panel_mirror <- panel %>%
-  select(reporter, reporter.ISO, rRegion, rIncome,
-         partner, partner.ISO, pRegion, pIncome,
-         commodity.code, year,
-         section.code, section,
-         Exp_IFF_lo)
-
-panel_mirror$id <- paste(panel_mirror$partner.ISO, 
-                         panel_mirror$reporter.ISO, 
-                         panel_mirror$commodity.code,
-                         panel_mirror$year, sep = "_")
-
-panel_mirror <- panel_mirror %>% 
-  rename(pExp_IFF_lo = Exp_IFF_lo)
-
-panel <- full_join(panel, panel_mirror,
-                   by = c("id" = "id",
-                          "reporter" = "partner",
-                          "reporter.ISO" = "partner.ISO",
-                          "rRegion" = "pRegion",
-                          "rIncome" = "pIncome",
-                          "partner.ISO" = "reporter.ISO",
-                          "partner" = "reporter",
-                          "pRegion" = "rRegion",
-                          "pIncome" = "rIncome",
-                          "year" = "year",
-                          "commodity.code" = "commodity.code",
-                          "section.code" = "section.code",
-                          "section" = "section"))
-
-panel %>%
-  filter(duplicated(panel$id)) %>% nrow
-# 0
-rm(panel_mirror)
+# # .. Move export IFF to mirror ####
+# panel_mirror <- panel %>%
+#   select(reporter, reporter.ISO, rRegion, rIncome,
+#          partner, partner.ISO, pRegion, pIncome,
+#          commodity.code, year,
+#          section.code, section,
+#          Exp_IFF_lo)
+# 
+# panel_mirror$id <- paste(panel_mirror$partner.ISO, 
+#                          panel_mirror$reporter.ISO, 
+#                          panel_mirror$commodity.code,
+#                          panel_mirror$year, sep = "_")
+# 
+# panel_mirror <- panel_mirror %>% 
+#   rename(pExp_IFF_lo = Exp_IFF_lo)
+# 
+# panel <- full_join(panel, panel_mirror,
+#                    by = c("id" = "id",
+#                           "reporter" = "partner",
+#                           "reporter.ISO" = "partner.ISO",
+#                           "rRegion" = "pRegion",
+#                           "rIncome" = "pIncome",
+#                           "partner.ISO" = "reporter.ISO",
+#                           "partner" = "reporter",
+#                           "pRegion" = "rRegion",
+#                           "pIncome" = "rIncome",
+#                           "year" = "year",
+#                           "commodity.code" = "commodity.code",
+#                           "section.code" = "section.code",
+#                           "section" = "section"))
+# 
+# panel %>%
+#   filter(duplicated(panel$id)) %>% nrow
+# # 0
+# rm(panel_mirror)
 
 panel_lo <- panel
 save(panel_lo, file = "Results/panel_lo.Rdata")
@@ -613,6 +692,13 @@ save(panel_lo, file = "Results/panel_lo.Rdata")
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Data/Panel/panel_nooutliers.Rdata")
+
+## ## ## ## ## ## ## ## ## ## ##
+# NEW VERSION               ####
+## ## ## ## ## ## ## ## ## ## ##
+panel <- panel %>%
+  mutate(ln.ratio_CIF2 = log(pImport_value / NetExport_value)) %>%
+  filter(is.finite(ln.ratio_CIF2))
 
 # fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
 #             contig + 
@@ -691,6 +777,16 @@ summary(fit)
 # panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
 # rm(coef, v)
 
+fit2 <- lm(ln.ratio_CIF2 ~ dist + dist.sq +
+             contig + 
+             rLandlocked +
+             pLandlocked +
+             ln.FutImport_misrep +
+             ihs.ReExport_misrep +
+             ln.ratio_CIF_lag,
+           data = panel)
+panel$fitted2 <- exp(fitted(fit2))
+
 
 # .. Compute adjusted FOB imports ####
 panel$fitted <- exp(fitted(fit))
@@ -731,7 +827,8 @@ panel <- panel %>%
 
 # Version 5
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted)
+  mutate(FOB_Import = Import_value / fitted,
+         pFOB_Import = pImport_value / fitted2)
 
 
 # .. Estimate fixed effects regression ####
@@ -791,53 +888,113 @@ summary(panel$w)
 panel <- panel %>%
   mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
 
+# .. Estimate fixed effects regression 2 ####
+panel <- panel %>%
+  mutate(rep_dist = abs(log(pFOB_Import/NetExport_value))) %>%
+  filter(is.finite(rep_dist))
+nrow(panel)
+# 2003078
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.factor(.)))
+
+FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
+                 partner.ISO + year,
+               data = panel)
+FE <- getfe(FE.out, se = T) 
+
+FE <- FE %>%
+  group_by(fe) %>%
+  mutate(min = min(effect)) %>%
+  ungroup()
+
+FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
+attr(FE$sigma, "extra") <- NULL
+
+panel <- panel %>%
+  mutate_at(vars(reporter.ISO, partner.ISO, year),
+            funs(as.character(.)))
+
+
+# .. Harmonization procedure ####
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "reporter.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("reporter.ISO" = "idx")) %>%
+  rename(rSigma2 = sigma)
+
+panel <- left_join(panel, FE %>% 
+                     filter(fe == "partner.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("partner.ISO" = "idx")) %>%
+  rename(pSigma2 = sigma)
+
+panel <- panel %>%
+  mutate(w_r = (exp(rSigma2^2)*(exp(rSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)),
+         w_p = (exp(pSigma2^2)*(exp(pSigma2^2) - 1))/(exp(rSigma2^2)*(exp(rSigma2^2)- 1) + exp(pSigma2^2)*(exp(pSigma2^2) - 1)))
+summary(panel$w_r)
+summary(panel$w_p)
+
+panel <- panel %>%
+  mutate(w = w_r + w_p)
+summary(panel$w)
+
+panel <- panel %>%
+  mutate(RV2 = w_r*NetExport_value + w_p*pFOB_Import)
+
 
 # .. Compute IFF ####
 # panel <- panel %>%
 #   mutate(Imp_IFF_hi = FOB_Import_IFF - RV,
 #          Exp_IFF_hi = RV - pNetExport_value)
+# panel <- panel %>%
+#   mutate(Imp_IFF_hi = FOB_Import - RV,
+#          Exp_IFF_hi = RV - pNetExport_value)
 panel <- panel %>%
   mutate(Imp_IFF_hi = FOB_Import - RV,
-         Exp_IFF_hi = RV - pNetExport_value)
+         Exp_IFF_hi = RV2 - NetExport_value)
 summary(panel$Imp_IFF_hi)
 summary(panel$Exp_IFF_hi)
 
 
-# .. Move export IFF to mirror ####
-panel_mirror <- panel %>%
-  select(reporter, reporter.ISO, rRegion, rIncome,
-         partner, partner.ISO, pRegion, pIncome,
-         commodity.code, year,
-         section.code, section,
-         Exp_IFF_hi)
-
-panel_mirror$id <- paste(panel_mirror$partner.ISO, 
-                         panel_mirror$reporter.ISO, 
-                         panel_mirror$commodity.code,
-                         panel_mirror$year, sep = "_")
-
-panel_mirror <- panel_mirror %>% 
-  rename(pExp_IFF_hi = Exp_IFF_hi)
-
-panel <- full_join(panel, panel_mirror,
-                   by = c("id" = "id",
-                          "reporter" = "partner",
-                          "reporter.ISO" = "partner.ISO",
-                          "rRegion" = "pRegion",
-                          "rIncome" = "pIncome",
-                          "partner.ISO" = "reporter.ISO",
-                          "partner" = "reporter",
-                          "pRegion" = "rRegion",
-                          "pIncome" = "rIncome",
-                          "year" = "year",
-                          "commodity.code" = "commodity.code",
-                          "section.code" = "section.code",
-                          "section" = "section"))
-
-panel %>%
-  filter(duplicated(panel$id)) %>% nrow
-# 0
-rm(panel_mirror)
+# # .. Move export IFF to mirror ####
+# panel_mirror <- panel %>%
+#   select(reporter, reporter.ISO, rRegion, rIncome,
+#          partner, partner.ISO, pRegion, pIncome,
+#          commodity.code, year,
+#          section.code, section,
+#          Exp_IFF_hi)
+# 
+# panel_mirror$id <- paste(panel_mirror$partner.ISO, 
+#                          panel_mirror$reporter.ISO, 
+#                          panel_mirror$commodity.code,
+#                          panel_mirror$year, sep = "_")
+# 
+# panel_mirror <- panel_mirror %>% 
+#   rename(pExp_IFF_hi = Exp_IFF_hi)
+# 
+# panel <- full_join(panel, panel_mirror,
+#                    by = c("id" = "id",
+#                           "reporter" = "partner",
+#                           "reporter.ISO" = "partner.ISO",
+#                           "rRegion" = "pRegion",
+#                           "rIncome" = "pIncome",
+#                           "partner.ISO" = "reporter.ISO",
+#                           "partner" = "reporter",
+#                           "pRegion" = "rRegion",
+#                           "pIncome" = "rIncome",
+#                           "year" = "year",
+#                           "commodity.code" = "commodity.code",
+#                           "section.code" = "section.code",
+#                           "section" = "section"))
+# 
+# panel %>%
+#   filter(duplicated(panel$id)) %>% nrow
+# # 0
+# rm(panel_mirror)
 
 panel_hi <- panel
 save(panel_hi, file = "Results/panel_hi.Rdata")
@@ -848,18 +1005,34 @@ save(panel_hi, file = "Results/panel_hi.Rdata")
 # MERGE RESULTS             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+# all <- full_join(panel_lo %>%
+#                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
+#                           reporter, rRegion, rIncome,
+#                           partner, pRegion, pIncome,
+#                           section.code, section,
+#                           Imp_IFF_lo, pExp_IFF_lo),
+#                  panel_hi %>%
+#                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
+#                           reporter, rRegion, rIncome,
+#                           partner, pRegion, pIncome,
+#                           section.code, section,
+#                           Imp_IFF_hi, pExp_IFF_hi),
+#                  by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
+#                         "reporter", "rRegion", "rIncome",
+#                         "partner", "pRegion", "pIncome",
+#                         "section.code", "section"))
 all <- full_join(panel_lo %>%
                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
                           reporter, rRegion, rIncome,
                           partner, pRegion, pIncome,
                           section.code, section,
-                          Imp_IFF_lo, pExp_IFF_lo),
+                          Imp_IFF_lo, Exp_IFF_lo),
                  panel_hi %>%
                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
                           reporter, rRegion, rIncome,
                           partner, pRegion, pIncome,
                           section.code, section,
-                          Imp_IFF_hi, pExp_IFF_hi),
+                          Imp_IFF_hi, Exp_IFF_hi),
                  by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
                         "reporter", "rRegion", "rIncome",
                         "partner", "pRegion", "pIncome",
@@ -874,6 +1047,13 @@ panel <- all
 rm(all, FE, FE.out, fit)
 rm(panel_hi, panel_lo)
 
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# NEW VERSION               ####
+## ## ## ## ## ## ## ## ## ## ##
+panel$pExp_IFF_lo <- panel$Exp_IFF_lo
+panel$pExp_IFF_hi <- panel$Exp_IFF_hi
 
 
 ## ## ## ## ## ## ## ## ## ## ##
