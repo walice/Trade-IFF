@@ -41,7 +41,6 @@
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
 # Pilot Country Results
-# Figures
 
 
 
@@ -1944,7 +1943,7 @@ write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
 # PILOT COUNTRY RESULTS     ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-pilots <- c("EGY", "NGA", "SEN", "ZAF", "TUN", "TZA")
+pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
 
 net <- Net_Orig_Avg_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
@@ -1957,72 +1956,3 @@ ger <- GER_Orig_Avg_Africa %>%
 kable(ger, format = "rst")
 
 rm(net, ger)
-
-GER_Orig_Sect_Africa %>%
-  filter(reporter.ISO %in% pilots)
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# FIGURES                   ####
-## ## ## ## ## ## ## ## ## ## ##
-
-g <- ggplot(GER_Year_Africa %>% 
-         melt(id.vars = "year") %>%
-         filter(str_detect(variable, "Imp")), 
-       aes(x = year, y = value, fill = variable)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Import IFF", labels = c("Low", "High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Gross Excluding Reversals",
-       x = "Year", y = "Illicit flow in billion USD")
-ggsave(g,
-       file = "Figures/Current Version/GER_Africa_Import.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot(GER_Year_Africa %>% 
-              melt(id.vars = "year") %>%
-              filter(str_detect(variable, "Exp")), 
-            aes(x = year, y = value, fill = variable)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Export IFF", labels = c("Low", "High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Gross Excluding Reversals",
-       x = "Year", y = "Illicit flow in billion USD")
-ggsave(g,
-       file = "Figures/Current Version/GER_Africa_Export.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot(Net_Year_Africa %>% 
-         melt(id.vars = "year") %>%
-         filter(str_detect(variable, "Imp")), 
-       aes(x = year, y = value, fill = variable)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1))+
-  scale_fill_discrete(name = "Import IFF", labels = c("Low", "High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Net",
-       x = "Year", y = "Illicit flow in billion USD")
-ggsave(g,
-       file = "Figures/Current Version/Net_Africa_Import.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot(Net_Year_Africa %>% 
-              melt(id.vars = "year") %>%
-              filter(str_detect(variable, "Exp")), 
-            aes(x = year, y = value, fill = variable)) +
-  geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Export IFF", labels = c("Low", "High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Illicit Financial Flows in Africa",
-       subtitle = "Net",
-       x = "Year", y = "Illicit flow in billion USD")
-ggsave(g,
-       file = "Figures/Current Version/Net_Africa_Export.png",
-       width = 6, height = 5, units = "in")
