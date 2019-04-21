@@ -1,4 +1,29 @@
 ## ## ## ## ## ## ## ## ## ## ##
+# CHECKING EXPORT IFF       ####
+## ## ## ## ## ## ## ## ## ## ##
+
+test <- panel_hi %>% 
+  filter(id == "ETH_USA_07_2010" | id == "USA_ETH_07_2010") %>%
+  select(-c(reporter, rRegion, rIncome, partner, pRegion, pIncome,
+            Export_value, pExport_value, ReExport_value, pReExport_value))
+
+test <- panel_hi %>% 
+  filter(id == "ZAF_BRA_09_2015" | id == "BRA_ZAF_09_2015") %>%
+  select(-c(reporter, rRegion, rIncome, partner, pRegion, pIncome,
+            Export_value, pExport_value, ReExport_value, pReExport_value))
+
+
+results <- panel
+test <- results %>% filter(reporter.ISO == "ETH")
+test <- test %>%
+  filter(complete.cases(Imp_IFF_lo, pExp_IFF_lo)) %>%
+  filter(complete.cases(Imp_IFF_hi, pExp_IFF_hi))
+test <- test %>% filter(year == 2010 & partner.ISO == "USA")
+
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # TOY EXAMPLE               ####
 ## ## ## ## ## ## ## ## ## ## ##
 test <- panel %>% filter(id == "ARG_CHN_05_2000" | id == "CHN_ARG_05_2000")
