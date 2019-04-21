@@ -343,7 +343,7 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# DESTINATION GRAPHS        ####
+# DESTINATION PIE CHARTS    ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Results/Current Version/GER_Dest_Africa.Rdata")
@@ -368,6 +368,40 @@ g <- ggplot(Destinations,
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Destinations pie chart.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# ORIGIN PIE CHART          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Current Version/GER_Orig_Sum_Africa.Rdata")
+
+Origins <- left_join(GER_Orig_Sum_Africa, codes %>% 
+                       select(ISO3166.3, UN_Sub.region, UN_Intermediate_Region) %>%
+                       distinct(ISO3166.3, .keep_all = TRUE),
+                     by = c("reporter.ISO" = "ISO3166.3")) %>%
+  mutate(Region = ifelse(UN_Intermediate_Region == "", UN_Sub.region, UN_Intermediate_Region)) %>%
+  group_by(Region) %>%
+  summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_lo = Tot_IFF_lo / sum(Tot_IFF_lo) * 100,
+         Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
+
+g <- ggplot(Origins,
+            aes(x = "", y = Pct_IFF_lo, fill = Region)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0(round(Pct_IFF_lo), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Origins pie chart.png",
        width = 6, height = 5, units = "in")
 
 
