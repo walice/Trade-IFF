@@ -475,6 +475,7 @@ panel <- panel %>%
          pImport_quantity, pExport_quantity, pReExport_quantity,
          pImport_weight, pExport_weight, pReExport_weight,
          contig, dist, rLandlocked, pLandlocked, tariff,
+         rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual,
          reporter, partner, rRegion, rIncome, pRegion, pIncome)
 
 missing <- panel %>% 
