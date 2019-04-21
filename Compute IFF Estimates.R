@@ -1945,14 +1945,24 @@ write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
 
 pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
 
-net <- Net_Orig_Avg_Africa %>%
+net.avg <- Net_Orig_Avg_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
-  select(-c(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn))
-kable(net, format = "rst")
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(net.avg, format = "rst")
 
-ger <- GER_Orig_Avg_Africa %>%
+ger.avg <- GER_Orig_Avg_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
-  select(-c(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn))
-kable(ger, format = "rst")
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(ger.avg, format = "rst")
 
-rm(net, ger)
+net.sum <- Net_Orig_Sum_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(net.sum, format = "rst")
+
+ger.sum <- GER_Orig_Sum_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(ger.sum, format = "rst")
+
+rm(net.avg, ger.avg, net.sum, ger.sum)
