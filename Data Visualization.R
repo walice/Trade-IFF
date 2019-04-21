@@ -132,6 +132,57 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# LINE CHARTS               ####
+## ## ## ## ## ## ## ## ## ## ##
+
+pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
+labels <- c(Tot_IFF_lo = "Low estimate", Tot_IFF_hi = "High estimate")
+
+load("Results/Current Version/GER_Orig_Year_Africa.Rdata")
+
+Pilot_Year <- GER_Orig_Year_Africa %>%
+  filter(reporter.ISO %in% pilots)
+
+g <- ggplot(Pilot_Year %>% 
+         melt(id.vars = c("year", "reporter")) %>%
+         filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi") %>%
+         mutate(year = as.numeric(year),
+                value = as.numeric(value),
+                reporter = as.factor(reporter))) +
+  geom_line(aes(x = year, y = value/10^9, color = reporter)) +
+  facet_wrap(~variable, labeller = labeller(variable = labels)) +
+  labs(title = "Gross yearly outflows in pilot countries",
+       x = "Year",
+       y = "Illicit flow in billion USD",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross Yearly Africa.png",
+       width = 6, height = 5, units = "in")
+
+load("Results/Current Version/Net_Orig_Year_Africa.Rdata")
+
+Pilot_Year <- Net_Orig_Year_Africa %>%
+  filter(reporter.ISO %in% pilots)
+
+g <- ggplot(Pilot_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi") %>%
+              mutate(year = as.numeric(year),
+                     value = as.numeric(value),
+                     reporter = as.factor(reporter))) +
+  geom_line(aes(x = year, y = value/10^9, color = reporter)) +
+  facet_wrap(~variable, labeller = labeller(variable = labels)) +
+  labs(title = "Net yearly flows in pilot countries",
+       x = "Year",
+       y = "Illicit flow in billion USD",
+       color = "")
+ggsave(g,
+       file = "Figures/Net Yearly Africa.png",
+       width = 6, height = 5, units = "in") 
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # CHOROPOLETHS              ####
 ## ## ## ## ## ## ## ## ## ## ##
 
