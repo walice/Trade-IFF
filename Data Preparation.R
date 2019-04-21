@@ -16,12 +16,15 @@
 # Import CEPII
 # .. Merge dyadic distance and contiguity data
 # .. Merge country geographic data
+# Import WGI
+# .. Interpolate missing data
+# .. Merge with reporters and partners
 # Import WITS
 # .. Import average tariff line data
 # .. Generate unique identifier
 # .. Merge with panel
 # Import HS Codes
-# Merge commodity and section codes
+# .. Merge commodity and section codes
 # Import Groupings
 # .. Merge reporters
 # .. Merge partners
@@ -256,6 +259,66 @@ rm(dist, geo)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# IMPORT WGI                ####
+## ## ## ## ## ## ## ## ## ## ##
+
+WGI <- read.csv("Data/World Bank/World Governance Indicators.csv") %>%
+  rename(corruption = Control.of.Corruption..Percentile.Rank..CC.PER.RNK.,
+         regulatory.qual = Regulatory.Quality..Percentile.Rank..RQ.PER.RNK.) %>%
+  mutate(Country.Code = as.character(Country.Code)) %>%
+  mutate_at(vars(corruption, regulatory.qual, Time),
+          funs(as.numeric(as.character(.)))) %>%
+  filter(complete.cases(.)) %>%
+  select(-c(Time.Code, Country.Name))
+
+
+# .. Interpolate missing data ####
+WGI %>% distinct(Time)
+# Missing data for 1999 and 2001, so interpolate from either year
+
+WGI98 <- WGI %>%
+  filter(Time == 1998)
+WGI00 <- WGI %>%
+  filter(Time == 2000)
+WGI02 <- WGI %>%
+  filter(Time == 2002)
+
+WGI99 <- full_join(WGI98, WGI00,
+                   by = "Country.Code") %>%
+  mutate(Time = 1999)
+WGI99$corruption <- rowMeans(WGI99[, c("corruption.x", "corruption.y")], na.rm = TRUE)
+WGI99$regulatory.qual <- rowMeans(WGI99[, c("regulatory.qual.x", "regulatory.qual.y")], na.rm = TRUE)
+WGI99 <- WGI99 %>% select(Country.Code, Time, corruption, regulatory.qual)
+
+WGI01 <- full_join(WGI00, WGI02,
+                   by = "Country.Code") %>%
+  mutate(Time = 2001)
+WGI01$corruption <- rowMeans(WGI01[, c("corruption.x", "corruption.y")], na.rm = TRUE)
+WGI01$regulatory.qual <- rowMeans(WGI01[, c("regulatory.qual.x", "regulatory.qual.y")], na.rm = TRUE)
+WGI01 <- WGI01 %>% select(Country.Code, Time, corruption, regulatory.qual)
+
+WGI <- rbind(WGI, WGI99, WGI01)
+rm(WGI98, WGI99, WGI00, WGI01, WGI02)
+
+
+# .. Merge with reporters and partners ####
+panel <- left_join(panel, WGI,
+                   by = c("reporter.ISO" = "Country.Code",
+                          "year" = "Time")) %>%
+  rename(rCorruption = corruption,
+         rRegulatory.qual = regulatory.qual)
+
+panel <- left_join(panel, WGI,
+                   by = c("partner.ISO" = "Country.Code",
+                          "year" = "Time")) %>%
+  rename(pCorruption = corruption,
+         pRegulatory.qual = regulatory.qual)
+
+rm(WGI)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # IMPORT WITS               ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -328,7 +391,7 @@ save(panel, file = "Data/Panel/panel.Rdata")
 # IMPORT HS CODES           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# Merge commodity and section codes ####
+# .. Merge commodity and section codes ####
 HS <- read.xlsx2("Data/HS Commodity Codes.xlsx", sheetName = "Codes") %>%
   mutate_all(as.character) %>%
   rename_all(tolower)
