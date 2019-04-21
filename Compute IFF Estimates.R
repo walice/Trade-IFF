@@ -333,6 +333,14 @@ summary(panel$ratio_CIF)
 #   filter(ratio_CIF_p < 10^4)
 # nrow(panel)
 # 3323416
+# panel <- panel %>%
+#   filter(ratio_CIF < 10^4)
+# nrow(panel)
+# # 3657496
+# panel <- panel %>%
+#   filter(ratio_CIF < 10^3)
+# nrow(panel)
+# # 3641071
 
 # panel %>% filter(ratio_CIF_r > 10^3) %>% nrow
 # # 9575
