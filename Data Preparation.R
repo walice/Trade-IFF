@@ -25,6 +25,9 @@
 # .. Merge with panel
 # Import HS Codes
 # .. Merge commodity and section codes
+# Import SITC Codes
+# .. Merge SITC with HS codes
+# .. Merge SITC with panel
 # Import Groupings
 # .. Merge reporters
 # .. Merge partners
@@ -383,7 +386,6 @@ panel <- left_join(panel, tariff %>% select(-c(reporter, partner)),
                           "year" = "year"))
 
 rm(tariff)
-save(panel, file = "Data/Panel/panel.Rdata")
 
 
 
@@ -392,7 +394,7 @@ save(panel, file = "Data/Panel/panel.Rdata")
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Merge commodity and section codes ####
-HS <- read.xlsx2("Data/HS Commodity Codes.xlsx", sheetName = "Codes") %>%
+HS <- read.xlsx2("Data/UN Stats/HS Commodity Codes.xlsx", sheetName = "HS Codes") %>%
   mutate_all(as.character) %>%
   rename_all(tolower)
 
@@ -407,6 +409,51 @@ panel %>% filter(is.na(section.code)) %>% distinct(commodity.code)
 # 99
 
 rm(HS)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# IMPORT SITC CODES         ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Merge SITC with HS codes ####
+SITC <- read.xlsx2("Data/UN Stats/SITC4 Codes.xlsx", sheetName = "SITC4 Codes") %>%
+  mutate_all(as.character) %>%
+  rename(SITC.section = Section)
+
+HStoSITC <- read.xlsx2("Data/UN Stats/HS07S4.xls", sheetName = "HS07S4",
+                       startRow = 9) %>%
+  mutate_all(as.character) %>%
+  select(HS07, X...S4) %>%
+  rename(SITC.code = X...S4) %>%
+  mutate(HS07 = substr(HS07, 1, 2),
+         SITC.code = substr(SITC.code, 1, 1))
+
+HStoSITC <- left_join(HStoSITC, SITC,
+                      by = c("SITC.code" = "SITC.Code"))
+
+HStoSITC %>% filter(is.na(SITC.section))
+# SITC codes I and II
+
+
+# .. Merge SITC with panel ####
+HStoSITC %>% distinct(HS07, SITC.code, SITC.section)
+HStoSITC <- HStoSITC %>% distinct(HS07, SITC.code, SITC.section) %>%
+  filter(HS07 %in% str_pad(seq(1:97), width = 2, side = "left", pad = "0"))
+
+HStoSITC %>% distinct(HS07, SITC.code, SITC.section)
+# To perform the accurate correspondence I would need to merge from HS at the 6-digit level.
+# Just pick the first SITC that matches the HS code and merge on that.
+
+HStoSITC <- HStoSITC %>% distinct(HS07, .keep_all = TRUE)
+# No HS code 77 in the SITC4 correspondence table.
+
+panel <- left_join(panel, HStoSITC,
+                   by = c("commodity.code" = "HS07"))
+
+table(panel$section, panel$SITC.section)
+
+rm(SITC, HStoSITC)
 
 
 
@@ -467,7 +514,7 @@ rm(codes, noreporter, nopartner)
 
 panel <- panel %>%
   select(id, reporter.ISO, partner.ISO, commodity.code, year,
-         section.code, section,
+         section.code, section, SITC.code, SITC.section,
          Import_value, Export_value, ReExport_value,
          Import_quantity, Export_quantity, ReExport_quantity,
          Import_weight, Export_weight, ReExport_weight,
