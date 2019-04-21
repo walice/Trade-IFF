@@ -47,7 +47,7 @@ g <- ggplot(GER_Year_Africa %>%
        subtitle = "Gross outflows",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER_Africa_Import.png",
+       file = "Figures/GER Africa Import.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Year_Africa %>% 
@@ -62,7 +62,7 @@ g <- ggplot(GER_Year_Africa %>%
        subtitle = "Gross outflows",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER_Africa_Export.png",
+       file = "Figures/GER Africa Export.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Year_Africa %>% 
@@ -79,7 +79,24 @@ g <- ggplot(GER_Year_Africa %>%
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/GER_Africa_Total.png",
+       file = "Figures/GER Africa Total.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Year_Africa %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Gross outflows",
+       x = "Year", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER Africa Total High.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -94,7 +111,7 @@ g <- ggplot(Net_Year_Africa %>%
        subtitle = "Net illicit flows",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/Net_Africa_Import.png",
+       file = "Figures/Net Africa Import.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -109,7 +126,7 @@ g <- ggplot(Net_Year_Africa %>%
        subtitle = "Net illicit flows",
        x = "Year", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/Net_Africa_Export.png",
+       file = "Figures/Net Africa Export.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
@@ -126,7 +143,24 @@ g <- ggplot(Net_Year_Africa %>%
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/Net_Africa_Total.png",
+       file = "Figures/Net Africa Total.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(Net_Year_Africa %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net illicit flows",
+       x = "Year", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/Net Africa Total High.png",
        width = 6, height = 5, units = "in")
 
 
@@ -357,10 +391,10 @@ Destinations <- GER_Dest_Africa %>%
          Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
 
 g <- ggplot(Destinations,
-       aes(x = "", y = Pct_IFF_lo, fill = pRegion)) +
+       aes(x = "", y = Pct_IFF_hi, fill = pRegion)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  geom_text(aes(label = paste0(round(Pct_IFF_lo), "%")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of outflows, 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
@@ -391,10 +425,10 @@ Origins <- left_join(GER_Orig_Sum_Africa, codes %>%
          Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
 
 g <- ggplot(Origins,
-            aes(x = "", y = Pct_IFF_lo, fill = Region)) +
+            aes(x = "", y = Pct_IFF_hi, fill = Region)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
-  geom_text(aes(label = paste0(round(Pct_IFF_lo), "%")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
