@@ -188,18 +188,34 @@ nrow(panel)
 panel <- panel %>%
   filter(complete.cases(ratio_CIF_r, ln.ratio_CIF_r, ln.ratio_CIF_r_lag,
                         dist, contig, rLandlocked, pLandlocked,
-                        FutImport_misrep, ReExport_misrep_r, tariff)) %>%
+                        FutImport_misrep, ReExport_misrep_r, 
+                        tariff, rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual)) %>%
   filter(complete.cases(ratio_CIF_p, ln.ratio_CIF_p, ln.ratio_CIF_p_lag,
                         dist, contig, rLandlocked, pLandlocked,
-                        FutExport_misrep, ReExport_misrep_p, tariff))
+                        FutExport_misrep, ReExport_misrep_p, 
+                        tariff, rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual))
 nrow(panel)
-# 3333021
-
-panel <- panel %>%
-  mutate(dist.sq = I(dist^2))
+# 1813592
 
 
 # .. Variable transformation ####
+panel <- panel %>%
+  mutate(dist.sq = I(dist^2))
+
+panel <- panel %>%
+  mutate(rCorruption = 100 - rCorruption,
+         pCorruption = 100 - pCorruption,
+         rRegulatory.qual = 100 - rRegulatory.qual,
+         pRegulatory.qual = 100 - pRegulatory.qual)
+
+panel <- panel %>%
+  rename(rPoorRegulation = rRegulatory.qual,
+         pPoorRegulation = pRegulatory.qual)
+
+hist(panel$rCorruption)
+hist(panel$pCorruption)
+hist(panel$rPoorRegulation)
+hist(panel$pPoorRegulation)
 hist(panel$ln.ratio_CIF_r)
 hist(panel$ln.ratio_CIF_p)
 hist(panel$FutImport_misrep)
@@ -246,7 +262,7 @@ hist(panel$ihs.tariff)
 
 rm(ihs)
 nrow(panel)
-# 3333021
+# 1813592
 save(panel, file = "Data/Panel/panel_clean.Rdata")
 
 
@@ -255,7 +271,7 @@ save(panel, file = "Data/Panel/panel_clean.Rdata")
 # REMOVE OUTLIERS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Truncate panel and remove CIF ratios greater than 10,000 ####
+# .. Truncate panel and remove CIF ratios greater than 10,000 (not used) ####
 summary(panel$ratio_CIF_r)
 summary(panel$ratio_CIF_p)
 
@@ -266,10 +282,10 @@ summary(panel$ratio_CIF_p)
 # 3323416
 
 panel %>% filter(ratio_CIF_r > 10^3) %>% nrow
-# 13888
+# 9575
 
 panel %>% filter(ratio_CIF_p > 10^3) %>% nrow
-# 13888
+# 12578
 
 
 # .. Estimate regression ####
@@ -279,15 +295,18 @@ fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               pLandlocked +
               ln.FutImport_misrep +
               ihs.ReExport_misrep_r +
-              ln.ratio_CIF_r_lag,
+              ln.ratio_CIF_r_lag +
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 summary(fit_r)
 mean(exp(fitted(fit_r)))
-# 2.968593
+# 3.631353
 max(panel$ratio_CIF_r)
-# 9988.626
+# 2354224577
 mean(panel$ratio_CIF_r)
-# 20.23745
+# 4696.118
 
 fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               contig + 
@@ -295,15 +314,18 @@ fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               pLandlocked +
               ln.FutExport_misrep +
               ihs.ReExport_misrep_p +
-              ln.ratio_CIF_p_lag,
+              ln.ratio_CIF_p_lag +
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 summary(fit_p)
 mean(exp(fitted(fit_p)))
-# 3.274375
+# 7.405753
 max(panel$ratio_CIF_p)
-# 9988.626
+# 1124495105
 mean(panel$ratio_CIF_p)
-# 20.23745
+# 4065.844
 
 # .. Identify and remove outliers ####
 panel$CD <- cooks.distance(fit_r)
@@ -318,12 +340,15 @@ while(max(panel$CD) > 2){
                 pLandlocked +
                 ln.FutImport_misrep +
                 ihs.ReExport_misrep_r +
-                ln.ratio_CIF_r_lag,
+                ln.ratio_CIF_r_lag +
+                tariff + 
+                rCorruption + pCorruption +
+                rPoorRegulation + pPoorRegulation,
               data = panel)
   panel$CD <- cooks.distance(fit_r)
 }
 nrow(panel)
-# 3323416
+# 1813592
 summary(panel$CD)
 
 panel$CD <- cooks.distance(fit_p)
@@ -338,35 +363,38 @@ while(max(panel$CD) > 2){
                 pLandlocked +
                 ln.FutExport_misrep +
                 ihs.ReExport_misrep_p +
-                ln.ratio_CIF_p_lag,
+                ln.ratio_CIF_p_lag +
+                tariff + 
+                rCorruption + pCorruption +
+                rPoorRegulation + pPoorRegulation,
               data = panel)
   panel$CD <- cooks.distance(fit_p)
 }
 nrow(panel)
-# 3323416
+# 1813592
 summary(panel$CD)
 
 Bonferonni.out <- outlierTest(fit_r, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF_r)
-# 1661.298
+# 1902170
 mean(panel$ratio_CIF_r)
-# 20.23745
+# 4696.118
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF_r)
-# 17.41505
+# 57.23201
 
 Bonferonni.out <- outlierTest(fit_p, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF_p, na.rm = T)
-# 29.55437
+# 99.94448
 mean(panel$ratio_CIF_p)
-# 20.20212
+# 4071.975
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF_p)
-# 20.18645
+# 4079.083
 
 fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               contig + 
@@ -374,18 +402,21 @@ fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               pLandlocked +
               ln.FutImport_misrep +
               ihs.ReExport_misrep_r +
-              ln.ratio_CIF_r_lag,
+              ln.ratio_CIF_r_lag +
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 Bonferonni.out <- outlierTest(fit_r, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF_r)
-# 1169.871
+# 7308.354
 mean(panel$ratio_CIF_r)
-# 17.4097
+# 57.25191
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF_r)
-# 16.8663
+# 51.45342
 
 fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               contig + 
@@ -393,23 +424,25 @@ fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               pLandlocked +
               ln.FutExport_misrep +
               ihs.ReExport_misrep_p +
-              ln.ratio_CIF_p_lag,
+              ln.ratio_CIF_p_lag +
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 Bonferonni.out <- outlierTest(fit_p, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF_p)
-# 19.22762
+# 1995705
 mean(panel$ratio_CIF_p)
-# 20.18072
+# 4082.203
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF_p)
-# 20.18117
+# 516.3927
 
 rm(Bonferonni.out, outliers, obs)
 nrow(panel)
-# 3309037
-# 3310598 when not truncating ratios > 10^4
+# 1801269
 save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
 
@@ -420,20 +453,20 @@ save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
 
 # .. Censor the data-set to get lower-bounds ####
 panel %>% filter(ratio_CIF_r > 2 | ratio_CIF_r < 0.5) %>% nrow
-# 1293383
+# 705552
 panel %>% filter(ratio_CIF_p > 2 | ratio_CIF_p < 0.5) %>% nrow
-# 1297137
+# 758978
 panel_censor <- panel %>% 
   filter(ratio_CIF_r <= 2) %>% 
   filter(ratio_CIF_r >= 0.5) %>%
   filter(ratio_CIF_p <= 2) %>% 
   filter(ratio_CIF_p >= 0.5)
 nrow(panel_censor)
-# 1298195
+# 668543
 mean(panel_censor$ratio_CIF_r)
-# 1.078477
+# 1.093699
 mean(panel_censor$ratio_CIF_p)
-# 1.078449
+# 1.111454
 plot(density(panel_censor$ratio_CIF_r))
 plot(density(panel_censor$ratio_CIF_p))
 
@@ -446,11 +479,13 @@ fit_censor_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
                      ln.FutImport_misrep +
                      ihs.ReExport_misrep_r +
                      ln.ratio_CIF_r_lag +
-                     tariff,
+                     tariff + 
+                     rCorruption + pCorruption +
+                     rPoorRegulation + pPoorRegulation,
                    data = panel_censor)
 summary(fit_censor_r)
 mean(exp(fitted(fit_censor_r)))
-# 1.03346
+# 1.048581
 
 fit_censor_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
                      contig + 
@@ -459,11 +494,13 @@ fit_censor_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
                      ln.FutExport_misrep +
                      ihs.ReExport_misrep_p +
                      ln.ratio_CIF_p_lag +
-                     tariff,
+                     tariff + 
+                     rCorruption + pCorruption +
+                     rPoorRegulation + pPoorRegulation,
                    data = panel_censor)
 summary(fit_censor_p)
 mean(exp(fitted(fit_censor_p)))
-# 1.033205
+# 1.064791
 
 panel <- panel_censor
 fit_r <- fit_censor_r
@@ -473,11 +510,12 @@ rm(fit_censor_r, fit_censor_p, panel_censor)
 
 
 # .. Compute fitted values when predictors are 0 ####
+IFF.preds <- c("tariff", "rCorruption", "pCorruption",
+               "rPoorRegulation", "pPoorRegulation")
+
 coef <- coef(fit_r)
 for (v in 1:length(coef)){
-if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit_r)["tariff"]
-  } else {
+  if (!(names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
 }
@@ -486,9 +524,7 @@ panel$fitted_IFF_r <- as.numeric(exp(model.matrix(fit_r) %*% coef))
 
 coef <- coef(fit_p)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit_p)["tariff"]
-  } else {
+  if (!(names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
 }
@@ -497,25 +533,23 @@ panel$fitted_IFF_p <- as.numeric(exp(model.matrix(fit_p) %*% coef))
 
 coef <- coef(fit_r)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
+  if ((names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
-
 }
 coef
 panel$fitted_nonIFF_r <- as.numeric(exp(model.matrix(fit_r) %*% coef))
 
 coef <- coef(fit_p)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
+  if ((names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
-  
 }
 coef
 panel$fitted_nonIFF_p <- as.numeric(exp(model.matrix(fit_p) %*% coef))
 
-rm(coef, v)
+rm(coef, v, IFF.preds)
 
 
 # .. Compute FOB imports ####
@@ -574,7 +608,7 @@ panel <- panel %>%
   mutate(rep_dist_r = abs(log(FOB_Import/pNetExport_value))) %>%
   filter(is.finite(rep_dist_r))
 nrow(panel)
-# 1298195
+# 668543
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -632,7 +666,7 @@ panel <- panel %>%
   mutate(rep_dist_p = abs(log(NetExport_value/pFOB_Import))) %>%
   filter(is.finite(rep_dist_p))
 nrow(panel)
-# 3309037
+# 668543
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -748,11 +782,11 @@ save(panel_lo, file = "Results/panel_lo.Rdata")
 load("Data/Panel/panel_nooutliers.Rdata")
 
 nrow(panel)
-# 3309037
+# 1801269
 max(panel$ratio_CIF_r)
-#  9979.673
+#  3427709
 max(panel$ratio_CIF_p)
-#  9988.626
+#  281442085
 
 fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               contig + 
@@ -761,11 +795,13 @@ fit_r <- lm(ln.ratio_CIF_r ~ dist + dist.sq +
               ln.FutImport_misrep +
               ihs.ReExport_misrep_r +
               ln.ratio_CIF_r_lag +
-              tariff,
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 summary(fit_r)
 mean(exp(fitted(fit_r)))
-# 3.05781
+# 3.605966
 
 fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               contig + 
@@ -774,19 +810,22 @@ fit_p <- lm(ln.ratio_CIF_p ~ dist + dist.sq +
               ln.FutExport_misrep +
               ihs.ReExport_misrep_p +
               ln.ratio_CIF_p_lag +
-              tariff,
+              tariff + 
+              rCorruption + pCorruption +
+              rPoorRegulation + pPoorRegulation,
             data = panel)
 summary(fit_p)
 mean(exp(fitted(fit_p)))
-# 3.27754
+# 7.404523
 
 
 # .. Compute fitted values when predictors are 0 ####
+IFF.preds <- c("tariff", "rCorruption", "pCorruption",
+               "rPoorRegulation", "pPoorRegulation")
+
 coef <- coef(fit_r)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit_r)["tariff"]
-  } else {
+  if (!(names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
 }
@@ -795,9 +834,7 @@ panel$fitted_IFF_r <- as.numeric(exp(model.matrix(fit_r) %*% coef))
 
 coef <- coef(fit_p)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
-    coef[v] <- coef(fit_p)["tariff"]
-  } else {
+  if (!(names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
 }
@@ -806,25 +843,23 @@ panel$fitted_IFF_p <- as.numeric(exp(model.matrix(fit_p) %*% coef))
 
 coef <- coef(fit_r)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
+  if ((names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
-  
 }
 coef
 panel$fitted_nonIFF_r <- as.numeric(exp(model.matrix(fit_r) %*% coef))
 
 coef <- coef(fit_p)
 for (v in 1:length(coef)){
-  if (names(coef[v]) == "tariff"){
+  if ((names(coef)[v] %in% IFF.preds)){
     coef[v] <- 0
   }
-  
 }
 coef
 panel$fitted_nonIFF_p <- as.numeric(exp(model.matrix(fit_p) %*% coef))
 
-rm(coef, v)
+rm(coef, v, IFF.preds)
 
 
 # .. Compute FOB imports ####
@@ -883,7 +918,7 @@ panel <- panel %>%
   mutate(rep_dist_r = abs(log(FOB_Import/pNetExport_value))) %>%
   filter(is.finite(rep_dist_r))
 nrow(panel)
-# 3309037
+# 1801269
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -941,7 +976,7 @@ panel <- panel %>%
   mutate(rep_dist_p = abs(log(NetExport_value/pFOB_Import))) %>%
   filter(is.finite(rep_dist_p))
 nrow(panel)
-# 1298195
+# 1801269
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -1086,7 +1121,7 @@ all <- full_join(panel_lo %>%
                         "partner", "pRegion", "pIncome",
                         "section.code", "section"))
 nrow(all)
-# 3309037
+# 1801269
 
 # all <- all %>%
 #   filter(complete.cases(Imp_IFF_lo, pExp_IFF_lo, Imp_IFF_hi, pExp_IFF_hi))
