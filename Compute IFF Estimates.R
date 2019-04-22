@@ -49,8 +49,8 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
-setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
-#setwd("/home/alice/IFFe/") # Virtual server
+#setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
+setwd("/home/alice/IFFe/") # Virtual server
 library(car)
 library(kableExtra)
 library(lfe)
@@ -954,6 +954,7 @@ panel_mirror <- panel %>%
          partner, partner.ISO, pRegion, pIncome,
          commodity.code, year,
          section.code, section,
+         SITC.code, SITC.section,
          Exp_IFF_lo)
 
 panel_mirror$id <- paste(panel_mirror$partner.ISO,
@@ -977,7 +978,9 @@ panel <- full_join(panel, panel_mirror,
                           "year" = "year",
                           "commodity.code" = "commodity.code",
                           "section.code" = "section.code",
-                          "section" = "section"))
+                          "section" = "section",
+                          "SITC.code" = "SITC.code",
+                          "SITC.section" = "SITC.section"))
 
 panel %>%
   filter(duplicated(panel$id)) %>% nrow
@@ -1306,6 +1309,7 @@ panel_mirror <- panel %>%
          partner, partner.ISO, pRegion, pIncome,
          commodity.code, year,
          section.code, section,
+         SITC.code, SITC.section,
          Exp_IFF_hi)
 
 panel_mirror$id <- paste(panel_mirror$partner.ISO,
@@ -1329,7 +1333,9 @@ panel <- full_join(panel, panel_mirror,
                           "year" = "year",
                           "commodity.code" = "commodity.code",
                           "section.code" = "section.code",
-                          "section" = "section"))
+                          "section" = "section",
+                          "SITC.code" = "SITC.code",
+                          "SITC.section" = "SITC.section"))
 
 panel %>%
   filter(duplicated(panel$id)) %>% nrow
@@ -1350,33 +1356,39 @@ all <- full_join(panel_lo %>%
                           reporter, rRegion, rIncome,
                           partner, pRegion, pIncome,
                           section.code, section,
+                          SITC.code, SITC.section,
                           Imp_IFF_lo, pExp_IFF_lo),
                  panel_hi %>%
                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
                           reporter, rRegion, rIncome,
                           partner, pRegion, pIncome,
                           section.code, section,
+                          SITC.code, SITC.section,
                           Imp_IFF_hi, pExp_IFF_hi),
                  by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
                         "reporter", "rRegion", "rIncome",
                         "partner", "pRegion", "pIncome",
-                        "section.code", "section"))
+                        "section.code", "section",
+                        "SITC.code", "SITC.section"))
 # all <- full_join(panel_lo %>%
 #                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
 #                           reporter, rRegion, rIncome,
 #                           partner, pRegion, pIncome,
 #                           section.code, section,
+#                           SITC.code, SITC.section,
 #                           Imp_IFF_lo, Exp_IFF_lo),
 #                  panel_hi %>%
 #                    select(id, reporter.ISO, partner.ISO, commodity.code, year,
 #                           reporter, rRegion, rIncome,
 #                           partner, pRegion, pIncome,
 #                           section.code, section,
+#                           SITC.code, SITC.section,
 #                           Imp_IFF_hi, Exp_IFF_hi),
 #                  by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
 #                         "reporter", "rRegion", "rIncome",
 #                         "partner", "pRegion", "pIncome",
-#                         "section.code", "section"))
+#                         "section.code", "section",
+#                         "SITC.code", "SITC.section"))
 nrow(all)
 # 6248254
 
@@ -1835,7 +1847,7 @@ GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                        "section" = "section"))
 rm(GER_Imp_Sect, GER_Exp_Sect)
 
-GER_Orig_Sect <- GER_Orig_Sect_Year %>%
+GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
