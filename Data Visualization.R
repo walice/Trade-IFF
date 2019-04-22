@@ -15,16 +15,26 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
-setwd("/home/alice/IFFe/") # Virtual server
+setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
+#setwd("/home/alice/IFFe/") # Virtual server
 library(geosphere)
 library(ggmap)
 # library(raster) # For raster data
 # library(sf) # For vector data
 # library(spData)
 # library(spDataLarge)
-# library(tidyverse)
+library(tidyverse)
 # library(tmap)
 library(xlsx)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# CODES MASTERLIST          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
+  mutate_all(as.character)
 
 
 
@@ -88,11 +98,11 @@ g <- ggplot(GER_Year_Africa %>%
             aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Gross outflows",
-       x = "Year", y = "Illicit flow in billion USD") +
+       x = "", y = "Illicit flow in billion USD") +
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
@@ -152,11 +162,11 @@ g <- ggplot(Net_Year_Africa %>%
             aes(x = year, y = value, fill = variable)) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Net illicit flows",
-       x = "Year", y = "Illicit flow in billion USD") +
+       x = "", y = "Illicit flow in billion USD") +
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
@@ -221,8 +231,6 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Merge geographic data ####
-codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
-  mutate_all(as.character)
 map <- map_data("world")
 map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3, UN_Region),
                  by = c("region" = "Country")) %>%
@@ -239,7 +247,7 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     panel.grid = element_blank()) 
 
 
-# .. Average Gross IFF
+# .. Average Gross IFF ####
 load("Results/Current Version/GER_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, GER_Orig_Avg_Africa,
@@ -274,7 +282,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Average Net IFF
+# .. Average Net IFF ####
 load("Results/Current Version/Net_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, Net_Orig_Avg_Africa,
@@ -311,103 +319,7 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# COUNTRY OUTLINES          ####
-## ## ## ## ## ## ## ## ## ## ##
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "EGY"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/Egypt outline.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "NGA"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/Nigeria outline.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "SEN"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/Senegal outline.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "ZAF"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/South Africa outline.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "TUN"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/Tunisia outline.png",
-       width = 6, height = 5, units = "in")
-
-g <- ggplot() + 
-  geom_polygon(data = map %>% filter(ISO3166.3 == "TZA"),
-               aes(x = long, y = lat, group = group), color = "white") + 
-  coord_fixed(1.3) +
-  theme_bw() + 
-  ditch_axes 
-ggsave(g,
-       file = "Figures/Maps/Tanzania outline.png",
-       width = 6, height = 5, units = "in")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# DESTINATION PIE CHARTS    ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Results/Current Version/GER_Dest_Africa.Rdata")
-
-Destinations <- GER_Dest_Africa %>%
-  group_by(pRegion) %>%
-  summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
-            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
-  ungroup() %>%
-  mutate(Pct_IFF_lo = Tot_IFF_lo / sum(Tot_IFF_lo) * 100,
-         Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
-
-g <- ggplot(Destinations,
-       aes(x = "", y = Pct_IFF_hi, fill = pRegion)) +
-  geom_bar(width = 1, stat = "identity") +
-  coord_polar("y", start = 0) +
-  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of outflows, 2000-2016") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Destinations pie chart.png",
-       width = 6, height = 5, units = "in")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# ORIGIN PIE CHART          ####
+# ORIGINS PIE CHART         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Results/Current Version/GER_Orig_Sum_Africa.Rdata")
@@ -436,6 +348,36 @@ g <- ggplot(Origins,
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Origins pie chart.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# DESTINATIONS PIE CHART    ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Current Version/GER_Dest_Africa.Rdata")
+
+Destinations <- GER_Dest_Africa %>%
+  group_by(pRegion) %>%
+  summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_lo = Tot_IFF_lo / sum(Tot_IFF_lo) * 100,
+         Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
+
+g <- ggplot(Destinations,
+       aes(x = "", y = Pct_IFF_hi, fill = pRegion)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of outflows, 2000-2016") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Destinations pie chart.png",
        width = 6, height = 5, units = "in")
 
 
@@ -636,6 +578,7 @@ plot_my_connection=function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
   }
 }
 
+
 # .. Egypt destinations ####
 viz <- GER_Orig_Dest_Africa %>%
   filter(reporter.ISO == "EGY") %>%
@@ -784,3 +727,69 @@ viz2 <- viz[c(8,6),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# COUNTRY OUTLINES          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "EGY"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/Egypt outline.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "NGA"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/Nigeria outline.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "SEN"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/Senegal outline.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "ZAF"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/South Africa outline.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "TUN"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/Tunisia outline.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "TZA"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Maps/Tanzania outline.png",
+       width = 6, height = 5, units = "in")

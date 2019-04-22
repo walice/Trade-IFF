@@ -49,7 +49,8 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
-setwd("/home/alice/IFFe/") # Virtual server
+setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
+#setwd("/home/alice/IFFe/") # Virtual server
 library(car)
 library(kableExtra)
 library(lfe)
@@ -1945,24 +1946,24 @@ write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
 
 pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
 
-net.avg <- Net_Orig_Avg_Africa %>%
-  filter(reporter.ISO %in% pilots) %>%
-  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
-kable(net.avg, format = "rst")
-
 ger.avg <- GER_Orig_Avg_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
   select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
-kable(ger.avg, format = "rst")
+kable(ger.avg, digits = 2, format = "rst")
 
-net.sum <- Net_Orig_Sum_Africa %>%
+net.avg <- Net_Orig_Avg_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
   select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
-kable(net.sum, format = "rst")
+kable(net.avg, digits = 2, format = "rst")
 
 ger.sum <- GER_Orig_Sum_Africa %>%
   filter(reporter.ISO %in% pilots) %>%
   select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
-kable(ger.sum, format = "rst")
+kable(ger.sum, digits = 2, format = "rst")
+
+net.sum <- Net_Orig_Sum_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(net.sum, digits = 2, format = "rst")
 
 rm(net.avg, ger.avg, net.sum, ger.sum)
