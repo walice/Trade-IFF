@@ -399,11 +399,11 @@ ggplot(GER_Sect_Africa,
 # TOP SECTORS FOR PILOTS    ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Orig_Sect_Africa.Rdata")
+load("Results/Current Version/GER_Orig_Sect_Sum_Africa.Rdata")
 
 
 # .. Egypt sectors ####
-EGY <- GER_Orig_Sect_Africa %>%
+EGY <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "EGY")
 
 viz <- EGY %>%
@@ -422,12 +422,12 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Egypt top 5 sectors GER high.png",
+       file = "Figures/Egypt top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Nigeria sectors ####
-NGA <- GER_Orig_Sect_Africa %>%
+NGA <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "NGA")
 
 viz <- NGA %>%
@@ -446,12 +446,12 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Nigeria top 5 sectors GER high.png",
+       file = "Figures/Nigeria top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Senegal sectors ####
-SEN <- GER_Orig_Sect_Africa %>%
+SEN <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "SEN")
 
 viz <- SEN %>%
@@ -470,12 +470,12 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Senegal top 5 sectors GER high.png",
+       file = "Figures/Senegal top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
 
 
 # .. South Africa sectors ####
-ZAF <- GER_Orig_Sect_Africa %>%
+ZAF <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "ZAF")
 
 viz <- ZAF %>%
@@ -494,12 +494,12 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/South Africa top 5 sectors GER high.png",
+       file = "Figures/South Africa top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Tanzania sectors ####
-TZA <- GER_Orig_Sect_Africa %>%
+TZA <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "TZA")
 
 viz <- TZA %>%
@@ -518,12 +518,12 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Tanzania top 5 sectors GER high.png",
+       file = "Figures/Tanzania top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Tunisia sectors ####
-TUN <- GER_Orig_Sect_Africa %>%
+TUN <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "TUN")
 
 viz <- TUN %>%
@@ -542,8 +542,161 @@ g <- ggplot(viz,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Tunisia top 5 sectors GER high.png",
+       file = "Figures/Tunisia top 5 sectors GER sum high.png",
        width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# TOP SECTORS, AVERAGE      ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Current Version/GER_Orig_Sect_Avg_Africa.Rdata")
+
+
+# .. Egypt sectors ####
+EGY <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "EGY")
+
+viz <- EGY %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Egypt",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Egypt top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Nigeria sectors ####
+NGA <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "NGA")
+
+viz <- NGA %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Nigeria",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Nigeria top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Senegal sectors ####
+SEN <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "SEN")
+
+viz <- SEN %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9, 2), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Senegal",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Senegal top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. South Africa sectors ####
+ZAF <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "ZAF")
+
+viz <- ZAF %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in South Africa",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/South Africa top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Tanzania sectors ####
+TZA <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "TZA")
+
+viz <- TZA %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9, 2), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Tanzania",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Tanzania top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Tunisia sectors ####
+TUN <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "TUN")
+
+viz <- TUN %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Tunisia",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Tunisia top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
 
 
 
