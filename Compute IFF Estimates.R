@@ -1400,6 +1400,8 @@ panel <- all
 rm(all, FE, FE.out, fit)
 rm(panel_hi, panel_lo)
 
+save(panel, file = "Results/panel_results.Rdata")
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -1847,6 +1849,18 @@ GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                        "section" = "section"))
 rm(GER_Imp_Sect, GER_Exp_Sect)
 
+GER_Orig_Sect_Avg <- GER_Orig_Sect_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+
 GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1863,11 +1877,15 @@ GER_Orig_Sect_Year_Africa <- GER_Orig_Sect_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-GER_Orig_Sect_Africa <- GER_Orig_Sect %>%
+GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-GER_Sect_Africa <- GER_Orig_Sect_Africa %>%
+GER_Orig_Sect_Sum_Africa <- GER_Orig_Sect_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+GER_Sect_Africa <- GER_Orig_Sect_Sum_Africa %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1882,8 +1900,11 @@ GER_Sect_Africa <- GER_Orig_Sect_Africa %>%
 save(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/GER_Orig_Sect_Year_Africa.Rdata")
 write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/GER_Orig_Sect_Year_Africa.csv",
           row.names = F)
-save(GER_Orig_Sect_Africa, file = "Results/Current Version/GER_Orig_Sect_Africa.Rdata")
-write.csv(GER_Orig_Sect_Africa, file = "Results/Current Version/GER_Orig_Sect_Africa.csv",
+save(GER_Orig_Sect_Avg_Africa, file = "Results/Current Version/GER_Orig_Sect_Avg_Africa.Rdata")
+write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Current Version/GER_Orig_Sect_Avg_Africa.csv",
+          row.names = F)
+save(GER_Orig_Sect_Sum_Africa, file = "Results/Current Version/GER_Orig_Sect_Sum_Africa.Rdata")
+write.csv(GER_Orig_Sect_Sum_Africa, file = "Results/Current Version/GER_Orig_Sect_Sum_Africa.csv",
           row.names = F)
 save(GER_Sect_Africa, file = "Results/Current Version/GER_Sect_Africa.Rdata")
 write.csv(GER_Sect_Africa, file = "Results/Current Version/GER_Sect_Africa.csv",
@@ -1908,7 +1929,19 @@ Net_Orig_Sect_Year <- panel %>%
             Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
-Net_Orig_Sect <- Net_Orig_Sect_Year %>%
+Net_Orig_Sect_Avg <- Net_Orig_Sect_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+
+Net_Orig_Sect_Sum <- Net_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1924,11 +1957,15 @@ Net_Orig_Sect_Year_Africa <- Net_Orig_Sect_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-Net_Orig_Sect_Africa <- Net_Orig_Sect %>%
+Net_Orig_Sect_Avg_Africa <- Net_Orig_Sect_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-Net_Sect_Africa <- Net_Orig_Sect_Africa %>%
+Net_Orig_Sect_Sum_Africa <- Net_Orig_Sect_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+Net_Sect_Africa <- Net_Orig_Sect_Sum_Africa %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1943,8 +1980,11 @@ Net_Sect_Africa <- Net_Orig_Sect_Africa %>%
 save(Net_Orig_Sect_Year_Africa, file = "Results/Current Version/Net_Orig_Sect_Year_Africa.Rdata")
 write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/Net_Orig_Sect_Year_Africa.csv",
           row.names = F)
-save(Net_Orig_Sect_Africa, file = "Results/Current Version/Net_Orig_Sect_Africa.Rdata")
-write.csv(Net_Orig_Sect_Africa, file = "Results/Current Version/Net_Orig_Sect_Africa.csv",
+save(Net_Orig_Sect_Avg_Africa, file = "Results/Current Version/Net_Orig_Sect_Avg_Africa.Rdata")
+write.csv(Net_Orig_Sect_Avg_Africa, file = "Results/Current Version/Net_Orig_Sect_Avg_Africa.csv",
+          row.names = F)
+save(Net_Orig_Sect_Sum_Africa, file = "Results/Current Version/Net_Orig_Sect_Sum_Africa.Rdata")
+write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Current Version/Net_Orig_Sect_Sum_Africa.csv",
           row.names = F)
 save(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.Rdata")
 write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
