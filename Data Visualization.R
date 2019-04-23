@@ -328,7 +328,8 @@ Origins <- left_join(GER_Orig_Sum_Africa, codes %>%
                        select(ISO3166.3, UN_Sub.region, UN_Intermediate_Region) %>%
                        distinct(ISO3166.3, .keep_all = TRUE),
                      by = c("reporter.ISO" = "ISO3166.3")) %>%
-  mutate(Region = ifelse(UN_Intermediate_Region == "", UN_Sub.region, UN_Intermediate_Region)) %>%
+  mutate(Region = ifelse(UN_Intermediate_Region == "", UN_Sub.region, UN_Intermediate_Region),
+         Region = ifelse(UN_Intermediate_Region == "Middle Africa", "Central Africa", Region)) %>%
   group_by(Region) %>%
   summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
