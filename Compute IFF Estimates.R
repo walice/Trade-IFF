@@ -1993,6 +1993,18 @@ write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# HEADLINE FIGURES          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+(Gross.IFF.per.year <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
+# 83.1738
+
+(Net.IFF.per.year <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
+# 26.42522
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # PILOT COUNTRY RESULTS     ####
 ## ## ## ## ## ## ## ## ## ## ##
 
