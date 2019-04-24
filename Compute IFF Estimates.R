@@ -1527,7 +1527,19 @@ GER_Orig_Sum <- GER_Orig_Year %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
-GER_Orig_Dest <- GER_Orig_Dest_Year %>%
+GER_Orig_Dest_Avg <- GER_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, partner, partner.ISO, pRegion) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+
+GER_Orig_Dest_Sum <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, partner, partner.ISO, pRegion) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1543,11 +1555,15 @@ GER_Orig_Dest_Year_Africa <- GER_Orig_Dest_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-GER_Orig_Dest_Africa <- GER_Orig_Dest %>%
+GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
-GER_Dest_Africa <- GER_Orig_Dest_Africa %>%
+GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+GER_Dest_Africa <- GER_Orig_Dest_Sum_Africa %>%
   group_by(partner, partner.ISO, pRegion) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1605,8 +1621,11 @@ write.csv(GER_Orig_Avg_Africa, file = "Results/Current Version/GER_Orig_Avg_Afri
 save(GER_Orig_Sum_Africa, file = "Results/Current Version/GER_Orig_Sum_Africa.Rdata")
 write.csv(GER_Orig_Sum_Africa, file = "Results/Current Version/GER_Orig_Sum_Africa.csv",
           row.names = F)
-save(GER_Orig_Dest_Africa, file = "Results/Current Version/GER_Orig_Dest_Africa.Rdata")
-write.csv(GER_Orig_Dest_Africa, file = "Results/Current Version/GER_Orig_Dest_Africa.csv",
+save(GER_Orig_Dest_Avg_Africa, file = "Results/Current Version/GER_Orig_Dest_Avg_Africa.Rdata")
+write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Current Version/GER_Orig_Dest_Avg_Africa.csv",
+          row.names = F)
+save(GER_Orig_Dest_Sum_Africa, file = "Results/Current Version/GER_Orig_Dest_Sum_Africa.Rdata")
+write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Current Version/GER_Orig_Dest_Sum_Africa.csv",
           row.names = F)
 save(GER_Dest_Africa, file = "Results/Current Version/GER_Dest_Africa.Rdata")
 write.csv(GER_Dest_Africa, file = "Results/Current Version/GER_Dest_Africa.csv",
@@ -1996,11 +2015,29 @@ write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
 # HEADLINE FIGURES          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-(Gross.IFF.per.year <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
+(Cumulative.gross.hi <- sum(GER_Year_Africa$Tot_IFF_hi_bn))
+# 1203.816
+
+(Cumulative.gross.lo <- sum(GER_Year_Africa$Tot_IFF_lo_bn))
+# 338.0475
+
+(Cumulative.net.hi <- sum(Net_Year_Africa$Tot_IFF_hi_bn))
+# 361.8016
+
+(Cumulative.net.lo <- sum(Net_Year_Africa$Tot_IFF_lo_bn))
+# 138.6011
+
+(Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
 # 83.1738
 
-(Net.IFF.per.year <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
+(Gross.IFF.per.year.lo <- sum(GER_Orig_Avg_Africa$Tot_IFF_lo_bn))
+# 22.57574
+
+(Net.IFF.per.year.hi <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
 # 26.42522
+
+(Net.IFF.per.year.lo <- sum(Net_Orig_Avg_Africa$Tot_IFF_lo_bn))
+# 9.155436
 
 
 
