@@ -583,6 +583,30 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Sudan sectors ####
+SDN <- GER_Orig_Sect_Sum_Africa %>%
+  filter(reporter.ISO == "SDN")
+
+viz <- SDN %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Sudan",
+       subtitle = "Cumulative gross outflows over 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Sudan top 5 sectors GER sum high pie chart.png",
+       width = 6, height = 5, units = "in")
+
+
 
 ## ## ## ## ## ## ## ## ## ## ##
 # TOP AVERAGE SECTORS PIE   ####
@@ -732,6 +756,30 @@ g <- ggplot(viz,
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Tunisia top 5 sectors GER average high pie chart.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sudan sectors ####
+SDN <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "SDN")
+
+viz <- SDN %>%
+  top_n(5, Tot_IFF_hi)
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), "bn")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Sudan",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Sudan top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
 
@@ -887,6 +935,31 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Sudan ####
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "SDN") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Sudan",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Sudan top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+
 ## ## ## ## ## ## ## ## ## ## ##
 # TOP SECTORS               ####
 ## ## ## ## ## ## ## ## ## ## ##
@@ -1038,6 +1111,30 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Sudan ####
+viz <- GER_Orig_Sect_Avg_Africa %>%
+  filter(reporter.ISO == "SDN") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(section = factor(section,
+                          levels = section[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = section)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 sectors in Sudan",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Sudan top 5 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
 
 ## ## ## ## ## ## ## ## ## ## ##
 # TOP FLOWS MAPS            ####
@@ -1058,14 +1155,14 @@ GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum_Africa %>%
   rename(pLongitude = Longitude,
          pLatitude = Latitude)
 
-plot_my_connection=function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
-  inter <- gcIntermediate(c(dep_lon, dep_lat), c(arr_lon, arr_lat), n=50, addStartEnd=TRUE, breakAtDateLine=F)             
-  inter=data.frame(inter)
-  diff_of_lon=abs(dep_lon) + abs(arr_lon)
-  if(diff_of_lon > 180){
-    lines(subset(inter, lon>=0), ...)
-    lines(subset(inter, lon<0), ...)
-  }else{
+plot_my_connection = function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
+  inter <- gcIntermediate(c(dep_lon, dep_lat), c(arr_lon, arr_lat), n = 50, addStartEnd = TRUE, breakAtDateLine = F)             
+  inter = data.frame(inter)
+  diff_of_lon = abs(dep_lon) + abs(arr_lon)
+  if (diff_of_lon > 180) {
+    lines(subset(inter, lon >= 0), ...)
+    lines(subset(inter, lon < 0), ...)
+  } else {
     lines(inter, ...)
   }
 }
@@ -1216,6 +1313,35 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 viz2 <- viz[c(2),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
 viz2 <- viz[c(8,6),]
+text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
+title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
+dev.off()
+
+
+
+# .. Sudan destinations ####
+viz <- GER_Orig_Dest_Sum_Africa %>%
+  filter(reporter.ISO == "SDN") %>%
+  top_n(10, Tot_IFF_hi) %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
+
+pdf("Figures/Flow map Sudan.pdf", 
+    height = 4.5, width = 6)
+map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+    mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
+for(i in 1:nrow(viz)){
+  plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
+                     col = "skyblue", lwd = viz$scale[i])
+}
+points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
+points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
+viz2 <- viz[-c(10,4,3,9,7),]
+text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
+viz2 <- viz[c(3),]
+text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
+viz2 <- viz[c(10,9),]
+text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
+viz2 <- viz[c(4,7),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
