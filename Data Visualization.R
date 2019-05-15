@@ -423,13 +423,29 @@ ggsave(g,
 # SECTOR GRAPHS             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Sect_Africa.Rdata")
+load("Results/Current Version/GER_Sect_Avg_Africa.Rdata")
 
-ggplot(GER_Sect_Africa,
-       aes(x = "", y = Tot_IFF_lo_bn, fill = section)) +
-  geom_bar(width = 1, stat = "identity") +
-  theme(legend.position="bottom")
+viz <- GER_Sect_Avg_Africa %>%
+  top_n(10, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(section = factor(section,
+                          levels = section[order(Tot_IFF_hi_bn, decreasing = T)]))
 
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = section)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5),
+            size = 3) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 10 sectors in Africa",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Top 10 sectors GER average high.png",
+       width = 6, height = 5, units = "in")
 
 
 ## ## ## ## ## ## ## ## ## ## ##
