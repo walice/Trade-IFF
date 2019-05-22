@@ -973,32 +973,32 @@ GER_Africa <- GER_Year_Africa %>%
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T))
 
-save(GER_Orig_Dest_Year_Africa, file = "Results/Current Version/GER_Orig_Dest_Year_Africa.Rdata")
-write.csv(GER_Orig_Dest_Year_Africa, file = "Results/Current Version/GER_Orig_Dest_Year_Africa.csv",
+save(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.Rdata")
+write.csv(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.csv",
           row.names = F)
-save(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.Rdata")
-write.csv(GER_Orig_Year_Africa, file = "Results/Current Version/GER_Orig_Year_Africa.csv",
+save(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
+write.csv(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.csv",
           row.names = F)
-save(GER_Orig_Avg_Africa, file = "Results/Current Version/GER_Orig_Avg_Africa.Rdata")
-write.csv(GER_Orig_Avg_Africa, file = "Results/Current Version/GER_Orig_Avg_Africa.csv",
+save(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
+write.csv(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.csv",
           row.names = F)
-save(GER_Orig_Sum_Africa, file = "Results/Current Version/GER_Orig_Sum_Africa.Rdata")
-write.csv(GER_Orig_Sum_Africa, file = "Results/Current Version/GER_Orig_Sum_Africa.csv",
+save(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
+write.csv(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.csv",
           row.names = F)
-save(GER_Orig_Dest_Avg_Africa, file = "Results/Current Version/GER_Orig_Dest_Avg_Africa.Rdata")
-write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Current Version/GER_Orig_Dest_Avg_Africa.csv",
+save(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
+write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.csv",
           row.names = F)
-save(GER_Orig_Dest_Sum_Africa, file = "Results/Current Version/GER_Orig_Dest_Sum_Africa.Rdata")
-write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Current Version/GER_Orig_Dest_Sum_Africa.csv",
+save(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
+write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.csv",
           row.names = F)
-save(GER_Dest_Africa, file = "Results/Current Version/GER_Dest_Africa.Rdata")
-write.csv(GER_Dest_Africa, file = "Results/Current Version/GER_Dest_Africa.csv",
+save(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.Rdata")
+write.csv(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.csv",
           row.names = F)
-save(GER_Year_Africa, file = "Results/Current Version/GER_Year_Africa.Rdata")
-write.csv(GER_Year_Africa, file = "Results/Current Version/GER_Year_Africa.csv",
+save(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.Rdata")
+write.csv(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.csv",
           row.names = F)
-save(GER_Africa, file = "Results/Current Version/GER_Africa.Rdata")
-write.csv(GER_Africa, file = "Results/Current Version/GER_Africa.csv",
+save(GER_Africa, file = "Results/Summary data-sets/GER_Africa.Rdata")
+write.csv(GER_Africa, file = "Results/Summary data-sets/GER_Africa.csv",
           row.names = F)
 
 
@@ -1115,29 +1115,29 @@ Net_Africa <- Net_Year_Africa %>%
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T))
 
-save(Net_Orig_Dest_Year_Africa, file = "Results/Current Version/Net_Orig_Dest_Year_Africa.Rdata")
-write.csv(Net_Orig_Dest_Year_Africa, file = "Results/Current Version/Net_Orig_Dest_Year_Africa.csv",
+save(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.Rdata")
+write.csv(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.csv",
           row.names = F)
-save(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.Rdata")
-write.csv(Net_Orig_Year_Africa, file = "Results/Current Version/Net_Orig_Year_Africa.csv",
+save(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
+write.csv(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.csv",
           row.names = F)
-save(Net_Orig_Avg_Africa, file = "Results/Current Version/Net_Orig_Avg_Africa.Rdata")
-write.csv(Net_Orig_Avg_Africa, file = "Results/Current Version/Net_Orig_Avg_Africa.csv",
+save(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.Rdata")
+write.csv(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.csv",
           row.names = F)
-save(Net_Orig_Sum_Africa, file = "Results/Current Version/Net_Orig_Sum_Africa.Rdata")
-write.csv(Net_Orig_Sum_Africa, file = "Results/Current Version/Net_Orig_Sum_Africa.csv",
+save(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.Rdata")
+write.csv(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.csv",
           row.names = F)
-save(Net_Orig_Dest_Africa, file = "Results/Current Version/Net_Orig_Dest_Africa.Rdata")
-write.csv(Net_Orig_Dest_Africa, file = "Results/Current Version/Net_Orig_Dest_Africa.csv",
+save(Net_Orig_Dest_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Africa.Rdata")
+write.csv(Net_Orig_Dest_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Africa.csv",
           row.names = F)
-save(Net_Dest_Africa, file = "Results/Current Version/Net_Dest_Africa.Rdata")
-write.csv(Net_Dest_Africa, file = "Results/Current Version/Net_Dest_Africa.csv",
+save(Net_Dest_Africa, file = "Results/Summary data-sets/Net_Dest_Africa.Rdata")
+write.csv(Net_Dest_Africa, file = "Results/Summary data-sets/Net_Dest_Africa.csv",
           row.names = F)
-save(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.Rdata")
-write.csv(Net_Year_Africa, file = "Results/Current Version/Net_Year_Africa.csv",
+save(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.Rdata")
+write.csv(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.csv",
           row.names = F)
-save(Net_Africa, file = "Results/Current Version/Net_Africa.Rdata")
-write.csv(Net_Africa, file = "Results/Current Version/Net_Africa.csv",
+save(Net_Africa, file = "Results/Summary data-sets/Net_Africa.Rdata")
+write.csv(Net_Africa, file = "Results/Summary data-sets/Net_Africa.csv",
           row.names = F)
 
 
@@ -1269,20 +1269,20 @@ GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
-save(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/GER_Orig_Sect_Year_Africa.Rdata")
-write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/GER_Orig_Sect_Year_Africa.csv",
+save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
+write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
           row.names = F)
-save(GER_Orig_Sect_Avg_Africa, file = "Results/Current Version/GER_Orig_Sect_Avg_Africa.Rdata")
-write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Current Version/GER_Orig_Sect_Avg_Africa.csv",
+save(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
+write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.csv",
           row.names = F)
-save(GER_Orig_Sect_Sum_Africa, file = "Results/Current Version/GER_Orig_Sect_Sum_Africa.Rdata")
-write.csv(GER_Orig_Sect_Sum_Africa, file = "Results/Current Version/GER_Orig_Sect_Sum_Africa.csv",
+save(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.Rdata")
+write.csv(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.csv",
           row.names = F)
-save(GER_Sect_Africa, file = "Results/Current Version/GER_Sect_Africa.Rdata")
-write.csv(GER_Sect_Africa, file = "Results/Current Version/GER_Sect_Africa.csv",
+save(GER_Sect_Africa, file = "Results/Summary data-sets/GER_Sect_Africa.Rdata")
+write.csv(GER_Sect_Africa, file = "Results/Summary data-sets/GER_Sect_Africa.csv",
           row.names = F)
-save(GER_Sect_Avg_Africa, file = "Results/Current Version/GER_Sect_Avg_Africa.Rdata")
-write.csv(GER_Sect_Avg_Africa, file = "Results/Current Version/GER_Sect_Avg_Africa.csv",
+save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
+write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
           row.names = F)
 
 
@@ -1344,17 +1344,17 @@ Net_Sect_Africa <- Net_Orig_Sect_Sum_Africa %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
-save(Net_Orig_Sect_Year_Africa, file = "Results/Current Version/Net_Orig_Sect_Year_Africa.Rdata")
-write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Current Version/Net_Orig_Sect_Year_Africa.csv",
+save(Net_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.Rdata")
+write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.csv",
           row.names = F)
-save(Net_Orig_Sect_Avg_Africa, file = "Results/Current Version/Net_Orig_Sect_Avg_Africa.Rdata")
-write.csv(Net_Orig_Sect_Avg_Africa, file = "Results/Current Version/Net_Orig_Sect_Avg_Africa.csv",
+save(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.Rdata")
+write.csv(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.csv",
           row.names = F)
-save(Net_Orig_Sect_Sum_Africa, file = "Results/Current Version/Net_Orig_Sect_Sum_Africa.Rdata")
-write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Current Version/Net_Orig_Sect_Sum_Africa.csv",
+save(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.Rdata")
+write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.csv",
           row.names = F)
-save(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.Rdata")
-write.csv(Net_Sect_Africa, file = "Results/Current Version/Net_Sect_Africa.csv",
+save(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.Rdata")
+write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv",
           row.names = F)
 
 
@@ -1415,4 +1415,4 @@ net.sum <- Net_Orig_Sum_Africa %>%
   select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
 kable(net.sum, digits = 2, format = "rst")
 
-rm(net.avg, ger.avg, net.sum, ger.sum)
+rm(net.avg, ger.avg, net.sum, ger.sum) 

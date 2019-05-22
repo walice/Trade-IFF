@@ -7,6 +7,28 @@
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
+# Codes Masterlist
+# Yearly IFF Africa
+# Yearly IFF Pilots
+# .. Line chart for gross estimates
+# .. Line chart for net estimates
+# .. Line chart for gross and net estimates
+# Average IFF Africa
+# .. Merge geographic data
+# .. Average gross IFF
+# .. Average net IFF
+# Origins and Destinations
+# .. Origins pie chart
+# .. Destinations pie chart
+# Sector Charts
+# .. Top 10 sectors in Africa
+# .. Pie charts of top cumulative outflows in pilots
+# .. Pie charts of top average outflows in pilots
+# .. Stacked bar charts of top average outflows in pilots
+# Destination Charts
+# .. Stacked bar charts of top average outflows in pilots
+# .. Flow maps of top total destinations in pilots
+# Country Outlines
 
 
 
@@ -19,12 +41,9 @@
 setwd("/home/alice/IFFe/") # Virtual server
 library(geosphere)
 library(ggmap)
-# library(raster) # For raster data
-# library(sf) # For vector data
-# library(spData)
-# library(spDataLarge)
+library(reshape2)
+library(scales)
 library(tidyverse)
-# library(tmap)
 library(xlsx)
 
 
@@ -39,11 +58,11 @@ codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# BAR CHARTS                ####
+# YEARLY IFF AFRICA         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Year_Africa.Rdata")
-load("Results/Current Version/Net_Year_Africa.Rdata")
+load("Results/Summary data-sets/GER_Year_Africa.Rdata")
+load("Results/Summary data-sets/Net_Year_Africa.Rdata")
 
 g <- ggplot(GER_Year_Africa %>% 
               melt(id.vars = "year") %>%
@@ -99,7 +118,8 @@ g <- ggplot(GER_Year_Africa %>%
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Gross outflows",
        x = "", y = "Illicit flow in billion USD") +
@@ -163,7 +183,8 @@ g <- ggplot(Net_Year_Africa %>%
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
   scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Net illicit flows",
        x = "", y = "Illicit flow in billion USD") +
@@ -176,7 +197,7 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# LINE CHARTS               ####
+# YEARLY IFF PILOTS         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
@@ -185,7 +206,7 @@ labels.grne <- c(GER_Tot_IFF_hi = "Gross estimates", Net_Tot_IFF_hi = "Net estim
 
 
 # .. Line chart for gross estimates ####
-load("Results/Current Version/GER_Orig_Year_Africa.Rdata")
+load("Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
 
 Pilot_Year <- GER_Orig_Year_Africa %>%
   filter(reporter.ISO %in% pilots)
@@ -197,18 +218,19 @@ g <- ggplot(Pilot_Year %>%
                 value = as.numeric(value),
                 reporter = as.factor(reporter))) +
   geom_line(aes(x = year, y = value/10^9, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
   facet_wrap(~variable, labeller = labeller(variable = labels.hilo)) +
   labs(title = "Gross yearly outflows in pilot countries",
        x = "Year",
        y = "Illicit flow in billion USD",
        color = "")
 ggsave(g,
-       file = "Figures/Gross Yearly Africa.png",
+       file = "Figures/Gross Yearly Pilots.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Line chart for net estimates ####
-load("Results/Current Version/Net_Orig_Year_Africa.Rdata")
+load("Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
 
 Pilot_Year <- Net_Orig_Year_Africa %>%
   filter(reporter.ISO %in% pilots)
@@ -220,13 +242,14 @@ g <- ggplot(Pilot_Year %>%
                      value = as.numeric(value),
                      reporter = as.factor(reporter))) +
   geom_line(aes(x = year, y = value/10^9, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
   facet_wrap(~variable, labeller = labeller(variable = labels.hilo)) +
   labs(title = "Net yearly flows in pilot countries",
        x = "Year",
        y = "Illicit flow in billion USD",
        color = "")
 ggsave(g,
-       file = "Figures/Net Yearly Africa.png",
+       file = "Figures/Net Yearly Pilots.png",
        width = 6, height = 5, units = "in") 
 
 
@@ -251,19 +274,20 @@ g <- ggplot(Pilot_Year %>%
            value = as.numeric(value),
            reporter = as.factor(reporter))) +
   geom_line(aes(x = year, y = value/10^9, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
   facet_wrap(~variable, labeller = labeller(variable = labels.grne)) +
   labs(title = "Yearly flows in pilot countries",
        x = "Year",
        y = "Illicit flow in billion USD",
        color = "")
 ggsave(g,
-       file = "Figures/Yearly pilot countries.png",
+       file = "Figures/Gross and Net Yearly Pilots.png",
        width = 6, height = 5, units = "in") 
 
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# CHOROPOLETHS              ####
+# AVERAGE IFF AFRICA        ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Merge geographic data ####
@@ -283,8 +307,8 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     panel.grid = element_blank()) 
 
 
-# .. Average Gross IFF ####
-load("Results/Current Version/GER_Orig_Avg_Africa.Rdata")
+# .. Average gross IFF ####
+load("Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, GER_Orig_Avg_Africa,
                  by = c("ISO3166.3" = "reporter.ISO"))
@@ -296,7 +320,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_gradient("IFF (billion USD)", low = "#56B1F7", high = "#132B43") +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Total outflows averaged over 2000-2016",
        subtitle = "Gross outflows, low estimate")
 ggsave(g,
@@ -310,7 +334,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_gradient("IFF (billion USD)", low = "#56B1F7", high = "#132B43") +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Total outflows averaged over 2000-2016",
        subtitle = "Gross outflows, high estimate")
 ggsave(g,
@@ -318,8 +342,8 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Average Net IFF ####
-load("Results/Current Version/Net_Orig_Avg_Africa.Rdata")
+# .. Average net IFF ####
+load("Results/Summary data-sets/Net_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, Net_Orig_Avg_Africa,
                  by = c("ISO3166.3" = "reporter.ISO"))
@@ -331,7 +355,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_gradient("IFF (billion USD)", low = "#56B1F7", high = "#132B43") +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Total net flows averaged over 2000-2016",
        subtitle = "Low estimate")
 ggsave(g,
@@ -345,7 +369,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_gradient("IFF (billion USD)", low = "#56B1F7", high = "#132B43") +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Total net flows averaged over 2000-2016",
        subtitle = "High estimate")
 ggsave(g,
@@ -355,10 +379,11 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# ORIGINS PIE CHART         ####
+# ORIGINS AND DESTINATIONS  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Orig_Sum_Africa.Rdata")
+# .. Origins pie chart ####
+load("Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
 
 Origins <- left_join(GER_Orig_Sum_Africa, codes %>% 
                        select(ISO3166.3, UN_Sub.region, UN_Intermediate_Region) %>%
@@ -376,10 +401,11 @@ Origins <- left_join(GER_Orig_Sum_Africa, codes %>%
 g <- ggplot(Origins,
             aes(x = "", y = Pct_IFF_hi, fill = Region)) +
   geom_bar(width = 1, stat = "identity") +
-  coord_polar("y", start = 0) +
+  coord_polar("y") +
   geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
   theme_classic() +
+  scale_fill_brewer(type = "qual", palette = "Set3") +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -388,12 +414,8 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# DESTINATIONS PIE CHART    ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Results/Current Version/GER_Dest_Africa.Rdata")
+# .. Destinations pie chart ####
+load("Results/Summary data-sets/GER_Dest_Africa.Rdata")
 
 Destinations <- GER_Dest_Africa %>%
   group_by(pRegion) %>%
@@ -406,10 +428,11 @@ Destinations <- GER_Dest_Africa %>%
 g <- ggplot(Destinations,
        aes(x = "", y = Pct_IFF_hi, fill = pRegion)) +
   geom_bar(width = 1, stat = "identity") +
-  coord_polar("y", start = 0) +
+  coord_polar("y") +
   geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of outflows, 2000-2016") +
   theme_classic() +
+  scale_fill_brewer(type = "qual", palette = "Pastel1") +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -420,10 +443,11 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# SECTOR GRAPHS             ####
+# SECTOR CHARTS             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Sect_Avg_Africa.Rdata")
+# .. Top 10 sectors in Africa ####
+load("Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 
 viz <- GER_Sect_Avg_Africa %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -448,14 +472,10 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-## ## ## ## ## ## ## ## ## ## ##
-# TOP TOTAL SECTORS PIE     ####
-## ## ## ## ## ## ## ## ## ## ##
+# .. Pie charts of top cumulative outflows in pilots ####
+load("Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.Rdata")
 
-load("Results/Current Version/GER_Orig_Sect_Sum_Africa.Rdata")
-
-
-# .. Egypt sectors ####
+# Egypt
 EGY <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "EGY")
 
@@ -478,8 +498,7 @@ ggsave(g,
        file = "Figures/Egypt top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Nigeria sectors ####
+# Nigeria
 NGA <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "NGA")
 
@@ -502,8 +521,7 @@ ggsave(g,
        file = "Figures/Nigeria top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Senegal sectors ####
+# Senegal
 SEN <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "SEN")
 
@@ -526,8 +544,7 @@ ggsave(g,
        file = "Figures/Senegal top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. South Africa sectors ####
+# South Africa
 ZAF <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "ZAF")
 
@@ -550,8 +567,7 @@ ggsave(g,
        file = "Figures/South Africa top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tanzania sectors ####
+# Tanzania
 TZA <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "TZA")
 
@@ -574,8 +590,7 @@ ggsave(g,
        file = "Figures/Tanzania top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tunisia sectors ####
+# Tunisia
 TUN <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "TUN")
 
@@ -598,8 +613,7 @@ ggsave(g,
        file = "Figures/Tunisia top 5 sectors GER sum high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Sudan sectors ####
+# Sudan
 SDN <- GER_Orig_Sect_Sum_Africa %>%
   filter(reporter.ISO == "SDN")
 
@@ -623,15 +637,10 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Pie charts of top average outflows in pilots ####
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
 
-## ## ## ## ## ## ## ## ## ## ##
-# TOP AVERAGE SECTORS PIE   ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Results/Current Version/GER_Orig_Sect_Avg_Africa.Rdata")
-
-
-# .. Egypt sectors ####
+# Egypt
 EGY <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "EGY")
 
@@ -654,8 +663,7 @@ ggsave(g,
        file = "Figures/Egypt top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Nigeria sectors ####
+# Nigeria
 NGA <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "NGA")
 
@@ -678,8 +686,7 @@ ggsave(g,
        file = "Figures/Nigeria top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Senegal sectors ####
+# Senegal
 SEN <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "SEN")
 
@@ -702,8 +709,7 @@ ggsave(g,
        file = "Figures/Senegal top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. South Africa sectors ####
+# South Africa
 ZAF <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "ZAF")
 
@@ -726,8 +732,7 @@ ggsave(g,
        file = "Figures/South Africa top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tanzania sectors ####
+# Tanzania
 TZA <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "TZA")
 
@@ -750,8 +755,7 @@ ggsave(g,
        file = "Figures/Tanzania top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tunisia sectors ####
+# Tunisia
 TUN <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "TUN")
 
@@ -774,8 +778,7 @@ ggsave(g,
        file = "Figures/Tunisia top 5 sectors GER average high pie chart.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Sudan sectors ####
+# Sudan
 SDN <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "SDN")
 
@@ -799,191 +802,10 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Stacked bar charts of top average outflows in pilots ####
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
 
-## ## ## ## ## ## ## ## ## ## ##
-# TOP DESTINATIONS          ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Results/Current Version/GER_Orig_Dest_Avg_Africa.Rdata")
-
-
-# .. Egypt ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "EGY") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Egypt",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Egypt top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Nigeria ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "NGA") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Nigeria",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Nigeria top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Senegal ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "SEN") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Senegal",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Senegal top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. South Africa ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "ZAF") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in South Africa",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/South Africa top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Tanzania ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "TZA") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Tanzania",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Tanzania top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Tunisia ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "TUN") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Tunisia",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Tunisia top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Sudan ####
-viz <- GER_Orig_Dest_Avg_Africa %>%
-  filter(reporter.ISO == "SDN") %>%
-  top_n(5, Tot_IFF_hi) %>%
-  arrange(desc(Tot_IFF_hi)) %>%
-  mutate(partner = factor(partner,
-                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
-
-g <- ggplot(viz,
-            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
-  geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in Sudan",
-       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
-  theme_classic() +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Sudan top 5 destinations GER average high.png",
-       width = 6, height = 5, units = "in")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# TOP SECTORS               ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Results/Current Version/GER_Orig_Sect_Avg_Africa.Rdata")
-
-
-# .. Egypt ####
+# Egypt
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "EGY") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1006,8 +828,7 @@ ggsave(g,
        file = "Figures/Egypt top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Nigeria ####
+# Nigeria
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "NGA") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1030,8 +851,7 @@ ggsave(g,
        file = "Figures/Nigeria top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Senegal ####
+# Senegal
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "SEN") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1054,8 +874,7 @@ ggsave(g,
        file = "Figures/Senegal top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. South Africa ####
+# South Africa
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "ZAF") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1078,8 +897,7 @@ ggsave(g,
        file = "Figures/South Africa top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tanzania ####
+# Tanzania
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "TZA") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1102,8 +920,7 @@ ggsave(g,
        file = "Figures/Tanzania top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Tunisia ####
+# Tunisia
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "TUN") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1126,8 +943,7 @@ ggsave(g,
        file = "Figures/Tunisia top 5 sectors GER average high.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Sudan ####
+# Sudan
 viz <- GER_Orig_Sect_Avg_Africa %>%
   filter(reporter.ISO == "SDN") %>%
   top_n(5, Tot_IFF_hi) %>%
@@ -1153,10 +969,176 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# TOP FLOWS MAPS            ####
+# DESTINATIONS CHARTS       ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-load("Results/Current Version/GER_Orig_Dest_Sum_Africa.Rdata")
+# .. Stacked bar charts of top average outflows in pilots ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
+
+# Egypt
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "EGY") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Egypt",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Egypt top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# Nigeria
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "NGA") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Nigeria",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Nigeria top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# Senegal
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "SEN") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Senegal",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Senegal top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# South Africa
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "ZAF") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in South Africa",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/South Africa top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# Tanzania
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "TZA") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Tanzania",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Tanzania top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# Tunisia
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "TUN") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Tunisia",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Tunisia top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+# Sudan
+viz <- GER_Orig_Dest_Avg_Africa %>%
+  filter(reporter.ISO == "SDN") %>%
+  top_n(5, Tot_IFF_hi) %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(partner = factor(partner,
+                          levels = partner[order(Tot_IFF_hi_bn, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = "", y = Tot_IFF_hi/10^6, fill = partner)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^6), " million")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in Sudan",
+       subtitle = "Yearly average outflows during 2000-2016, high estimate") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Sudan top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Flow maps of top total destinations in pilots ####
+load("Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
 
 centroids <- codes %>%
   dplyr::select(ISO3166.3, Longitude, Latitude) %>%
@@ -1173,7 +1155,7 @@ GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum_Africa %>%
 
 plot_my_connection = function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
   inter <- gcIntermediate(c(dep_lon, dep_lat), c(arr_lon, arr_lat), n = 50, addStartEnd = TRUE, breakAtDateLine = F)             
-  inter = data.frame(inter)
+  inter <- data.frame(inter)
   diff_of_lon = abs(dep_lon) + abs(arr_lon)
   if (diff_of_lon > 180) {
     lines(subset(inter, lon >= 0), ...)
@@ -1183,8 +1165,7 @@ plot_my_connection = function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
   }
 }
 
-
-# .. Egypt destinations ####
+# Egypt
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "EGY") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1207,8 +1188,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-# .. Nigeria destinations ####
+# Nigeria
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "NGA") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1233,8 +1213,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-# .. Senegal destinations ####
+# Senegal
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "SEN") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1257,8 +1236,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-# .. South Africa destinations ####
+# South Africa
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "ZAF") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1283,8 +1261,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-# .. Tanzania destinations ####
+# Tanzania
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "TZA") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1307,8 +1284,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-# .. Tunisia destinations ####
+# Tunisia
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "TUN") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1333,9 +1309,7 @@ text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", c
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
-
-
-# .. Sudan destinations ####
+# Sudan
 viz <- GER_Orig_Dest_Sum_Africa %>%
   filter(reporter.ISO == "SDN") %>%
   top_n(10, Tot_IFF_hi) %>%
@@ -1375,7 +1349,7 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/Egypt outline.png",
+       file = "Figures/Outline Egypt.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot() + 
@@ -1385,7 +1359,7 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/Nigeria outline.png",
+       file = "Figures/Outline Nigeria.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot() + 
@@ -1395,7 +1369,7 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/Senegal outline.png",
+       file = "Figures/Outline Senegal.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot() + 
@@ -1405,7 +1379,7 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/South Africa outline.png",
+       file = "Figures/Outline South Africa.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot() + 
@@ -1415,7 +1389,7 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/Tunisia outline.png",
+       file = "Figures/Outline Tunisia.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot() + 
@@ -1425,5 +1399,15 @@ g <- ggplot() +
   theme_bw() + 
   ditch_axes 
 ggsave(g,
-       file = "Figures/Maps/Tanzania outline.png",
+       file = "Figures/Outline Tanzania.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = map %>% filter(ISO3166.3 == "SDN"),
+               aes(x = long, y = lat, group = group), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes 
+ggsave(g,
+       file = "Figures/Outline Sudan.png",
        width = 6, height = 5, units = "in")
