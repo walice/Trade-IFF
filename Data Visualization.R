@@ -1320,10 +1320,12 @@ for(i in 1:nrow(viz)){
 }
 points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
 points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-viz2 <- viz[-c(1,2,5),]
+viz2 <- viz[-c(1,2,5,7),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
 viz2 <- viz[c(1,2,5),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
+viz2 <- viz[c(7),]
+text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
 
