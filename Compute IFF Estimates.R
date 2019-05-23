@@ -786,6 +786,9 @@ save(panel, file = "Results/panel_results.Rdata")
 # AGGREGATE BY DESTINATION  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+load("Data/WDI/WDI.Rdata")
+
+
 # .. Aggregate results using Gross Excluding Reversals ####
 GER_Imp_lo_Dest <- panel %>%
   filter(Imp_IFF_lo > 0) %>%
@@ -866,6 +869,12 @@ GER_Orig_Year <- GER_Orig_Dest_Year %>%
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
          Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+GER_Orig_Year <- left_join(GER_Orig_Year %>% mutate(year = as.integer(year)),
+                           WDI,
+            by = c("reporter.ISO" = "ISO3166.3", 
+                   "year")) %>%
+  mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
 
 GER_Orig_Avg <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion) %>%
@@ -960,8 +969,11 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
-            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-  ungroup() 
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
 
 GER_Africa <- GER_Year_Africa %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1024,6 +1036,12 @@ Net_Orig_Year <- Net_Orig_Dest_Year %>%
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
          Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+Net_Orig_Year <- left_join(Net_Orig_Year %>% mutate(year = as.integer(year)),
+                           WDI,
+                           by = c("reporter.ISO" = "ISO3166.3", 
+                                  "year")) %>%
+  mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
 
 Net_Orig_Avg <- Net_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion) %>%
@@ -1102,8 +1120,11 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
             Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
-            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-  ungroup()
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
 
 Net_Africa <- Net_Year_Africa %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1364,28 +1385,40 @@ write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv
 ## ## ## ## ## ## ## ## ## ## ##
 
 (Cumulative.gross.hi <- sum(GER_Year_Africa$Tot_IFF_hi_bn))
-# 1204.915
+# 1205.171
+
+(Cumulative.gross.hi.GDP <- Cumulative.gross.hi / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
+# 5.345837
 
 (Cumulative.gross.lo <- sum(GER_Year_Africa$Tot_IFF_lo_bn))
-# 337.985
+# 337.2414
+
+(Cumulative.gross.lo.GDP <- Cumulative.gross.lo / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
+# 1.495918
 
 (Cumulative.net.hi <- sum(Net_Year_Africa$Tot_IFF_hi_bn))
-# 361.86
+# 362.2447
+
+(Cumulative.net.hi.GDP <- Cumulative.net.hi / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
+# 1.606736
 
 (Cumulative.net.lo <- sum(Net_Year_Africa$Tot_IFF_lo_bn))
-# 138.3958
+# 138.6235
+
+(Cumulative.net.lo.GDP <- Cumulative.net.lo / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
+# 0.6148643
 
 (Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 83.35634
+# 83.38875
 
 (Gross.IFF.per.year.lo <- sum(GER_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 22.58164
+# 22.46123
 
 (Net.IFF.per.year.hi <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 26.40499
+# 26.4426
 
 (Net.IFF.per.year.lo <- sum(Net_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 9.18025
+# 9.208034
 
 
 
@@ -1415,4 +1448,4 @@ net.sum <- Net_Orig_Sum_Africa %>%
   select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
 kable(net.sum, digits = 2, format = "rst")
 
-rm(net.avg, ger.avg, net.sum, ger.sum) 
+rm(net.avg, ger.avg, net.sum, ger.sum)

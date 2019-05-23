@@ -65,6 +65,7 @@ load("Results/Summary data-sets/GER_Year_Africa.Rdata")
 load("Results/Summary data-sets/Net_Year_Africa.Rdata")
 
 g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>%
               melt(id.vars = "year") %>%
               filter(str_detect(variable, "Imp")), 
             aes(x = year, y = value, fill = variable)) +
@@ -80,6 +81,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>%
               melt(id.vars = "year") %>%
               filter(str_detect(variable, "Exp")), 
             aes(x = year, y = value, fill = variable)) +
@@ -95,6 +97,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>%
               melt(id.vars = "year") %>%
               filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi"), 
             aes(x = year, y = value, fill = variable)) +
@@ -112,6 +115,25 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Gross outflows",
+       x = "Year", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER Africa Total Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
               filter(variable == "Tot_IFF_hi"), 
             aes(x = year, y = value, fill = variable)) +
@@ -129,7 +151,27 @@ ggsave(g,
        file = "Figures/GER Africa Total High.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot(GER_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Gross outflows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER Africa Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
 g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
               filter(str_detect(variable, "Imp")), 
             aes(x = year, y = value, fill = variable)) +
@@ -145,6 +187,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>%
               melt(id.vars = "year") %>%
               filter(str_detect(variable, "Exp")), 
             aes(x = year, y = value, fill = variable)) +
@@ -160,6 +203,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
               filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi"), 
             aes(x = year, y = value, fill = variable)) +
@@ -177,6 +221,25 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Low", "High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net illicit flows",
+       x = "Year", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/Net Africa Total Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
               filter(variable == "Tot_IFF_hi"), 
             aes(x = year, y = value, fill = variable)) +
@@ -194,6 +257,25 @@ ggsave(g,
        file = "Figures/Net Africa Total High.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot(Net_Year_Africa %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net illicit flows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/Net Africa Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -201,8 +283,14 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 
 pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
-labels.hilo <- c(Tot_IFF_lo = "Low estimates", Tot_IFF_hi = "High estimates")
-labels.grne <- c(GER_Tot_IFF_hi = "Gross estimates", Net_Tot_IFF_hi = "Net estimates")
+labels.hilo <- c(Tot_IFF_lo = "Low estimates", 
+                 Tot_IFF_hi = "High estimates",
+                 Tot_IFF_lo_GDP = "Low estimates", 
+                 Tot_IFF_hi_GDP = "High estimates")
+labels.grne <- c(GER_Tot_IFF_hi = "Gross estimates", 
+                 Net_Tot_IFF_hi = "Net estimates",
+                 GER_Tot_IFF_hi_GDP = "Gross estimates", 
+                 Net_Tot_IFF_hi_GDP = "Net estimates")
 
 
 # .. Line chart for gross estimates ####
@@ -228,6 +316,23 @@ ggsave(g,
        file = "Figures/Gross Yearly Pilots.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot(Pilot_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP") %>%
+              mutate(year = as.numeric(year),
+                     value = as.numeric(value),
+                     reporter = as.factor(reporter))) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.hilo)) +
+  labs(title = "Gross yearly outflows in pilot countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross Yearly Pilots Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. Line chart for net estimates ####
 load("Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
@@ -250,6 +355,23 @@ g <- ggplot(Pilot_Year %>%
        color = "")
 ggsave(g,
        file = "Figures/Net Yearly Pilots.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(Pilot_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP") %>%
+              mutate(year = as.numeric(year),
+                     value = as.numeric(value),
+                     reporter = as.factor(reporter))) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.hilo)) +
+  labs(title = "Net yearly flows in pilot countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Net Yearly Pilots Percent GDP.png",
        width = 6, height = 5, units = "in") 
 
 
@@ -283,6 +405,23 @@ g <- ggplot(Pilot_Year %>%
 ggsave(g,
        file = "Figures/Gross and Net Yearly Pilots.png",
        width = 6, height = 5, units = "in") 
+
+g <- ggplot(Pilot_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "GER_Tot_IFF_hi_GDP" | variable == "Net_Tot_IFF_hi_GDP") %>%
+              mutate(year = as.numeric(year),
+                     value = as.numeric(value),
+                     reporter = as.factor(reporter))) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.grne)) +
+  labs(title = "Yearly flows in pilot countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross and Net Yearly Pilots Percent GDP.png",
+       width = 6, height = 5, units = "in")
 
 
 

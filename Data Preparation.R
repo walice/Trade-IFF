@@ -477,6 +477,8 @@ WDI <- WDI %>%
   select(-c(iso2c,country)) %>%
   rename(GDP = NY.GDP.MKTP.CD)
 
+save(WDI, file = "Data/WDI/WDI.Rdata")
+
 
 # .. Merge with reporters ####
 panel <- left_join(panel, WDI,
