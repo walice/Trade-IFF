@@ -28,6 +28,8 @@
 # Import SITC Codes
 # .. Merge SITC with HS codes
 # .. Merge SITC with panel
+# Import WDI
+# .. Merge with reporters
 # Import Groupings
 # .. Merge reporters
 # .. Merge partners
@@ -45,6 +47,7 @@ setwd("/home/alice/IFFe/") # Virtual server
 library(data.table)
 library(stringr)
 library(tidyverse)
+library(WDI)
 library(xlsx)
 
 
@@ -458,6 +461,33 @@ rm(SITC, HStoSITC)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# IMPORT WDI                ####
+## ## ## ## ## ## ## ## ## ## ##
+
+WDI <- WDI(indicator = "NY.GDP.MKTP.CD", start = 1999) %>%
+  mutate(NY.GDP.MKTP.CD = as.numeric(NY.GDP.MKTP.CD))
+WDI <- left_join(WDI, codes %>%
+                   select(ISO3166.2, ISO3166.3) %>% 
+                   distinct(ISO3166.2, .keep_all = T),
+                 by = c("iso2c" = "ISO3166.2"))
+WDI %>% filter(is.na(ISO3166.3)) %>% distinct(country)
+# Only aggregates remain
+WDI <- WDI %>%
+  filter(!is.na(ISO3166.3)) %>%
+  select(-c(iso2c,country)) %>%
+  rename(GDP = NY.GDP.MKTP.CD)
+
+
+# .. Merge with reporters ####
+panel <- left_join(panel, WDI,
+                   by = c("reporter.ISO" = "ISO3166.3",
+                          "year" = "year"))
+
+rm(WDI)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # IMPORT GROUPINGS          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -523,7 +553,8 @@ panel <- panel %>%
          pImport_weight, pExport_weight, pReExport_weight,
          contig, dist, rLandlocked, pLandlocked, tariff,
          rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual,
-         reporter, partner, rRegion, rIncome, pRegion, pIncome)
+         reporter, partner, rRegion, rIncome, pRegion, pIncome,
+         GDP)
 
 missing <- panel %>% 
   filter(is.na(Import_value) & is.na(Export_value) & is.na(ReExport_value) &
