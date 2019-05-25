@@ -495,20 +495,22 @@ rm(WDI)
 
 # .. Merge reporters ####
 panel <- left_join(panel, codes %>% 
-                   select(c(ISO3166.3, UN_Region, WB_Income_Group_Code)) %>%
+                   select(c(ISO3166.3, UN_Region, WB_Income_Group_Code, UN_Developing.Developed)) %>%
                    distinct(ISO3166.3, .keep_all = T),
                  by = c("reporter.ISO" = "ISO3166.3")) %>%
   rename(rRegion = UN_Region,
-         rIncome = WB_Income_Group_Code)
+         rIncome = WB_Income_Group_Code,
+         rDev = UN_Developing.Developed)
 
 
 # .. Merge partners ####
 panel <- left_join(panel, codes %>% 
-                     select(c(ISO3166.3, UN_Region, WB_Income_Group_Code)) %>%
+                     select(c(ISO3166.3, UN_Region, WB_Income_Group_Code, UN_Developing.Developed)) %>%
                      distinct(ISO3166.3, .keep_all = T),
                    by = c("partner.ISO" = "ISO3166.3")) %>%
   rename(pRegion = UN_Region,
-         pIncome = WB_Income_Group_Code)
+         pIncome = WB_Income_Group_Code,
+         pDev = UN_Developing.Developed)
 
 
 # .. Import country names ####
@@ -555,7 +557,7 @@ panel <- panel %>%
          pImport_weight, pExport_weight, pReExport_weight,
          contig, dist, rLandlocked, pLandlocked, tariff,
          rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual,
-         reporter, partner, rRegion, rIncome, pRegion, pIncome,
+         reporter, partner, rRegion, rDev, rIncome, pRegion, pIncome, pDev,
          GDP)
 
 missing <- panel %>% 
