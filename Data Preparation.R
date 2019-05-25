@@ -13,6 +13,9 @@
 # .. Convert to wide
 # .. Create mirror variables
 # .. Checking coverage of quantities and weights
+# .. Process total trade
+# .. Convert to wide
+# .. Compute total trade
 # Import CEPII
 # .. Merge dyadic distance and contiguity data
 # .. Merge country geographic data
@@ -226,6 +229,51 @@ range(ReExport_weight$year)
 
 rm(Import_quantity, Export_quantity, ReExport_quantity,
    Import_weight, Export_weight, ReExport_weight)
+
+
+# .. Process total trade ####
+load("Data/Comtrade/comtrade_total.Rdata")
+
+comtrade_total <- comtrade_total %>%
+  select(-c(Aggregate.Level, Commodity, Qty, Netweight..kg.)) %>%
+  rename_all(tolower) %>%
+  rename(reporter.ISO = reporter.iso, partner.ISO = partner.iso,
+         value = trade.value..us.., flow = trade.flow)
+
+noreporter <- subset(comtrade_total, reporter.ISO == "")
+noreporter %>% distinct(reporter)
+# Other Asia, nes
+rm(noreporter)
+comtrade_total <- comtrade_total %>%
+  filter(reporter.ISO != "")
+
+comtrade_total %>% distinct(partner)
+# World
+comtrade_total %>% distinct(commodity.code)
+# TOTAL
+comtrade_total <- comtrade_total %>%
+  select(-c(partner, partner.ISO, commodity.code))
+
+
+# .. Convert to wide ####
+comtrade_total <- comtrade_total %>% 
+  gather(variable, value, -c("year", "flow", "reporter", "reporter.ISO")) %>% 
+  unite(temp, flow, variable) %>% 
+  spread(temp, value, fill = 0)
+
+nrow(comtrade_total)
+# 3129
+
+
+# .. Compute total trade ####
+comtrade_total <- comtrade_total %>%
+  mutate(Total_value = Import_value + Export_value + `Re-Import_value` + `Re-Export_value`) %>%
+  select(reporter.ISO, year, Total_value) %>%
+  mutate(reporter.ISO = as.character(reporter.ISO))
+comtrade_total %>% distinct(reporter.ISO) %>% nrow
+# 197
+
+save(comtrade_total, file = "Data/Comtrade/comtrade_total_clean.Rdata")
 
 
 
