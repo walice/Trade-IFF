@@ -8,11 +8,16 @@
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
 # Codes Masterlist
+# Yearly IFF LMIC
+# Yearly IFF Developing
 # Yearly IFF Africa
 # Yearly IFF Pilots
 # .. Line chart for gross estimates
 # .. Line chart for net estimates
 # .. Line chart for gross and net estimates
+# Average IFF World
+# .. Merge geographic data
+# .. Average gross IFF
 # Average IFF Africa
 # .. Merge geographic data
 # .. Average gross IFF
@@ -54,6 +59,98 @@ library(xlsx)
 
 codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
   mutate_all(as.character)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# YEARLY IFF LMIC           ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
+
+g <- ggplot(GER_Year_LMIC %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in low income and lower-middle income countries",
+       subtitle = "Gross outflows",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER LMIC Total High.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Year_LMIC %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in low income and lower-middle income countries",
+       subtitle = "Gross outflows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER LMIC Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# YEARLY IFF DEVELOPING     ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Summary data-sets/GER_Year_Developing.Rdata")
+
+g <- ggplot(GER_Year_Developing %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in developing countries",
+       subtitle = "Gross outflows",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER Developing Total High.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Year_Developing %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = variable)) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("High")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none") +
+  labs(title = "Trade mis-invoicing in developing countries",
+       subtitle = "Gross outflows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER Developing Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
 
 
 
@@ -421,6 +518,62 @@ g <- ggplot(Pilot_Year %>%
        color = "")
 ggsave(g,
        file = "Figures/Gross and Net Yearly Pilots Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# AVERAGE IFF WORLD         ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Merge geographic data ####
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion)
+
+ditch_axes <- theme(axis.title.x = element_blank(),
+                    axis.text.x = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.border = element_blank(),
+                    panel.grid = element_blank()) 
+
+
+# .. Average gross IFF ####
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+
+viz <- left_join(map, GER_Orig_Avg,
+                 by = c("ISO3166.3" = "reporter.ISO"))
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_bn), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Gross outflows, high estimate")
+ggsave(g,
+       file = "Figures/GER Total Average World IFF high.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_GDP*100), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Gross outflows, high estimate")
+ggsave(g,
+       file = "Figures/GER Total Average World IFF high Percent GDP.png",
        width = 6, height = 5, units = "in")
 
 
