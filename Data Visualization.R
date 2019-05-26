@@ -30,6 +30,8 @@
 # .. Origins sunburst World
 # .. Destinations sunburst World
 # Sector Charts
+# .. Treemap in LMIC
+# .. Treemap in Developing
 # .. Top 10 sectors in Africa
 # .. Pie charts of top cumulative outflows in pilots
 # .. Pie charts of top average outflows in pilots
@@ -55,6 +57,7 @@ library(ggsunburst)
 library(reshape2)
 library(scales)
 library(tidyverse)
+library(treemapify)
 library(xlsx)
 
 
@@ -84,7 +87,7 @@ g <- ggplot(GER_Year_LMIC %>%
   scale_fill_discrete(name = "Estimate", labels = c("High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
-  labs(title = "Trade mis-invoicing in low income and lower-middle income countries",
+  labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Gross outflows",
        x = "", y = "Illicit flow in billion USD") +
   geom_text(aes(label = round(value/10^9)),
@@ -103,7 +106,7 @@ g <- ggplot(GER_Year_LMIC %>%
   scale_fill_discrete(name = "Estimate", labels = c("High")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = "none") +
-  labs(title = "Trade mis-invoicing in low income and lower-middle income countries",
+  labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
@@ -730,8 +733,8 @@ ggsave(g,
 load("Results/Summary data-sets/GER_Orig_Sum.Rdata")
 
 Origins <- GER_Orig_Sum %>%
-  filter(rIncome != "") %>%
-  group_by(rIncome) %>%
+  filter(rRegion != "") %>%
+  group_by(rRegion) %>%
   summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
   ungroup() %>%
@@ -739,7 +742,7 @@ Origins <- GER_Orig_Sum %>%
          Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
 
 g <- ggplot(Origins,
-            aes(x = "", y = Pct_IFF_hi, fill = rIncome)) +
+            aes(x = "", y = Pct_IFF_hi, fill = rRegion)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y") +
   geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
@@ -750,7 +753,7 @@ g <- ggplot(Origins,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Origins pie chart.png",
+       file = "Figures/Origins pie chart World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -786,6 +789,7 @@ ggsave(g,
 load("Results/Summary data-sets/GER_Dest.Rdata")
 
 Destinations <- GER_Dest %>%
+  filter(pRegion != "") %>%
   group_by(pRegion) %>%
   summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
@@ -889,6 +893,41 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 # SECTOR CHARTS             ####
 ## ## ## ## ## ## ## ## ## ## ##
+
+tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
+
+
+# .. Treemap in LMIC ####
+load("Results/Summary data-sets/GER_Sect_LMIC.Rdata")
+
+g <- ggplot(GER_Sect_LMIC,
+       aes(area = Tot_IFF_hi_bn, fill = section, label = section)) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(tol21rainbow)) +
+  labs(title = "Top sectors in low and lower middle income countries",
+       subtitle = "Cumulative gross outflows, 2000-2016")
+ggsave(g,
+       file = "Figures/Treemap sectors cumulative LMIC.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Treemap in Developing ####
+load("Results/Summary data-sets/GER_Sect_Developing.Rdata")
+
+g <- ggplot(GER_Sect_Developing,
+            aes(area = Tot_IFF_hi_bn, fill = section, label = section)) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = rev(tol21rainbow)) +
+  labs(title = "Top sectors in developing countries",
+       subtitle = "Cumulative gross outflows, 2000-2016")
+ggsave(g,
+       file = "Figures/Treemap sectors cumulative Developing.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. Top 10 sectors in Africa ####
 load("Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
