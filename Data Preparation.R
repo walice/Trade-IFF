@@ -457,7 +457,13 @@ panel <- left_join(panel, HS,
                    by = c("commodity.code" = "chapter"))
 
 panel %>% filter(is.na(section.code)) %>% distinct(commodity.code)
-# 99
+# 99, reserved for special use by contracting parties
+
+panel %>% filter(commodity.code == "77") %>% nrow
+# 0, HS code 77 is reserved for possible future use
+
+panel %>% filter(commodity.code == "98") %>% nrow
+# 0, HS code 98 is reserved for special use by contracting parties
 
 rm(HS)
 
