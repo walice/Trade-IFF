@@ -27,6 +27,8 @@
 # .. Origins pie chart World
 # .. Destinations pie chart Africa
 # .. Destinations pie chart World
+# .. Origins sunburst World
+# .. Destinations sunburst World
 # Sector Charts
 # .. Top 10 sectors in Africa
 # .. Pie charts of top cumulative outflows in pilots
@@ -807,7 +809,45 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Sunburst pie chart World ####
+# .. Origins sunburst World ####
+load("Results/Summary data-sets/GER_Orig_Sum.Rdata")
+
+Origins <- GER_Orig_Sum %>%
+  filter(rRegion != "" & rIncome != "") %>%
+  group_by(rRegion, rIncome) %>%
+  summarize(Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100) %>%
+  mutate(rRegion = factor(rRegion),
+         parent = rRegion) %>%
+  rename(node = rIncome,
+         size = Pct_IFF_hi) %>%
+  select(-Tot_IFF_hi) %>%
+  mutate(node = factor(node, levels = c("LIC", "LMC", "UMC", "HIC"))) %>%
+  arrange(parent, node)
+
+write.table(Origins, file = "Figures/Origins.csv", row.names = F, sep = ",")
+sb <- sunburst_data("Figures/Origins.csv", sep = ",", type = "node_parent",
+                    node_attributes = c("rRegion", "size"))
+sb$rects[!sb$rects$leaf, ]$rRegion <- sb$rects[!sb$rects$leaf, ]$name
+
+g <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min = 15) +
+  geom_text(data = sb$leaf_labels %>%
+              filter(!(label == "HIC" & rRegion == "Africa")) %>%
+              filter(!(label == "LMC" & rRegion == "Oceania")),
+            aes(x = x, y = 0.1, 
+                label = paste0(label, " ", round(size), "%"),
+                angle = angle, hjust = hjust), size = 2.5) +
+  scale_fill_brewer(type = "qual", palette = 8) +
+  labs(title = "Top origins",
+       subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
+       fill = "")
+ggsave(g,
+       file = "Figures/Origins sunburst World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Destinations sunburst World ####
 load("Results/Summary data-sets/GER_Dest.Rdata")
 
 Destinations <- GER_Dest %>%
