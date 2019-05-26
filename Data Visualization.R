@@ -76,43 +76,72 @@ codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
+load("Results/Summary data-sets/Net_Year_LMIC.Rdata")
 
-g <- ggplot(GER_Year_LMIC %>% 
-              mutate(year = as.character(year)) %>% 
-              melt(id.vars = "year") %>%
-              filter(variable == "Tot_IFF_hi"), 
-            aes(x = year, y = value, fill = variable)) +
+viz <- full_join(GER_Year_LMIC %>% 
+                   select(year, 
+                          GER_Tot_IFF_hi = Tot_IFF_hi, 
+                          GER_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          GER_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 Net_Year_LMIC %>%
+                   select(year, 
+                          Net_Tot_IFF_hi = Tot_IFF_hi, 
+                          Net_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          Net_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 by = c("year"))
+
+g <- ggplot(viz %>% 
+         mutate(year = as.character(year)) %>% 
+         melt(id.vars = "year") %>%
+         filter(variable == "Net_Tot_IFF_hi" | variable == "GER_Tot_IFF_hi"), 
+       aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none") +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
-       subtitle = "Gross outflows",
+       subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/GER LMIC Total High.png",
+       file = "Figures/GER and Net LMIC Total High.png",
        width = 6, height = 5, units = "in")
 
-g <- ggplot(GER_Year_LMIC %>% 
+g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
-              filter(variable == "Tot_IFF_hi_GDP"), 
-            aes(x = year, y = value, fill = variable)) +
+              filter(variable == "Net_Tot_IFF_hi_GDP" | variable == "GER_Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none") +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
-       subtitle = "Gross outflows",
+       subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/GER LMIC Total High Percent GDP.png",
+       file = "Figures/GER and Net LMIC Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_hi_Trade" | variable == "GER_Tot_IFF_hi_Trade"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in low and lower-middle income",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of trade") +
+  geom_text(aes(label = round(value*100)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER and Net LMIC Total High Percent Trade.png",
        width = 6, height = 5, units = "in")
 
 
@@ -122,43 +151,72 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Results/Summary data-sets/GER_Year_Developing.Rdata")
+load("Results/Summary data-sets/Net_Year_Developing.Rdata")
 
-g <- ggplot(GER_Year_Developing %>% 
+viz <- full_join(GER_Year_Developing %>% 
+                   select(year, 
+                          GER_Tot_IFF_hi = Tot_IFF_hi, 
+                          GER_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          GER_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 Net_Year_Developing %>%
+                   select(year, 
+                          Net_Tot_IFF_hi = Tot_IFF_hi, 
+                          Net_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          Net_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 by = c("year"))
+
+g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
-              filter(variable == "Tot_IFF_hi"), 
-            aes(x = year, y = value, fill = variable)) +
+              filter(variable == "Net_Tot_IFF_hi" | variable == "GER_Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none") +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in developing countries",
-       subtitle = "Gross outflows",
+       subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
   geom_text(aes(label = round(value/10^9)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/GER Developing Total High.png",
+       file = "Figures/GER and Net Developing Total High.png",
        width = 6, height = 5, units = "in")
 
-g <- ggplot(GER_Year_Developing %>% 
+g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
-              filter(variable == "Tot_IFF_hi_GDP"), 
-            aes(x = year, y = value, fill = variable)) +
+              filter(variable == "Net_Tot_IFF_hi_GDP" | variable == "GER_Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("High")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-        legend.position = "none") +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in developing countries",
-       subtitle = "Gross outflows",
+       subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
-       file = "Figures/GER Developing Total High Percent GDP.png",
+       file = "Figures/GER and Net Developing Total High Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_hi_Trade" | variable == "GER_Tot_IFF_hi_Trade"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in developing countries",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of trade") +
+  geom_text(aes(label = round(value*100)),
+            size = 3, position = position_dodge(1), vjust = -0.4)
+ggsave(g,
+       file = "Figures/GER and Net Developing Total High Percent Trade.png",
        width = 6, height = 5, units = "in")
 
 
