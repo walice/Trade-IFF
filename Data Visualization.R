@@ -39,6 +39,10 @@
 # Destination Charts
 # .. Stacked bar charts of top average outflows in pilots
 # .. Flow maps of top total destinations in pilots
+# Conduits Charts
+# .. Top conduits in World
+# .. Top conduits in LMIC
+# .. Top conduits in Developing
 # Country Outlines
 
 
@@ -1891,6 +1895,107 @@ viz2 <- viz[c(4,7),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# CONDUITS CHARTS           ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Top conduits in World ####
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+
+g <- ggplot(GER_Orig_Avg %>%
+         select(reporter, Tot_IFF_hi_GDP) %>%
+         top_n(10, Tot_IFF_hi_GDP),
+       aes(x = fct_reorder(reporter, Tot_IFF_hi_GDP), y = Tot_IFF_hi_GDP*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_GDP*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of GDP",
+       x = "", y = "Illicit flow as % of GDP")
+ggsave(g,
+       file = "Figures/Top origin countries World Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Orig_Avg %>%
+              select(reporter, Tot_IFF_hi_trade) %>%
+              top_n(10, Tot_IFF_hi_trade),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_trade), y = Tot_IFF_hi_trade*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_trade*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of trade",
+       x = "", y = "Illicit flow as % of trade")
+ggsave(g,
+       file = "Figures/Top origin countries World Percent Trade.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Top conduits in LMIC ####
+load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
+
+g <- ggplot(GER_Orig_Avg_LMIC %>%
+              select(reporter, Tot_IFF_hi_GDP) %>%
+              top_n(10, Tot_IFF_hi_GDP),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_GDP), y = Tot_IFF_hi_GDP*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_GDP*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of GDP",
+       x = "", y = "Illicit flow as % of GDP")
+ggsave(g,
+       file = "Figures/Top origin countries LMIC Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Orig_Avg_LMIC %>%
+              select(reporter, Tot_IFF_hi_trade) %>%
+              top_n(10, Tot_IFF_hi_trade),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_trade), y = Tot_IFF_hi_trade*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_trade*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of trade",
+       x = "", y = "Illicit flow as % of trade")
+ggsave(g,
+       file = "Figures/Top origin countries LMIC Percent Trade.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Top conduits in Developing ####
+load("Results/Summary data-sets/GER_Orig_Avg_Developing.Rdata")
+
+g <- ggplot(GER_Orig_Avg_Developing %>%
+              select(reporter, Tot_IFF_hi_GDP) %>%
+              top_n(10, Tot_IFF_hi_GDP),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_GDP), y = Tot_IFF_hi_GDP*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_GDP*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of GDP",
+       x = "", y = "Illicit flow as % of GDP")
+ggsave(g,
+       file = "Figures/Top origin countries Developing Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Orig_Avg_Developing %>%
+              select(reporter, Tot_IFF_hi_trade) %>%
+              top_n(10, Tot_IFF_hi_trade),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_trade), y = Tot_IFF_hi_trade*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_trade*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of trade",
+       x = "", y = "Illicit flow as % of trade")
+ggsave(g,
+       file = "Figures/Top origin countries Developing Percent Trade.png",
+       width = 6, height = 5, units = "in")
 
 
 

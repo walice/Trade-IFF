@@ -1765,46 +1765,46 @@ write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv
 ## ## ## ## ## ## ## ## ## ## ##
 
 (Cumulative.gross.hi <- sum(GER_Year_Africa$Tot_IFF_hi_bn))
-# 1204.604
+# 1204.693
 
 (Cumulative.gross.hi.GDP <- Cumulative.gross.hi / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 5.34332
+# 5.343715
 
 (Cumulative.gross.hi.trade <- Cumulative.gross.hi / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 11.43342
+# 11.43427
 
 (Cumulative.gross.lo <- sum(GER_Year_Africa$Tot_IFF_lo_bn))
-# 337.8595
+# 337.3599
 
 (Cumulative.gross.lo.GDP <- Cumulative.gross.lo / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 1.49866
+# 1.496444
 
 (Cumulative.gross.lo.trade <- Cumulative.gross.lo / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 3.201949
+# 3.20203
 
 (Cumulative.net.hi <- sum(Net_Year_Africa$Tot_IFF_hi_bn))
-# 3.206773
+# 362.135
 
 (Cumulative.net.hi.GDP <- Cumulative.net.hi / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 1.606542
+# 1.606249
 
 (Cumulative.net.lo <- sum(Net_Year_Africa$Tot_IFF_lo_bn))
-# 138.3999
+# 139.1025
 
 (Cumulative.net.lo.GDP <- Cumulative.net.lo / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 0.6138723
+# 0.616989
 
 (Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 83.2833
+# 83.31073
 
 (Gross.IFF.per.year.lo <- sum(GER_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 22.54761
+# 22.525
 
 (Net.IFF.per.year.hi <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 26.44862
+# 26.4324
 
 (Net.IFF.per.year.lo <- sum(Net_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 9.161594
+# 9.264024
 
 
 
