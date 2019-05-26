@@ -23,8 +23,10 @@
 # .. Average gross IFF
 # .. Average net IFF
 # Origins and Destinations
-# .. Origins pie chart
-# .. Destinations pie chart
+# .. Origins pie chart Africa
+# .. Origins pie chart World
+# .. Destinations pie chart Africa
+# .. Destinations pie chart World
 # Sector Charts
 # .. Top 10 sectors in Africa
 # .. Pie charts of top cumulative outflows in pilots
@@ -46,6 +48,8 @@
 setwd("/home/alice/IFFe/") # Virtual server
 library(geosphere)
 library(ggmap)
+library(ggrepel)
+library(ggsunburst)
 library(reshape2)
 library(scales)
 library(tidyverse)
@@ -576,6 +580,20 @@ ggsave(g,
        file = "Figures/GER Total Average World IFF high Percent GDP.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_trade*100), color = "white") + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% trade)", direction = -1) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Gross outflows, high estimate")
+ggsave(g,
+       file = "Figures/GER Total Average World IFF high Percent Trade.png",
+       width = 6, height = 5, units = "in")
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -674,7 +692,7 @@ ggsave(g,
 # ORIGINS AND DESTINATIONS  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Origins pie chart ####
+# .. Origins pie chart Africa ####
 load("Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
 
 Origins <- left_join(GER_Orig_Sum_Africa, codes %>% 
@@ -702,14 +720,43 @@ g <- ggplot(Origins,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
+       file = "Figures/Origins pie chart Africa.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Origins pie chart World ####
+load("Results/Summary data-sets/GER_Orig_Sum.Rdata")
+
+Origins <- GER_Orig_Sum %>%
+  filter(rIncome != "") %>%
+  group_by(rIncome) %>%
+  summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_lo = Tot_IFF_lo / sum(Tot_IFF_lo) * 100,
+         Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
+
+g <- ggplot(Origins,
+            aes(x = "", y = Pct_IFF_hi, fill = rIncome)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
+  theme_classic() +
+  scale_fill_brewer(type = "qual", palette = "Set3") +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
        file = "Figures/Origins pie chart.png",
        width = 6, height = 5, units = "in")
 
 
-# .. Destinations pie chart ####
+# .. Destinations pie chart Africa ####
 load("Results/Summary data-sets/GER_Dest_Africa.Rdata")
 
 Destinations <- GER_Dest_Africa %>%
+  filter(pRegion != "") %>%
   group_by(pRegion) %>%
   summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
@@ -729,7 +776,72 @@ g <- ggplot(Destinations,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Destinations pie chart.png",
+       file = "Figures/Destinations pie chart Africa.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Destinations pie chart World ####
+load("Results/Summary data-sets/GER_Dest.Rdata")
+
+Destinations <- GER_Dest %>%
+  group_by(pRegion) %>%
+  summarize(Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_lo = Tot_IFF_lo / sum(Tot_IFF_lo) * 100,
+         Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100)
+
+g <- ggplot(Destinations,
+            aes(x = "", y = Pct_IFF_hi, fill = pRegion)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y") +
+  geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of outflows, 2000-2016") +
+  theme_classic() +
+  scale_fill_brewer(type = "qual", palette = "Pastel1") +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Destinations pie chart World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sunburst pie chart World ####
+load("Results/Summary data-sets/GER_Dest.Rdata")
+
+Destinations <- GER_Dest %>%
+  filter(pRegion != "" & pIncome != "") %>%
+  group_by(pRegion, pIncome) %>%
+  summarize(Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF_hi = Tot_IFF_hi / sum(Tot_IFF_hi) * 100) %>%
+  mutate(pRegion = factor(pRegion),
+         parent = pRegion) %>%
+  rename(node = pIncome,
+         size = Pct_IFF_hi) %>%
+  select(-Tot_IFF_hi) %>%
+  mutate(node = factor(node, levels = c("LIC", "LMC", "UMC", "HIC"))) %>%
+  arrange(parent, node)
+
+write.table(Destinations, file = "Figures/Destinations.csv", row.names = F, sep = ",")
+sb <- sunburst_data("Figures/Destinations.csv", sep = ",", type = "node_parent",
+                    node_attributes = c("pRegion", "size"))
+sb$rects[!sb$rects$leaf, ]$pRegion <- sb$rects[!sb$rects$leaf, ]$name
+
+g <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min = 15) +
+  geom_text(data = sb$leaf_labels %>%
+              filter(!(label == "HIC" & pRegion == "Africa")) %>%
+              filter(!(label == "UMC" & pRegion == "Oceania")),
+              aes(x = x, y = 0.1, 
+                  label = paste0(label, " ", round(size), "%"),
+                  angle = angle, hjust = hjust), size = 2.5) +
+  scale_fill_brewer(type = "qual", palette = 8) +
+  labs(title = "Top destinations",
+       subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
+       fill = "")
+ggsave(g,
+       file = "Figures/Destinations sunburst World.png",
        width = 6, height = 5, units = "in")
 
 

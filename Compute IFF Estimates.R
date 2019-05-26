@@ -791,6 +791,7 @@ save(panel, file = "Results/panel_results.Rdata")
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Data/WDI/WDI.Rdata")
+load("Data/Comtrade/comtrade_total_clean.Rdata")
 
 
 # .. Aggregate results using Gross Excluding Reversals ####
@@ -881,10 +882,15 @@ GER_Orig_Year <- GER_Orig_Dest_Year %>%
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
 GER_Orig_Year <- left_join(GER_Orig_Year %>% mutate(year = as.integer(year)),
                            WDI,
-            by = c("reporter.ISO" = "ISO3166.3", 
-                   "year")) %>%
+                           by = c("reporter.ISO" = "ISO3166.3", 
+                                  "year")) %>%
   mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
          Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
+GER_Orig_Year <- left_join(GER_Orig_Year,
+                           comtrade_total,
+                           by = c("reporter.ISO", "year")) %>%
+  mutate(Tot_IFF_lo_trade = Tot_IFF_lo / Total_value,
+         Tot_IFF_hi_trade = Tot_IFF_hi / Total_value)
 
 GER_Orig_Avg <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev) %>%
@@ -897,7 +903,9 @@ GER_Orig_Avg <- GER_Orig_Year %>%
             Tot_IFF_lo_bn = mean(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = mean(Tot_IFF_hi_bn, na.rm = T),
             Tot_IFF_lo_GDP = mean(Tot_IFF_lo_GDP, na.rm = T),
-            Tot_IFF_hi_GDP = mean(Tot_IFF_hi_GDP, na.rm = T)) %>%
+            Tot_IFF_hi_GDP = mean(Tot_IFF_hi_GDP, na.rm = T),
+            Tot_IFF_lo_trade = mean(Tot_IFF_lo_trade, na.rm = T),
+            Tot_IFF_hi_trade = mean(Tot_IFF_hi_trade, na.rm = T)) %>%
   ungroup()
 
 GER_Orig_Sum <- GER_Orig_Year %>%
@@ -947,6 +955,18 @@ GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
 GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
+
+GER_Dest <- GER_Orig_Dest_Sum %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
 
 GER_Dest_Africa <- GER_Orig_Dest_Sum_Africa %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev) %>%
@@ -998,10 +1018,13 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T),
-            GDP = sum(GDP, na.rm = T)) %>%
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
   ungroup() %>%
   mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
-         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP,
+         Tot_IFF_lo_trade = Tot_IFF_lo / Total_value,
+         Tot_IFF_hi_trade = Tot_IFF_hi / Total_value)
 
 GER_Year_LMIC <- GER_Orig_Year_LMIC %>%
   group_by(year) %>%
@@ -1013,10 +1036,13 @@ GER_Year_LMIC <- GER_Orig_Year_LMIC %>%
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T),
-            GDP = sum(GDP, na.rm = T)) %>%
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
   ungroup() %>%
   mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
-         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP,
+         Tot_IFF_lo_trade = Tot_IFF_lo / Total_value,
+         Tot_IFF_hi_trade = Tot_IFF_hi / Total_value)
 
 GER_Year_Developing <- GER_Orig_Year_Developing %>%
   group_by(year) %>%
@@ -1028,10 +1054,13 @@ GER_Year_Developing <- GER_Orig_Year_Developing %>%
             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
             Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T),
-            GDP = sum(GDP, na.rm = T)) %>%
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
   ungroup() %>%
   mutate(Tot_IFF_lo_GDP = Tot_IFF_lo / GDP,
-         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP)
+         Tot_IFF_hi_GDP = Tot_IFF_hi / GDP,
+         Tot_IFF_lo_trade = Tot_IFF_lo / Total_value,
+         Tot_IFF_hi_trade = Tot_IFF_hi / Total_value)
 
 GER_Africa <- GER_Year_Africa %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1107,6 +1136,9 @@ write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_D
           row.names = F)
 save(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
 write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.csv",
+          row.names = F)
+save(GER_Dest, file = "Results/Summary data-sets/GER_Dest.Rdata")
+write.csv(GER_Dest, file = "Results/Summary data-sets/GER_Dest.csv",
           row.names = F)
 save(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.Rdata")
 write.csv(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.csv",
