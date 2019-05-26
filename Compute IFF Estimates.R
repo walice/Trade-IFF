@@ -1566,6 +1566,14 @@ GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
+GER_Orig_Sect_Avg_LMIC <- GER_Orig_Sect_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+GER_Orig_Sect_Avg_Developing <- GER_Orig_Sect_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
 GER_Orig_Sect_Sum_Africa <- GER_Orig_Sect_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
@@ -1626,6 +1634,30 @@ GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
+GER_Sect_Avg_LMIC <- GER_Orig_Sect_Avg_LMIC %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
 save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
 write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
           row.names = F)
@@ -1646,6 +1678,12 @@ write.csv(GER_Sect_Developing, file = "Results/Summary data-sets/GER_Sect_Develo
           row.names = F)
 save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
+          row.names = F)
+save(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
+write.csv(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.csv",
+          row.names = F)
+save(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
+write.csv(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.csv",
           row.names = F)
 
 
@@ -1727,46 +1765,46 @@ write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv
 ## ## ## ## ## ## ## ## ## ## ##
 
 (Cumulative.gross.hi <- sum(GER_Year_Africa$Tot_IFF_hi_bn))
-# 1204.749
+# 1204.604
 
 (Cumulative.gross.hi.GDP <- Cumulative.gross.hi / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 5.343963
+# 5.34332
 
 (Cumulative.gross.hi.trade <- Cumulative.gross.hi / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 11.4348
+# 11.43342
 
 (Cumulative.gross.lo <- sum(GER_Year_Africa$Tot_IFF_lo_bn))
-# 337.3514
+# 337.8595
 
 (Cumulative.gross.lo.GDP <- Cumulative.gross.lo / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 1.496406
+# 1.49866
 
 (Cumulative.gross.lo.trade <- Cumulative.gross.lo / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
 # 3.201949
 
 (Cumulative.net.hi <- sum(Net_Year_Africa$Tot_IFF_hi_bn))
-# 362.4794
+# 3.206773
 
 (Cumulative.net.hi.GDP <- Cumulative.net.hi / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 1.607777
+# 1.606542
 
 (Cumulative.net.lo <- sum(Net_Year_Africa$Tot_IFF_lo_bn))
-# 138.8587
+# 138.3999
 
 (Cumulative.net.lo.GDP <- Cumulative.net.lo / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 0.6159076
+# 0.6138723
 
 (Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 83.32372
+# 83.2833
 
 (Gross.IFF.per.year.lo <- sum(GER_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 22.44262
+# 22.54761
 
 (Net.IFF.per.year.hi <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
-# 26.46354
+# 26.44862
 
 (Net.IFF.per.year.lo <- sum(Net_Orig_Avg_Africa$Tot_IFF_lo_bn))
-# 9.202539
+# 9.161594
 
 
 

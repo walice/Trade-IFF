@@ -894,38 +894,51 @@ ggsave(g,
 # SECTOR CHARTS             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+
 tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
 
 
 # .. Treemap in LMIC ####
-load("Results/Summary data-sets/GER_Sect_LMIC.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 
-g <- ggplot(GER_Sect_LMIC,
-       aes(area = Tot_IFF_hi_bn, fill = section, label = section)) +
+g <- ggplot(GER_Sect_Avg_LMIC %>%
+         arrange(desc(Tot_IFF_hi_bn)),
+       aes(area = Tot_IFF_hi_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
   geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_LMIC,
+                    aes(label = ifelse(Tot_IFF_hi_bn >= sort(GER_Sect_Avg_LMIC$Tot_IFF_hi_bn, decreasing = T)[8],
+                                       paste0("$", round(Tot_IFF_hi_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", size = 12) +
   theme(legend.position = "none") +
-  scale_fill_manual(values = rev(tol21rainbow)) +
+  scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors in low and lower middle income countries",
-       subtitle = "Cumulative gross outflows, 2000-2016")
+       subtitle = "Average gross yearly outflow during 2000-2016")
 ggsave(g,
-       file = "Figures/Treemap sectors cumulative LMIC.png",
+       file = "Figures/Treemap sectors average LMIC.png",
        width = 6, height = 5, units = "in")
 
 
 # .. Treemap in Developing ####
-load("Results/Summary data-sets/GER_Sect_Developing.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
 
-g <- ggplot(GER_Sect_Developing,
-            aes(area = Tot_IFF_hi_bn, fill = section, label = section)) +
+g <- ggplot(GER_Sect_Avg_Developing %>%
+              arrange(desc(Tot_IFF_hi_bn)),
+            aes(area = Tot_IFF_hi_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
   geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_Developing,
+                    aes(label = ifelse(Tot_IFF_hi_bn >= sort(GER_Sect_Avg_Developing$Tot_IFF_hi_bn, decreasing = T)[8],
+                                       paste0("$", round(Tot_IFF_hi_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", size = 12) +
   theme(legend.position = "none") +
-  scale_fill_manual(values = rev(tol21rainbow)) +
+  scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors in developing countries",
-       subtitle = "Cumulative gross outflows, 2000-2016")
+       subtitle = "Average gross yearly outflow during 2000-2016")
 ggsave(g,
-       file = "Figures/Treemap sectors cumulative Developing.png",
+       file = "Figures/Treemap sectors average Developing.png",
        width = 6, height = 5, units = "in")
 
 
