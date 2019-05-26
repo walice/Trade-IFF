@@ -15,6 +15,10 @@
 # .. Line chart for gross estimates
 # .. Line chart for net estimates
 # .. Line chart for gross and net estimates
+# Yearly IFF Conduits
+# .. Line chart for conduits in Africa
+# .. Line chart for conduits in LMIC
+# .. Line chart for conduits in Developing
 # Average IFF World
 # .. Merge geographic data
 # .. Average gross IFF
@@ -41,6 +45,7 @@
 # .. Flow maps of top total destinations in pilots
 # Conduits Charts
 # .. Top conduits in World
+# .. Top conduits in Africa
 # .. Top conduits in LMIC
 # .. Top conduits in Developing
 # Country Outlines
@@ -594,6 +599,123 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# YEARLY IFF CONDUITS       ####
+## ## ## ## ## ## ## ## ## ## ##
+
+labels.grne <- c(GER_Tot_IFF_hi_GDP = "Gross estimates", 
+                 Net_Tot_IFF_hi_GDP = "Net estimates")
+
+
+# .. Line chart for conduits in Africa ####
+load("Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
+load("Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
+conduits <- c("MUS", "UGA", "MWI", "SYC", "MLI")
+
+Conduits_Gross <- GER_Orig_Year_Africa %>%
+  filter(reporter.ISO %in% conduits)
+Conduits_Net <- Net_Orig_Year_Africa %>%
+  filter(reporter.ISO %in% conduits)
+
+Conduits_Year <- full_join(Conduits_Gross %>%
+                           rename_at(vars(starts_with("Tot")), funs(paste0("GER_", .))), 
+                           Conduits_Net %>%
+                           rename_at(vars(starts_with("Tot")), funs(paste0("Net_", .))),
+                           by = c("reporter" = "reporter",
+                                  "reporter.ISO" = "reporter.ISO",
+                                  "year" = "year"))
+
+g <- ggplot(Conduits_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "GER_Tot_IFF_hi_GDP" | variable == "Net_Tot_IFF_hi_GDP") %>%
+              mutate(
+                     value = as.numeric(value)
+                     )) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.grne)) +
+  labs(title = "Yearly flows in conduit countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross and Net Yearly Conduits Africa Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Line chart for conduits in LMIC ####
+load("Results/Summary data-sets/GER_Orig_Year_LMIC.Rdata")
+load("Results/Summary data-sets/Net_Orig_Year_LMIC.Rdata")
+conduits <- c("MDA", "PNG", "VNM", "NIC", "SLV")
+
+Conduits_Gross <- GER_Orig_Year_LMIC %>%
+  filter(reporter.ISO %in% conduits)
+Conduits_Net <- Net_Orig_Year_LMIC %>%
+  filter(reporter.ISO %in% conduits)
+
+Conduits_Year <- full_join(Conduits_Gross %>%
+                             rename_at(vars(starts_with("Tot")), funs(paste0("GER_", .))), 
+                           Conduits_Net %>%
+                             rename_at(vars(starts_with("Tot")), funs(paste0("Net_", .))),
+                           by = c("reporter" = "reporter",
+                                  "reporter.ISO" = "reporter.ISO",
+                                  "year" = "year"))
+
+g <- ggplot(Conduits_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "GER_Tot_IFF_hi_GDP" | variable == "Net_Tot_IFF_hi_GDP") %>%
+              mutate(
+                value = as.numeric(value)
+              )) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.grne)) +
+  labs(title = "Yearly flows in conduit countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross and Net Yearly Conduits LMIC Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Line chart for conduits in Developing ####
+load("Results/Summary data-sets/GER_Orig_Year_Developing.Rdata")
+load("Results/Summary data-sets/Net_Orig_Year_Developing.Rdata")
+conduits <- c("SGP", "HKG", "MDV", "GUY", "PLW")
+
+Conduits_Gross <- GER_Orig_Year_Developing %>%
+  filter(reporter.ISO %in% conduits)
+Conduits_Net <- Net_Orig_Year_Developing %>%
+  filter(reporter.ISO %in% conduits)
+
+Conduits_Year <- full_join(Conduits_Gross %>%
+                             rename_at(vars(starts_with("Tot")), funs(paste0("GER_", .))), 
+                           Conduits_Net %>%
+                             rename_at(vars(starts_with("Tot")), funs(paste0("Net_", .))),
+                           by = c("reporter" = "reporter",
+                                  "reporter.ISO" = "reporter.ISO",
+                                  "year" = "year"))
+
+g <- ggplot(Conduits_Year %>% 
+              melt(id.vars = c("year", "reporter")) %>%
+              filter(variable == "GER_Tot_IFF_hi_GDP" | variable == "Net_Tot_IFF_hi_GDP") %>%
+              mutate(
+                value = as.numeric(value)
+              )) +
+  geom_line(aes(x = year, y = value*100, color = reporter)) +
+  scale_color_viridis_d(option = "inferno") +
+  facet_wrap(~variable, labeller = labeller(variable = labels.grne)) +
+  labs(title = "Yearly flows in conduit countries",
+       x = "Year",
+       y = "Illicit flow as % of GDP",
+       color = "")
+ggsave(g,
+       file = "Figures/Gross and Net Yearly Conduits Developing Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # AVERAGE IFF WORLD         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -601,7 +723,8 @@ ggsave(g,
 map <- map_data("world")
 map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
                  by = c("region" = "Country")) %>%
-  dplyr::select(-subregion)
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
 
 ditch_axes <- theme(axis.title.x = element_blank(),
                     axis.text.x = element_blank(),
@@ -1931,6 +2054,38 @@ g <- ggplot(GER_Orig_Avg %>%
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
        file = "Figures/Top origin countries World Percent Trade.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Top conduits in Africa ####
+load("Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
+
+g <- ggplot(GER_Orig_Avg_Africa %>%
+              select(reporter, Tot_IFF_hi_GDP) %>%
+              top_n(10, Tot_IFF_hi_GDP),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_GDP), y = Tot_IFF_hi_GDP*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_GDP*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of GDP",
+       x = "", y = "Illicit flow as % of GDP")
+ggsave(g,
+       file = "Figures/Top origin countries Africa Percent GDP.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Orig_Avg_Africa %>%
+              select(reporter, Tot_IFF_hi_trade) %>%
+              top_n(10, Tot_IFF_hi_trade),
+            aes(x = fct_reorder(reporter, Tot_IFF_hi_trade), y = Tot_IFF_hi_trade*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_hi_trade*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origin countries for trade mis-invoicing",
+       subtitle = "Average yearly gross outflow as % of trade",
+       x = "", y = "Illicit flow as % of trade")
+ggsave(g,
+       file = "Figures/Top origin countries Africa Percent Trade.png",
        width = 6, height = 5, units = "in")
 
 
