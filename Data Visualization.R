@@ -1038,7 +1038,7 @@ g <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min =
             aes(x = x, y = 0.1, 
                 label = paste0(label, " ", round(size), "%"),
                 angle = angle, hjust = hjust), size = 2.5) +
-  scale_fill_brewer(type = "qual", palette = 8) +
+  scale_fill_brewer(type = "qual", palette = "Set3") +
   labs(title = "Top origins",
        subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
        fill = "")
@@ -1076,7 +1076,7 @@ g <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min =
               aes(x = x, y = 0.1, 
                   label = paste0(label, " ", round(size), "%"),
                   angle = angle, hjust = hjust), size = 2.5) +
-  scale_fill_brewer(type = "qual", palette = 8) +
+  scale_fill_brewer(type = "qual", palette = "Set3") +
   labs(title = "Top destinations",
        subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
        fill = "")
@@ -1161,7 +1161,8 @@ g <- ggplot(viz,
        fill = NULL, 
        title = "Breakdown of top sectors in low and lower middle income",
        subtitle = "Yearly average outflows during 2000-2016") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 8)) +
+  scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
        file = "Figures/Top commodities in LMIC.png",
        width = 6, height = 5, units = "in")
@@ -1862,19 +1863,19 @@ ggsave(g,
 load("Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
 
 g <- ggplot(GER_Dest_Avg_LMIC %>%
-         top_n(5, Tot_IFF_hi),
+         top_n(10, Tot_IFF_hi),
        aes(x = "", y = Tot_IFF_hi/10^9, fill = fct_reorder(partner, Tot_IFF_hi, .desc = T))) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in low and lower middle income countries",
+       title = "Top 10 destinations in low and lower middle income countries",
        subtitle = "Yearly average outflows during 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Top 5 destinations GER average LMIC.png",
+       file = "Figures/Top 10 destinations GER average LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1882,19 +1883,19 @@ ggsave(g,
 load("Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
 
 g <- ggplot(GER_Dest_Avg_Developing %>%
-              top_n(5, Tot_IFF_hi),
+              top_n(10, Tot_IFF_hi),
             aes(x = "", y = Tot_IFF_hi/10^9, fill = fct_reorder(partner, Tot_IFF_hi, .desc = T))) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 5 destinations in developing countries",
+       title = "Top 10 destinations in developing countries",
        subtitle = "Yearly average outflows during 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Top 5 destinations GER average Developing.png",
+       file = "Figures/Top 10 destinations GER average Developing.png",
        width = 6, height = 5, units = "in")
 
 
