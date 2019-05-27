@@ -43,6 +43,8 @@
 # .. Stacked bar charts of top average outflows in pilots
 # Destination Charts
 # .. Stacked bar charts of top average outflows in pilots
+# .. Stacked bar charts of top average outflows in LMIC
+# .. Stacked bar charts of top average outflows in Developing
 # .. Flow maps of top total destinations in pilots
 # Conduits Charts
 # .. Top conduits in World
@@ -1846,6 +1848,46 @@ g <- ggplot(viz,
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Sudan top 5 destinations GER average high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Stacked bar charts of top average outflows in LMIC ####
+load("Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
+
+g <- ggplot(GER_Dest_Avg_LMIC %>%
+         top_n(5, Tot_IFF_hi),
+       aes(x = "", y = Tot_IFF_hi/10^9, fill = fct_reorder(partner, Tot_IFF_hi, .desc = T))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in low and lower middle income countries",
+       subtitle = "Yearly average outflows during 2000-2016") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Top 5 destinations GER average LMIC.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Stacked bar charts of top average outflows in Developing ####
+load("Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
+
+g <- ggplot(GER_Dest_Avg_Developing %>%
+              top_n(5, Tot_IFF_hi),
+            aes(x = "", y = Tot_IFF_hi/10^9, fill = fct_reorder(partner, Tot_IFF_hi, .desc = T))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 5 destinations in developing countries",
+       subtitle = "Yearly average outflows during 2000-2016") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Top 5 destinations GER average Developing.png",
        width = 6, height = 5, units = "in")
 
 

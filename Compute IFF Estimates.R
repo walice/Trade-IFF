@@ -952,6 +952,14 @@ GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
+GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+GER_Orig_Dest_Avg_Developing <- GER_Orig_Dest_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
 GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
@@ -969,6 +977,30 @@ GER_Dest <- GER_Orig_Dest_Sum %>%
   ungroup()
 
 GER_Dest_Africa <- GER_Orig_Dest_Sum_Africa %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+GER_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+GER_Dest_Avg_Developing <- GER_Orig_Dest_Avg_Developing %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
@@ -1142,6 +1174,12 @@ write.csv(GER_Dest, file = "Results/Summary data-sets/GER_Dest.csv",
           row.names = F)
 save(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.Rdata")
 write.csv(GER_Dest_Africa, file = "Results/Summary data-sets/GER_Dest_Africa.csv",
+          row.names = F)
+save(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
+write.csv(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.csv",
+          row.names = F)
+save(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
+write.csv(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.csv",
           row.names = F)
 
 save(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.Rdata")
