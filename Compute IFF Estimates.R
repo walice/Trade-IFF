@@ -1456,6 +1456,12 @@ write.csv(Net_Developing, file = "Results/Summary data-sets/Net_Developing.csv",
 # AGGREGATE BY SECTOR       ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+load("Data/UN Stats/HS.Rdata")
+panel <- left_join(panel, HS %>% select(chapter, chapter.description),
+                   by = c("commodity.code" = "chapter")) %>%
+  rename(commodity = chapter.description)
+
+
 # .. Aggregate results using Gross Excluding Reversals ####
 GER_Imp_lo_Sect <- panel %>%
   filter(Imp_IFF_lo > 0) %>%
@@ -1465,11 +1471,27 @@ GER_Imp_lo_Sect <- panel %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
+GER_Imp_lo_Sect_disag <- panel %>%
+  filter(Imp_IFF_lo > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
+           year, 
+           commodity.code, commodity) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T)) %>%
+  ungroup()
+
 GER_Imp_hi_Sect <- panel %>%
   filter(Imp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
            year, 
            section.code, section) %>%
+  summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T)) %>%
+  ungroup()
+
+GER_Imp_hi_Sect_disag <- panel %>%
+  filter(Imp_IFF_hi > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
+           year, 
+           commodity.code, commodity) %>%
   summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
@@ -1484,6 +1506,17 @@ GER_Imp_Sect <- full_join(GER_Imp_lo_Sect, GER_Imp_hi_Sect,
                                  "section" = "section"))
 rm(GER_Imp_lo_Sect, GER_Imp_hi_Sect)
 
+GER_Imp_Sect_disag <- full_join(GER_Imp_lo_Sect_disag, GER_Imp_hi_Sect_disag,
+                                by = c("reporter" = "reporter",
+                                       "reporter.ISO" = "reporter.ISO",
+                                       "rRegion" = "rRegion",
+                                       "rIncome" = "rIncome",
+                                       "rDev" = "rDev",
+                                       "year" = "year",
+                                       "commodity.code" = "commodity.code",
+                                       "commodity" = "commodity"))
+rm(GER_Imp_lo_Sect_disag, GER_Imp_hi_Sect_disag)
+
 GER_Exp_lo_Sect <- panel %>%
   filter(pExp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
@@ -1492,11 +1525,27 @@ GER_Exp_lo_Sect <- panel %>%
   summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
   ungroup()
 
+GER_Exp_lo_Sect_disag <- panel %>%
+  filter(pExp_IFF_lo > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
+           year, 
+           commodity.code, commodity) %>%
+  summarize(Exp_IFF_lo = sum(pExp_IFF_lo, na.rm = T)) %>%
+  ungroup()
+
 GER_Exp_hi_Sect <- panel %>%
   filter(pExp_IFF_hi > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
            year, 
            section.code, section) %>%
+  summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
+  ungroup()
+
+GER_Exp_hi_Sect_disag <- panel %>%
+  filter(pExp_IFF_hi > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
+           year, 
+           commodity.code, commodity) %>%
   summarize(Exp_IFF_hi = sum(pExp_IFF_hi, na.rm = T)) %>%
   ungroup()
 
@@ -1511,6 +1560,17 @@ GER_Exp_Sect <- full_join(GER_Exp_lo_Sect, GER_Exp_hi_Sect,
                                  "section" = "section"))
 rm(GER_Exp_lo_Sect, GER_Exp_hi_Sect)
 
+GER_Exp_Sect_disag <- full_join(GER_Exp_lo_Sect_disag, GER_Exp_hi_Sect_disag,
+                                by = c("reporter" = "reporter",
+                                       "reporter.ISO" = "reporter.ISO",
+                                       "rRegion" = "rRegion",
+                                       "rIncome" = "rIncome",
+                                       "rDev" = "rDev",
+                                       "year" = "year",
+                                       "commodity.code" = "commodity.code",
+                                       "commodity" = "commodity"))
+rm(GER_Exp_lo_Sect_disag, GER_Exp_hi_Sect_disag)
+
 GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                 by = c("reporter" = "reporter",
                                        "reporter.ISO" = "reporter.ISO",
@@ -1522,8 +1582,31 @@ GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                        "section" = "section"))
 rm(GER_Imp_Sect, GER_Exp_Sect)
 
+GER_Orig_Sect_Year_disag <- full_join(GER_Imp_Sect_disag, GER_Exp_Sect_disag,
+                                      by = c("reporter" = "reporter",
+                                             "reporter.ISO" = "reporter.ISO",
+                                             "rRegion" = "rRegion",
+                                             "rIncome" = "rIncome",
+                                             "rDev" = "rDev",
+                                             "year" = "year",
+                                             "commodity.code" = "commodity.code",
+                                             "commodity" = "commodity"))
+rm(GER_Imp_Sect_disag, GER_Exp_Sect_disag)
+
 GER_Orig_Sect_Avg <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, section.code, section) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+
+GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, commodity.code, commodity) %>%
   summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
             Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
@@ -1567,6 +1650,10 @@ GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
   select(-rRegion)
 
 GER_Orig_Sect_Avg_LMIC <- GER_Orig_Sect_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+GER_Orig_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_disag %>%
   filter(rIncome == "LIC" | rIncome == "LMC") %>%
   select(-rIncome)
 
@@ -1646,6 +1733,18 @@ GER_Sect_Avg_LMIC <- GER_Orig_Sect_Avg_LMIC %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
+GER_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_LMIC_disag %>%
+  group_by(commodity.code, commodity) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
 GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1681,6 +1780,9 @@ write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Af
           row.names = F)
 save(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 write.csv(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.csv",
+          row.names = F)
+save(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
+write.csv(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.csv",
           row.names = F)
 save(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
 write.csv(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.csv",

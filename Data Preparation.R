@@ -447,9 +447,7 @@ rm(tariff)
 # .. Merge commodity and section codes ####
 HS <- read.xlsx2("Data/UN Stats/HS Commodity Codes.xlsx", sheetName = "HS Codes") %>%
   mutate_all(as.character) %>%
-  rename_all(tolower)
-
-HS <- HS  %>%
+  rename_all(tolower) %>%
   mutate(chapter = str_pad(str_trim(chapter), 
                            width = 2, side = "left", pad = "0"))
 
@@ -465,6 +463,7 @@ panel %>% filter(commodity.code == "77") %>% nrow
 panel %>% filter(commodity.code == "98") %>% nrow
 # 0, HS code 98 is reserved for special use by contracting parties
 
+save(HS, file = "Data/UN Stats/HS.Rdata")
 rm(HS)
 
 

@@ -36,6 +36,7 @@
 # Sector Charts
 # .. Treemap in LMIC
 # .. Treemap in Developing
+# .. Stacked bar chart of average outflows in top sector in LMIC
 # .. Top 10 sectors in Africa
 # .. Pie charts of top cumulative outflows in pilots
 # .. Pie charts of top average outflows in pilots
@@ -65,6 +66,7 @@ library(ggrepel)
 library(ggsunburst)
 library(reshape2)
 library(scales)
+library(stringr)
 library(tidyverse)
 library(treemapify)
 library(xlsx)
@@ -1124,6 +1126,35 @@ g <- ggplot(GER_Sect_Avg_Developing %>%
        subtitle = "Average gross yearly outflow during 2000-2016")
 ggsave(g,
        file = "Figures/Treemap sectors average Developing.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Stacked bar chart of average outflows in top sector in LMIC ####
+load("Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
+load("Data/UN Stats/HS.Rdata")
+
+viz <- left_join(GER_Sect_Avg_LMIC_disag, HS %>% select(-chapter.description),
+                 by = c("commodity.code" = "chapter")) %>%
+  filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(commodity = factor(commodity,
+                            levels = commodity[order(Tot_IFF_hi, decreasing = T)]))
+
+g <- ggplot(viz,
+       aes(x = fct_rev(section), y = Tot_IFF_hi/10^9, 
+           fill = fct_inorder(str_wrap(commodity, 20)))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), 
+            position = position_stack(vjust = 0.5),
+            size = 3) +
+  labs(x = NULL, 
+       y = "Illicit flow in billion USD", 
+       fill = NULL, 
+       title = "Breakdown of top sectors in low and lower middle income",
+       subtitle = "Yearly average outflows during 2000-2016") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Top commodities in LMIC.png",
        width = 6, height = 5, units = "in")
 
 
