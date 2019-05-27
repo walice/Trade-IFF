@@ -46,6 +46,7 @@
 # .. Stacked bar charts of top average outflows in LMIC
 # .. Stacked bar charts of top average outflows in Developing
 # .. Flow maps of top total destinations in pilots
+# .. Flow maps of top total destinations in conduits
 # Conduits Charts
 # .. Top conduits in World
 # .. Top conduits in Africa
@@ -66,6 +67,8 @@ library(geosphere)
 library(ggmap)
 library(ggrepel)
 library(ggsunburst)
+library(mapproj)
+library(RColorBrewer)
 library(reshape2)
 library(scales)
 library(stringr)
@@ -749,13 +752,15 @@ viz <- left_join(map, GER_Orig_Avg,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_hi_bn), color = "white") + 
+                   fill = Tot_IFF_hi_bn), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1,
+                       breaks = c(50, 150)) +
   labs(title = "Total outflows averaged over 2000-2016",
-       subtitle = "Gross outflows, high estimate")
+       subtitle = "Gross outflows, high estimate") +
+  theme(legend.position = "bottom")
 ggsave(g,
        file = "Figures/GER Total Average World IFF high.png",
        width = 6, height = 5, units = "in")
@@ -763,13 +768,14 @@ ggsave(g,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_hi_GDP*100), color = "white") + 
+                   fill = Tot_IFF_hi_GDP*100), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
   scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
   labs(title = "Total outflows averaged over 2000-2016",
-       subtitle = "Gross outflows, high estimate")
+       subtitle = "Gross outflows, high estimate") +
+  theme(legend.position = "bottom")
 ggsave(g,
        file = "Figures/GER Total Average World IFF high Percent GDP.png",
        width = 6, height = 5, units = "in")
@@ -777,13 +783,14 @@ ggsave(g,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_hi_trade*100), color = "white") + 
+                   fill = Tot_IFF_hi_trade*100), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
   scale_fill_viridis_c("IFF (% trade)", direction = -1) +
   labs(title = "Total outflows averaged over 2000-2016",
-       subtitle = "Gross outflows, high estimate")
+       subtitle = "Gross outflows, high estimate") +
+  theme(legend.position = "bottom")
 ggsave(g,
        file = "Figures/GER Total Average World IFF high Percent Trade.png",
        width = 6, height = 5, units = "in")
@@ -820,7 +827,7 @@ viz <- left_join(map, GER_Orig_Avg_Africa,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_lo_bn), color = "white") + 
+                   fill = Tot_IFF_lo_bn), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
@@ -834,7 +841,7 @@ ggsave(g,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_hi_bn), color = "white") + 
+                   fill = Tot_IFF_hi_bn), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
@@ -855,7 +862,7 @@ viz <- left_join(map, Net_Orig_Avg_Africa,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_lo_bn), color = "white") + 
+                   fill = Tot_IFF_lo_bn), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
@@ -869,7 +876,7 @@ ggsave(g,
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
-                   fill = Tot_IFF_hi_bn), color = "white") + 
+                   fill = Tot_IFF_hi_bn), color = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
@@ -2091,6 +2098,72 @@ viz2 <- viz[c(4,7),]
 text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
 title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
 dev.off()
+
+
+# .. Flow maps of top total destinations in conduits ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
+
+conduits <- c("MDA", "PNG", "VNM", "NIC", "SLV")
+
+ditch_axes <- theme(axis.title.x = element_blank(),
+                    axis.text.x = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.border = element_blank(),
+                    panel.grid = element_blank()) 
+
+centroids <- codes %>%
+  dplyr::select(ISO3166.3, Longitude, Latitude) %>%
+  mutate_at(vars(Longitude, Latitude),
+            funs(as.numeric))
+
+GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Longitude,
+                rLatitude = Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Longitude,
+                pLatitude = Latitude) %>%
+  filter(reporter.ISO %in% conduits) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF_hi) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(GER_Orig_Dest_Avg_LMIC %>% filter(reporter.ISO %in% conduits),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_text_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                  aes(label = reporter, x = rLongitude, y = rLatitude)) +
+  ditch_axes +
+  guides(col = FALSE) +
+  scale_color_brewer(type = "qual", palette = "Dark2") +
+  labs(title = "Destinations of top origin countries",
+       subtitle = "Top origin countries by % of GDP")
+ggsave(g,
+       file = "Figures/Flow map top destinations LMIC.png",
+       width = 6, height = 5, units = "in")
 
 
 
