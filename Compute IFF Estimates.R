@@ -790,11 +790,10 @@ save(panel, file = "Results/panel_results.Rdata")
 # AGGREGATE BY DESTINATION  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+# .. Aggregate results using Gross Excluding Reversals ####
 load("Data/WDI/WDI.Rdata")
 load("Data/Comtrade/comtrade_total_clean.Rdata")
 
-
-# .. Aggregate results using Gross Excluding Reversals ####
 GER_Imp_lo_Dest <- panel %>%
   filter(Imp_IFF_lo > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
@@ -1230,6 +1229,8 @@ write.csv(GER_Developing, file = "Results/Summary data-sets/GER_Developing.csv",
 
 
 # .. Aggregate results using Net Aggregation ####
+load("Data/WDI/WDI.Rdata")
+
 Net_Orig_Dest_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
            partner, partner.ISO, pRegion, pIncome, pDev,
@@ -1521,6 +1522,7 @@ write.csv(Net_Developing, file = "Results/Summary data-sets/Net_Developing.csv",
 # AGGREGATE BY SECTOR       ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+load("Data/WDI/WDI.Rdata")
 load("Data/UN Stats/HS.Rdata")
 panel <- left_join(panel, HS %>% select(chapter, chapter.description),
                    by = c("commodity.code" = "chapter")) %>%
