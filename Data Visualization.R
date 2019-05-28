@@ -66,11 +66,14 @@
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
 #setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
 setwd("/home/alice/IFFe/") # Virtual server
+#library(cowplot)
 library(geosphere)
 library(ggalluvial)
 library(ggmap)
+library(ggpubr)
 library(ggrepel)
 library(ggsunburst)
+#library(gridExtra)
 library(mapproj)
 library(RColorBrewer)
 library(reshape2)
@@ -1034,6 +1037,7 @@ write.table(Origins, file = "Figures/Origins.csv", row.names = F, sep = ",")
 sb <- sunburst_data("Figures/Origins.csv", sep = ",", type = "node_parent",
                     node_attributes = c("rRegion", "size"))
 sb$rects[!sb$rects$leaf, ]$rRegion <- sb$rects[!sb$rects$leaf, ]$name
+sb$node_labels$size <- Origins %>% group_by(rRegion) %>% summarize(size = sum(size)) %>% select(size) %>% pull
 
 g <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min = 15) +
   geom_text(data = sb$leaf_labels %>%
@@ -1042,10 +1046,15 @@ g <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min =
             aes(x = x, y = 0.1, 
                 label = paste0(label, " ", round(size), "%"),
                 angle = angle, hjust = hjust), size = 2.5) +
+  geom_text(data = sb$node_labels,
+            aes(x = x, y = y,
+                label = ifelse(label != "Oceania", paste0(round(size), "%"), round(size))),
+            size = 3) +
   scale_fill_brewer(type = "qual", palette = "Set3") +
   labs(title = "Top origins",
-       subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
-       fill = "")
+       subtitle = "Cumulative gross outflows during 2000-2016",
+       fill = "") +
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
 ggsave(g,
        file = "Figures/Origins sunburst World.png",
        width = 6, height = 5, units = "in")
@@ -1066,12 +1075,14 @@ Destinations <- GER_Dest %>%
          size = Pct_IFF_hi) %>%
   select(-Tot_IFF_hi) %>%
   mutate(node = factor(node, levels = c("LIC", "LMC", "UMC", "HIC"))) %>%
-  arrange(parent, node)
+  arrange(parent, node) %>%
+  mutate(size = ifelse(pRegion == "Americas" & node == "LMC", 0.51, size)) # Just for rounding display, everything is correct
 
 write.table(Destinations, file = "Figures/Destinations.csv", row.names = F, sep = ",")
 sb <- sunburst_data("Figures/Destinations.csv", sep = ",", type = "node_parent",
                     node_attributes = c("pRegion", "size"))
 sb$rects[!sb$rects$leaf, ]$pRegion <- sb$rects[!sb$rects$leaf, ]$name
+sb$node_labels$size <- Destinations %>% group_by(pRegion) %>% summarize(size = sum(size)) %>% select(size) %>% pull
 
 g <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min = 15) +
   geom_text(data = sb$leaf_labels %>%
@@ -1080,10 +1091,15 @@ g <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min =
               aes(x = x, y = 0.1, 
                   label = paste0(label, " ", round(size), "%"),
                   angle = angle, hjust = hjust), size = 2.5) +
+  geom_text(data = sb$node_labels,
+            aes(x = x, y = y,
+                label = ifelse(label != "Oceania" & label != "Africa", paste0(round(size), "%"), round(size))),
+            size = 3) +
   scale_fill_brewer(type = "qual", palette = "Set3") +
   labs(title = "Top destinations",
-       subtitle = "Cumulative gross outflows during 2000-2016, high estimate",
-       fill = "")
+       subtitle = "Cumulative gross outflows during 2000-2016",
+       fill = "") +
+  theme(plot.margin = unit(c(0, 0, 0, 0), "cm"))
 ggsave(g,
        file = "Figures/Destinations sunburst World.png",
        width = 6, height = 5, units = "in")
