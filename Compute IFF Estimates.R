@@ -1642,6 +1642,22 @@ GER_Orig_Sect_Avg <- GER_Orig_Sect_Year %>%
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
          Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+weights <- GER_Orig_Sect_Year %>%
+  distinct(reporter.ISO, year, .keep_all = T) %>%
+  group_by(reporter.ISO) %>%
+  mutate(weight = 1/n()) %>%
+  ungroup()
+WDI <- left_join(WDI, weights %>% 
+                   mutate(year = as.integer(year)) %>%
+                   select(reporter.ISO, year, weight),
+                 by = c("ISO3166.3" = "reporter.ISO",
+                        "year")) %>%
+  mutate(weight = ifelse(is.na(weight), 0, weight)) %>%
+  group_by(ISO3166.3) %>%
+  summarize(GDP = weighted.mean(GDP, weight))
+GER_Orig_Sect_Avg <- left_join(GER_Orig_Sect_Avg,
+                               WDI,
+                               by = c("reporter.ISO" = "ISO3166.3"))
 
 GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, commodity.code, commodity) %>%
@@ -1797,6 +1813,9 @@ GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
 
 save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
 write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
+          row.names = F)
+save(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
+write.csv(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.csv",
           row.names = F)
 save(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
 write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.csv",
