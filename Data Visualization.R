@@ -920,7 +920,7 @@ g <- ggplot(Origins,
   geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
   theme_classic() +
-  scale_fill_brewer(type = "qual", palette = "Set3") +
+  scale_fill_brewer(type = "qual", palette = "Pastel1") +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -948,7 +948,7 @@ g <- ggplot(Origins,
   geom_text(aes(label = paste0(round(Pct_IFF_hi), "%")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of outflows, 2000-2016") +
   theme_classic() +
-  scale_fill_brewer(type = "qual", palette = "Set3") +
+  scale_fill_brewer(type = "qual", palette = "Pastel1") +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -1939,7 +1939,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Egypt.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -1964,7 +1964,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Nigeria.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -1989,7 +1989,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Senegal.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -2012,7 +2012,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map South Africa.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -2037,7 +2037,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Tanzania.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -2060,7 +2060,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Tunisia.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -2085,7 +2085,7 @@ viz <- GER_Orig_Dest_Sum_Africa %>%
 
 pdf("Figures/Flow map Sudan.pdf", 
     height = 4.5, width = 6)
-map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
+maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
     mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
 for(i in 1:nrow(viz)){
   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
@@ -2313,6 +2313,11 @@ ggsave(g,
 load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 
+top_sectors <- GER_Sect_Avg_LMIC %>%
+  top_n(10, Tot_IFF_hi_bn) %>%
+  arrange(desc(Tot_IFF_hi_bn)) %>%
+  pull(section)
+
 viz <- GER_Orig_Sect_Avg %>%
   filter(rIncome == "LIC" | rIncome == "LMC") %>%
   mutate(cut = cut(GNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
@@ -2321,15 +2326,9 @@ viz <- GER_Orig_Sect_Avg %>%
   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup() %>%
   filter(!is.na(cut)) %>%
-  arrange(desc(Tot_IFF_hi_bn))
-
-top_sectors <- GER_Sect_Avg_LMIC %>%
-  group_by(section) %>%
-  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-  ungroup() %>%
-  top_n(10, Tot_IFF_hi_bn) %>%
-  arrange(desc(Tot_IFF_hi_bn)) %>%
-  pull(section)
+  arrange(factor(section, levels = GER_Sect_Avg_LMIC %>%
+                   arrange(desc(Tot_IFF_hi_bn)) %>%
+                   pull(section)))
 
 viz <- GER_Orig_Sect_Avg %>%
   filter(rIncome == "LIC" | rIncome == "LMC") %>%
@@ -2340,9 +2339,11 @@ viz <- GER_Orig_Sect_Avg %>%
   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup() %>%
   filter(!is.na(cut)) %>%
-  arrange(desc(Tot_IFF_hi_bn))
+  arrange(factor(section, levels = GER_Sect_Avg_LMIC %>%
+                   arrange(desc(Tot_IFF_hi_bn)) %>%
+                   pull(section)))
 
-ggplot(viz,
+g <- ggplot(viz,
        aes(y = Tot_IFF_hi_bn, axis1 = cut, axis2 = fct_inorder(section))) +
   geom_alluvium(aes(fill = cut)) +
   geom_stratum(width = 1/12, fill = "black", color = "grey") +
@@ -2350,23 +2351,26 @@ ggplot(viz,
   scale_x_discrete(limits = c("GNI per capita", "Sector"), expand = c(0.05, 0.05)) +
   scale_fill_brewer(type = "qual", palette = "Set1") +
   labs(title = "Trade mis-invoicing in low and lower middle income",
-       subtitle = "according to GNI per capita",
+       subtitle = "according to GNI per capita and sector",
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey GNIpc sector LMIC.png",
+       width = 6, height = 5, units = "in")
 
 
 # .. Sankey diagram by reporter and partner GNI per capita ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 
-viz <- GER_Orig_Dest_Avg_LMIC %>%
-  mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
-                    labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$")),
-         pcut = cut(pGNPpc, breaks = c(0, 995, 3895, 12055, 75000),
-                    labels = c("0-995$", "996-3895$", "3896-12,055$", "above 12,055$"))) %>%
-  filter(is.finite(rcut) & is.finite(pcut)) %>%
-  group_by(rcut, pcut) %>%
-  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-  ungroup()
+# viz <- GER_Orig_Dest_Avg_LMIC %>%
+#   mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+#                     labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$")),
+#          pcut = cut(pGNPpc, breaks = c(0, 995, 3895, 12055, 75000),
+#                     labels = c("0-995$", "996-3895$", "3896-12,055$", "above 12,055$"))) %>%
+#   filter(is.finite(rcut) & is.finite(pcut)) %>%
+#   group_by(rcut, pcut) %>%
+#   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+#   ungroup()
 
 viz <- GER_Orig_Dest_Avg_LMIC %>%
   mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
@@ -2387,7 +2391,7 @@ viz <- GER_Orig_Dest_Avg_LMIC %>%
 #   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
 #   ungroup()
 
-ggplot(viz,
+g <- ggplot(viz,
        aes(y = Tot_IFF_hi_bn, axis1 = rcut, axis2 = pcut)) +
   geom_alluvium(aes(fill = rcut)) +
   geom_stratum(width = 1/12, fill = "black", color = "grey") +
@@ -2398,6 +2402,9 @@ ggplot(viz,
        subtitle = "according to GNI per capita",
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey GNIpc reporter partner LMIC.png",
+       width = 6, height = 5, units = "in")
 
 
 
