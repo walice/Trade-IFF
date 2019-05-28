@@ -931,6 +931,30 @@ GER_Orig_Dest_Avg <- GER_Orig_Dest_Year %>%
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
          Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+weights <- GER_Orig_Dest_Year %>%
+  distinct(reporter.ISO, year, .keep_all = T) %>%
+  group_by(reporter.ISO) %>%
+  mutate(weight = 1/n()) %>%
+  ungroup()
+WDI <- left_join(WDI, weights %>% 
+                   mutate(year = as.integer(year)) %>%
+                   select(reporter.ISO, year, weight),
+                 by = c("ISO3166.3" = "reporter.ISO",
+                        "year")) %>%
+  mutate(weight = ifelse(is.na(weight), 0, weight)) %>%
+  group_by(ISO3166.3) %>%
+  summarize(GDP = weighted.mean(GDP, weight),
+            GNPpc = weighted.mean(GNPpc, weight))
+GER_Orig_Dest_Avg <- left_join(GER_Orig_Dest_Avg,
+                               WDI,
+                               by = c("reporter.ISO" = "ISO3166.3")) %>%
+  rename(rGDP = GDP,
+         rGNPpc = GNPpc)
+GER_Orig_Dest_Avg <- left_join(GER_Orig_Dest_Avg,
+                               WDI,
+                               by = c("partner.ISO" = "ISO3166.3")) %>%
+  rename(pGDP = GDP,
+         pGNPpc = GNPpc)
 
 GER_Orig_Dest_Sum <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, partner, partner.ISO, pRegion, pIncome, pDev) %>%
@@ -1165,6 +1189,9 @@ write.csv(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Af
           row.names = F)
 save(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.csv",
+          row.names = F)
+save(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
+write.csv(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.csv",
           row.names = F)
 save(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
 write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.csv",
@@ -1654,7 +1681,8 @@ WDI <- left_join(WDI, weights %>%
                         "year")) %>%
   mutate(weight = ifelse(is.na(weight), 0, weight)) %>%
   group_by(ISO3166.3) %>%
-  summarize(GDP = weighted.mean(GDP, weight))
+  summarize(GDP = weighted.mean(GDP, weight),
+            GNPpc = weighted.mean(GNPpc, weight))
 GER_Orig_Sect_Avg <- left_join(GER_Orig_Sect_Avg,
                                WDI,
                                by = c("reporter.ISO" = "ISO3166.3"))

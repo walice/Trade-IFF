@@ -517,9 +517,9 @@ rm(SITC, HStoSITC)
 # IMPORT WDI                ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-WDI <- WDI(indicator = c("NY.GDP.MKTP.CD", "NY.GDP.PCAP.CD"), start = 1999) %>%
+WDI <- WDI(indicator = c("NY.GDP.MKTP.CD", "NY.GNP.PCAP.CD"), start = 1999) %>%
   mutate(NY.GDP.MKTP.CD = as.numeric(NY.GDP.MKTP.CD),
-         NY.GDP.PCAP.CD = as.numeric(NY.GDP.PCAP.CD))
+         NY.GNP.PCAP.CD = as.numeric(NY.GNP.PCAP.CD))
 WDI <- left_join(WDI, codes %>%
                    select(ISO3166.2, ISO3166.3) %>% 
                    distinct(ISO3166.2, .keep_all = T),
@@ -530,7 +530,7 @@ WDI <- WDI %>%
   filter(!is.na(ISO3166.3)) %>%
   select(-c(iso2c,country)) %>%
   rename(GDP = NY.GDP.MKTP.CD,
-         GDPpc = NY.GDP.PCAP.CD)
+         GNPpc = NY.GNP.PCAP.CD)
 
 save(WDI, file = "Data/WDI/WDI.Rdata")
 

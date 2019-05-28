@@ -52,6 +52,9 @@
 # .. Top conduits in Africa
 # .. Top conduits in LMIC
 # .. Top conduits in Developing
+# Sankey Diagram
+# .. Sankey diagram by GNI per capita and sector
+# .. Sankey diagram by reporter and partner GNI per capita
 # Country Outlines
 
 
@@ -64,6 +67,7 @@
 #setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
 setwd("/home/alice/IFFe/") # Virtual server
 library(geosphere)
+library(ggalluvial)
 library(ggmap)
 library(ggrepel)
 library(ggsunburst)
@@ -2298,6 +2302,102 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
 ggsave(g,
        file = "Figures/Top origin countries Developing Percent Trade.png",
        width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# SANKEY DIAGRAM            ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Sankey diagram by GNI per capita and sector ####
+load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  mutate(cut = cut(GNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+                   labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$"))) %>%
+  group_by(cut, section, section.code) %>%
+  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup() %>%
+  filter(!is.na(cut)) %>%
+  arrange(desc(Tot_IFF_hi_bn))
+
+top_sectors <- GER_Sect_Avg_LMIC %>%
+  group_by(section) %>%
+  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup() %>%
+  top_n(10, Tot_IFF_hi_bn) %>%
+  arrange(desc(Tot_IFF_hi_bn)) %>%
+  pull(section)
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  filter(section %in% top_sectors) %>%
+  mutate(cut = cut(GNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+                   labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$"))) %>%
+  group_by(cut, section, section.code) %>%
+  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup() %>%
+  filter(!is.na(cut)) %>%
+  arrange(desc(Tot_IFF_hi_bn))
+
+ggplot(viz,
+       aes(y = Tot_IFF_hi_bn, axis1 = cut, axis2 = fct_inorder(section))) +
+  geom_alluvium(aes(fill = cut)) +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", label.strata = TRUE, size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("GNI per capita", "Sector"), expand = c(0.05, 0.05)) +
+  scale_fill_brewer(type = "qual", palette = "Set1") +
+  labs(title = "Trade mis-invoicing in low and lower middle income",
+       subtitle = "according to GNI per capita",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+
+
+# .. Sankey diagram by reporter and partner GNI per capita ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
+
+viz <- GER_Orig_Dest_Avg_LMIC %>%
+  mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+                    labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$")),
+         pcut = cut(pGNPpc, breaks = c(0, 995, 3895, 12055, 75000),
+                    labels = c("0-995$", "996-3895$", "3896-12,055$", "above 12,055$"))) %>%
+  filter(is.finite(rcut) & is.finite(pcut)) %>%
+  group_by(rcut, pcut) %>%
+  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+viz <- GER_Orig_Dest_Avg_LMIC %>%
+  mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+                    labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$")),
+         pcut = cut(pGNPpc, breaks = c(0, 15000, 30000, 45000, 60000, 75000),
+                    labels = c("0-15,000$", "15,001-30,000$", "30,001-45,000$", "45,001-60,000$", "60,001-75,000$"))) %>%
+  filter(is.finite(rcut) & is.finite(pcut)) %>%
+  group_by(rcut, pcut) %>%
+  summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+# viz <- GER_Orig_Dest_Avg_LMIC %>%
+#   mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
+#                     labels = c("0-1000$", "1001-2000$", "2001-3000$", "3001-4000$")),
+#          pcut = cut(pGNPpc, breaks = 4)) %>%
+#   filter(is.finite(rcut) & is.finite(pcut)) %>%
+#   group_by(rcut, pcut) %>%
+#   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+#   ungroup()
+
+ggplot(viz,
+       aes(y = Tot_IFF_hi_bn, axis1 = rcut, axis2 = pcut)) +
+  geom_alluvium(aes(fill = rcut)) +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", label.strata = TRUE, size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.05, 0.05)) +
+  scale_fill_brewer(type = "qual", palette = "Set1") +
+  labs(title = "Trade mis-invoicing in low and lower middle income",
+       subtitle = "according to GNI per capita",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
 
 
 
