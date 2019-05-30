@@ -47,6 +47,7 @@
 # .. Stacked bar charts of top average outflows in pilots
 # .. Flow maps of top total destinations in pilots
 # .. Flow maps of top destinations in conduits
+# .. Flow maps of top inflows
 # Conduits Charts
 # .. Top conduits in World
 # .. Top conduits in Africa
@@ -2170,6 +2171,87 @@ g <- ggplot() +
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
        file = "Figures/Flow map top destinations Developing.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Flow maps of top inflows ####
+load("Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
+load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
+
+# conduits_Africa <- c("MUS", "UGA", "MWI", "SYC", "MLI", "AGO", "ZWE", "NER", "CIV", "KEN")
+# conduits_LMIC <- c("MDA", "PNG", "VNM", "NIC", "SLV", "KGZ", "VUT", "NPL", "HND", "UGA")
+# conduits_Developing <- c("SGP", "HKG", "MDV", "GUY", "PLW", "MYS", "PNG", "VNM", "THA", "NIC")
+
+top_inflows <- Net_Orig_Avg %>%
+  filter(Tot_IFF_hi < 0) %>%
+  top_n(10, abs(Tot_IFF_hi)) %>%
+  arrange(desc(abs(Tot_IFF_hi))) %>%
+  pull(reporter.ISO)
+  
+ditch_axes <- theme(axis.title.x = element_blank(),
+                    axis.text.x = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.border = element_blank(),
+                    panel.grid = element_blank()) 
+
+centroids <- codes %>%
+  dplyr::select(ISO3166.3, Longitude, Latitude) %>%
+  mutate_at(vars(Longitude, Latitude),
+            funs(as.numeric))
+
+Net_Orig_Dest_Avg <- Net_Orig_Dest_Avg %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Longitude,
+                rLatitude = Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Longitude,
+                pLatitude = Latitude) %>%
+  filter(reporter.ISO %in% top_inflows) %>%
+  filter(Tot_IFF_hi < 0) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, abs(Tot_IFF_hi)) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(Net_Orig_Dest_Avg %>% filter(reporter.ISO %in% top_inflows),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
+  labs(title = "Provenance of inflows for top recipients of net inflows",
+       subtitle = "Top 10 origin countries for net inflows in $")
+ggsave(g,
+       file = "Figures/Flow map provenance top inflows World.png",
        width = 6, height = 5, units = "in")
 
 

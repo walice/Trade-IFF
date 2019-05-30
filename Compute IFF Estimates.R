@@ -1198,6 +1198,9 @@ write.csv(GER_Orig_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Av
 save(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
 write.csv(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.csv",
           row.names = F)
+save(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+write.csv(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.csv",
+          row.names = F)
 save(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.csv",
           row.names = F)
@@ -1313,6 +1316,18 @@ Net_Orig_Dest <- Net_Orig_Dest_Year %>%
             Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
             Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
+         Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
+         Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
+         Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+
+Net_Orig_Dest_Avg <- Net_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, partner, partner.ISO, pRegion, pIncome, pDev) %>%
+  summarize(Imp_IFF_lo = mean(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = mean(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = mean(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = mean(Exp_IFF_hi, na.rm = T)) %>%
   ungroup() %>%
   mutate(Tot_IFF_lo = Imp_IFF_lo + Exp_IFF_lo,
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
@@ -1476,6 +1491,9 @@ save(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.Rdata")
 write.csv(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.csv",
           row.names = F)
 
+save(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
+write.csv(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.csv",
+          row.names = F)
 save(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.Rdata")
 write.csv(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.csv",
           row.names = F)
