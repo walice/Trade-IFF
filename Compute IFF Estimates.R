@@ -1248,6 +1248,7 @@ write.csv(GER_Developing, file = "Results/Summary data-sets/GER_Developing.csv",
 
 # .. Aggregate results using Net Aggregation ####
 load("Data/WDI/WDI.Rdata")
+load("Data/Comtrade/comtrade_total_clean.Rdata")
 
 Net_Orig_Dest_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev,
@@ -1333,6 +1334,30 @@ Net_Orig_Dest_Avg <- Net_Orig_Dest_Year %>%
          Tot_IFF_hi = Imp_IFF_hi + Exp_IFF_hi,
          Tot_IFF_lo_bn = Tot_IFF_lo / 10^9,
          Tot_IFF_hi_bn = Tot_IFF_hi / 10^9)
+weights <- Net_Orig_Dest_Year %>%
+  distinct(reporter.ISO, year, .keep_all = T) %>%
+  group_by(reporter.ISO) %>%
+  mutate(weight = 1/n()) %>%
+  ungroup()
+WDI <- left_join(WDI, weights %>% 
+                   mutate(year = as.integer(year)) %>%
+                   select(reporter.ISO, year, weight),
+                 by = c("ISO3166.3" = "reporter.ISO",
+                        "year")) %>%
+  mutate(weight = ifelse(is.na(weight), 0, weight)) %>%
+  group_by(ISO3166.3) %>%
+  summarize(GDP = weighted.mean(GDP, weight),
+            GNPpc = weighted.mean(GNPpc, weight))
+Net_Orig_Dest_Avg <- left_join(Net_Orig_Dest_Avg,
+                               WDI,
+                               by = c("reporter.ISO" = "ISO3166.3")) %>%
+  rename(rGDP = GDP,
+         rGNPpc = GNPpc)
+Net_Orig_Dest_Avg <- left_join(Net_Orig_Dest_Avg,
+                               WDI,
+                               by = c("partner.ISO" = "ISO3166.3")) %>%
+  rename(pGDP = GDP,
+         pGNPpc = GNPpc)
 
 Net_Orig_Dest_Year_Africa <- Net_Orig_Dest_Year %>%
   filter(rRegion == "Africa") %>%
