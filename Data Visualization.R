@@ -1997,9 +1997,11 @@ dev.off()
 
 
 # .. Flow maps of top destinations in conduits ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
 
+conduits_Africa <- c("MUS", "UGA", "MWI", "SYC", "MLI", "AGO", "ZWE", "NER", "CIV", "KEN")
 conduits_LMIC <- c("MDA", "PNG", "VNM", "NIC", "SLV", "KGZ", "VUT", "NPL", "HND", "UGA")
 conduits_Developing <- c("SGP", "HKG", "MDV", "GUY", "PLW", "MYS", "PNG", "VNM", "THA", "NIC")
 
@@ -2016,6 +2018,57 @@ centroids <- codes %>%
   dplyr::select(ISO3166.3, Longitude, Latitude) %>%
   mutate_at(vars(Longitude, Latitude),
             funs(as.numeric))
+
+GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Longitude,
+                rLatitude = Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Longitude,
+                pLatitude = Latitude) %>%
+  filter(reporter.ISO %in% conduits_Africa) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF_hi) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(GER_Orig_Dest_Avg_Africa %>% filter(reporter.ISO %in% conduits_Africa),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
+  labs(title = "Destinations of top origins in Africa",
+       subtitle = "Top 10 origin countries by % of GDP")
+ggsave(g,
+       file = "Figures/Flow map top destinations Africa.png",
+       width = 6, height = 5, units = "in")
 
 GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
@@ -2053,13 +2106,17 @@ g <- ggplot() +
              aes(x = rLongitude, y = rLatitude, col = reporter),
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 3) +
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
-  guides(col = FALSE) +
+  guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
   labs(title = "Destinations of top origins in low and lower middle income",
-       subtitle = "Top origin countries by % of GDP")
+       subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
        file = "Figures/Flow map top destinations LMIC.png",
        width = 6, height = 5, units = "in")
@@ -2100,13 +2157,17 @@ g <- ggplot() +
              aes(x = rLongitude, y = rLatitude, col = reporter),
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 3) +
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
-  guides(col = FALSE) +
+  guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
   labs(title = "Destinations of top origins in developing countries",
-       subtitle = "Top origin countries by % of GDP")
+       subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
        file = "Figures/Flow map top destinations Developing.png",
        width = 6, height = 5, units = "in")
