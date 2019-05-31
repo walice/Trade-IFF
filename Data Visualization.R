@@ -40,6 +40,7 @@
 # .. Stacked bar chart of commodities in top sector in LMIC
 # .. Stacked bar charts of top average outflows in pilots
 # .. Pie charts of top cumulative outflows in pilots
+# .. Stacked bar charts of top sectors in conduits
 # Destination Charts
 # .. Stacked bar charts of top average outflows in Africa
 # .. Stacked bar charts of top average outflows in LMIC
@@ -1562,6 +1563,45 @@ g <- ggplot(viz,
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Pilots/Sudan top 5 sectors GER sum high pie chart.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Stacked bar charts of top sectors in conduits ####
+load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
+
+conduits_Africa <- c("MUS", "UGA", "MWI", "SYC", "MLI", "AGO", "ZWE", "NER", "CIV", "KEN")
+conduits_LMIC <- c("MDA", "PNG", "VNM", "NIC", "SLV", "KGZ", "VUT", "NPL", "HND", "UGA")
+conduits_Developing <- c("SGP", "HKG", "MDV", "GUY", "PLW", "MYS", "PNG", "VNM", "THA", "NIC")
+
+top <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_Africa) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  arrange(Tot_IFF_hi) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_Africa) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF_hi) %>%
+  ungroup() %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+       aes(x = reporter, y = Tot_IFF_hi, fill = str_wrap(section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top 5 sectors in top African countries",
+       subtitle = "Yearly average outflows during 2000-2016",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_brewer(type = "qual", palette = "Set3") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Top 5 sectors GER in conduits Africa.png",
        width = 6, height = 5, units = "in")
 
 
