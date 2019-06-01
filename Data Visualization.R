@@ -27,6 +27,7 @@
 # Average IFF World
 # .. Merge geographic data
 # .. Average gross IFF
+# Cartogram World
 # Origins and Destinations
 # .. Origins pie chart Africa
 # .. Origins pie chart World
@@ -957,6 +958,38 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# CARTOGRAM WORLD           ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+
+data(wrld_simpl)
+wrld_simpl@data <- left_join(wrld_simpl@data, GER_Orig_Avg %>%
+                               select(reporter.ISO, Tot_IFF_hi_GDP),
+                             by = c("ISO3" = "reporter.ISO"))
+rownames(wrld_simpl@data) <- wrld_simpl@data$ISO3
+World_cartogram <- cartogram_cont(wrld_simpl, "Tot_IFF_hi_GDP", itermax = 5, threshold = 0.1)
+
+viz <- tidy(World_cartogram)
+viz <- viz %>% left_join(. , World_cartogram@data, by = c("id" = "ISO3")) 
+
+g <- ggplot() +
+  geom_polygon(data = viz, aes(fill = Tot_IFF_hi_GDP, x = long, y = lat, group = group) , color = "white", lwd = 0.2) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Country size is proportional to gross outflows") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Cartogram GER World.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # ORIGINS AND DESTINATIONS  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -1716,7 +1749,7 @@ g <- ggplot(viz,
        aes(x = reporter, y = Tot_IFF_hi, fill = str_wrap(section, 20))) +
   geom_bar(stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Top 5 sectors in top low and lower middle income countries",
+  labs(title = "Top 5 sectors in top low and lower middle income",
        subtitle = "Yearly average outflows during 2000-2016",
        x = NULL,
        y = "Illicit flow in billion USD",
