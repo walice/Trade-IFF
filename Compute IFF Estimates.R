@@ -1791,6 +1791,10 @@ GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
+GER_Orig_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_disag %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
 GER_Orig_Sect_Avg_LMIC <- GER_Orig_Sect_Avg %>%
   filter(rIncome == "LIC" | rIncome == "LMC") %>%
   select(-rIncome)
@@ -1800,6 +1804,10 @@ GER_Orig_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_disag %>%
   select(-rIncome)
 
 GER_Orig_Sect_Avg_Developing <- GER_Orig_Sect_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
+GER_Orig_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_disag %>%
   filter(rDev == "Developing") %>%
   select(-rDev)
 
@@ -1863,6 +1871,18 @@ GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
+GER_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_Africa_disag %>%
+  group_by(commodity.code, commodity) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
 GER_Sect_Avg_LMIC <- GER_Orig_Sect_Avg_LMIC %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1899,6 +1919,18 @@ GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
   ungroup()
 
+GER_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_Developing_disag %>%
+  group_by(commodity.code, commodity) %>%
+  summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
+            Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_lo = sum(Exp_IFF_lo, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_lo = sum(Tot_IFF_lo, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_lo_bn = sum(Tot_IFF_lo_bn, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
 save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
 write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
           row.names = F)
@@ -1923,6 +1955,9 @@ write.csv(GER_Sect_Developing, file = "Results/Summary data-sets/GER_Sect_Develo
 save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
           row.names = F)
+save(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
+write.csv(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.csv",
+          row.names = F)
 save(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 write.csv(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.csv",
           row.names = F)
@@ -1931,6 +1966,9 @@ write.csv(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Av
           row.names = F)
 save(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
 write.csv(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.csv",
+          row.names = F)
+save(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.Rdata")
+write.csv(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.csv",
           row.names = F)
 
 

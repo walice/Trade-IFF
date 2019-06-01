@@ -23,6 +23,7 @@
 # .. Merge geographic data
 # .. Average gross IFF
 # .. Average net IFF
+# Cartogram Africa
 # Average IFF World
 # .. Merge geographic data
 # .. Average gross IFF
@@ -37,7 +38,7 @@
 # .. Treemap in Africa
 # .. Treemap in LMIC
 # .. Treemap in Developing
-# .. Stacked bar chart of commodities in top sector in LMIC
+# .. Stacked bar chart of commodities in top sectors
 # .. Stacked bar charts of top average outflows in pilots
 # .. Pie charts of top cumulative outflows in pilots
 # .. Stacked bar charts of top sectors in conduits
@@ -68,6 +69,9 @@
 #setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
 #setwd("D:/Google Drive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice laptop
 setwd("/home/alice/IFFe/") # Virtual server
+library(broom)
+library(cartogram)
+library(disco)
 library(geosphere)
 library(ggalluvial)
 library(ggmap)
@@ -75,12 +79,15 @@ library(ggpubr)
 library(ggrepel)
 library(ggsunburst)
 library(mapproj)
+library(maptools)
+library(rcartocolor)
 library(RColorBrewer)
 library(reshape2)
 library(scales)
 library(stringr)
 library(tidyverse)
 library(treemapify)
+library(wesanderson)
 library(xlsx)
 
 
@@ -844,6 +851,37 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
+# CARTOGRAM AFRICA          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
+
+data(wrld_simpl)
+Africa <- wrld_simpl[wrld_simpl$REGION == 2, ]
+Africa@data <- left_join(Africa@data, GER_Orig_Avg_Africa %>%
+                           select(reporter.ISO, Tot_IFF_hi_bn),
+                         by = c("ISO3" = "reporter.ISO"))
+rownames(Africa@data) <- Africa@data$ISO3
+Africa_cartogram <- cartogram_cont(Africa, "Tot_IFF_hi_bn")
+
+viz <- tidy(Africa_cartogram)
+viz <- viz %>% left_join(. , Africa_cartogram@data, by = c("id" = "ISO3")) 
+
+g <- ggplot() +
+  geom_polygon(data = viz, aes(fill = Tot_IFF_hi_bn, x = long, y = lat, group = group) , color = "white", lwd = 0.2) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Country size is proportional to gross outflows")
+ggsave(g,
+       file = "Figures/Cartogram GER Africa.png",
+       width = 6, height = 5, units = "in")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
 # AVERAGE IFF WORLD         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
@@ -1206,9 +1244,37 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Stacked bar chart of commodities in top sector in LMIC ####
+# .. Stacked bar chart of commodities in top sectors ####
+load("Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_Developing_disag.Rdata")
 load("Data/UN Stats/HS.Rdata")
+
+viz <- left_join(GER_Sect_Avg_Africa_disag, HS %>% select(-chapter.description),
+                 by = c("commodity.code" = "chapter")) %>%
+  filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(commodity = factor(commodity,
+                            levels = commodity[order(Tot_IFF_hi, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = section, y = Tot_IFF_hi/10^9, 
+                fill = fct_inorder(str_wrap(commodity, 20)))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(order(Tot_IFF_hi) == min(order(Tot_IFF_hi)),
+                               "", paste0("$", round(Tot_IFF_hi/10^9), " billion"))), 
+            position = position_stack(vjust = 0.5),
+            size = 3) +
+  labs(x = NULL, 
+       y = "Illicit flow in billion USD", 
+       fill = NULL, 
+       title = "Breakdown of top sectors in Africa",
+       subtitle = "Yearly average outflows during 2000-2016") +
+  theme(legend.text = element_text(size = 8)) +
+  scale_fill_brewer(type = "qual", palette = "Accent")
+ggsave(g,
+       file = "Figures/Top commodities in Africa.png",
+       width = 6, height = 5, units = "in")
 
 viz <- left_join(GER_Sect_Avg_LMIC_disag, HS %>% select(-chapter.description),
                  by = c("commodity.code" = "chapter")) %>%
@@ -1221,7 +1287,8 @@ g <- ggplot(viz,
             aes(x = fct_rev(section), y = Tot_IFF_hi/10^9, 
                 fill = fct_inorder(str_wrap(commodity, 20)))) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), 
+  geom_text(aes(label = ifelse(order(Tot_IFF_hi) == min(order(Tot_IFF_hi)),
+                               "", paste0("$", round(Tot_IFF_hi/10^9), " billion"))), 
             position = position_stack(vjust = 0.5),
             size = 3) +
   labs(x = NULL, 
@@ -1233,6 +1300,32 @@ g <- ggplot(viz,
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
        file = "Figures/Top commodities in LMIC.png",
+       width = 6, height = 5, units = "in")
+
+viz <- left_join(GER_Sect_Avg_Developing_disag, HS %>% select(-chapter.description),
+                 by = c("commodity.code" = "chapter")) %>%
+  filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
+  arrange(desc(Tot_IFF_hi)) %>%
+  mutate(commodity = factor(commodity,
+                            levels = commodity[order(Tot_IFF_hi, decreasing = T)]))
+
+g <- ggplot(viz,
+            aes(x = section, y = Tot_IFF_hi/10^9, 
+                fill = fct_inorder(str_wrap(commodity, 20)))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = ifelse(order(Tot_IFF_hi) == min(order(Tot_IFF_hi)),
+                               "", paste0("$", round(Tot_IFF_hi/10^9), " billion"))),
+            position = position_stack(vjust = 0.5),
+            size = 3) +
+  labs(x = NULL, 
+       y = "Illicit flow in billion USD", 
+       fill = NULL, 
+       title = "Breakdown of top sectors in developing countries",
+       subtitle = "Yearly average outflows during 2000-2016") +
+  theme(legend.text = element_text(size = 8)) +
+  scale_fill_brewer(type = "qual", palette = "Accent")
+ggsave(g,
+       file = "Figures/Top commodities in Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1598,10 +1691,72 @@ g <- ggplot(viz,
        y = "Illicit flow in billion USD",
        fill = NULL) +
   coord_flip() +
-  scale_fill_brewer(type = "qual", palette = "Set3") +
+  scale_fill_disco(palette = "rainbow") +
   theme(legend.text = element_text(size = 8))
 ggsave(g,
        file = "Figures/Top 5 sectors GER in conduits Africa.png",
+       width = 6, height = 5, units = "in")
+
+top <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_LMIC) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  arrange(Tot_IFF_hi) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_LMIC) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF_hi) %>%
+  ungroup() %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+       aes(x = reporter, y = Tot_IFF_hi, fill = str_wrap(section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top 5 sectors in top low and lower middle income countries",
+       subtitle = "Yearly average outflows during 2000-2016",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_disco(palette = "rainbow") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Top 5 sectors GER in conduits LMIC.png",
+       width = 6, height = 5, units = "in")
+
+top <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_Developing) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T)) %>%
+  arrange(Tot_IFF_hi) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(reporter.ISO %in% conduits_Developing) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF_hi) %>%
+  ungroup() %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+       aes(x = reporter, y = Tot_IFF_hi, fill = str_wrap(section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top 5 sectors in top developing countries",
+       subtitle = "Yearly average outflows during 2000-2016",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_disco(palette = "rainbow") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Top 5 sectors GER in conduits Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2085,7 +2240,7 @@ viz <- left_join(GER_Orig_Dest_Avg_Africa %>% filter(reporter.ISO %in% conduits_
 
 g <- ggplot() + 
   geom_polygon(data = map,
-               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   geom_curve(data = viz, 
@@ -2103,8 +2258,8 @@ g <- ggplot() +
                    size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
   guides(col = FALSE, fill = FALSE) +
-  scale_color_brewer(type = "qual", palette = "Paired") +
-  scale_fill_brewer(type = "qual", palette = "Paired") +
+  scale_color_manual(values = carto_pal(10, "Bold")) +
+  scale_fill_manual(values = carto_pal(10, "Bold")) +
   labs(title = "Destinations of top origins in Africa",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
@@ -2136,7 +2291,7 @@ viz <- left_join(GER_Orig_Dest_Avg_LMIC %>% filter(reporter.ISO %in% conduits_LM
 
 g <- ggplot() + 
   geom_polygon(data = map,
-               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   geom_curve(data = viz, 
@@ -2154,8 +2309,8 @@ g <- ggplot() +
                    size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
   guides(col = FALSE, fill = FALSE) +
-  scale_color_brewer(type = "qual", palette = "Paired") +
-  scale_fill_brewer(type = "qual", palette = "Paired") +
+  scale_color_manual(values = carto_pal(10, "Bold")) +
+  scale_fill_manual(values = carto_pal(10, "Bold")) +
   labs(title = "Destinations of top origins in low and lower middle income",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
@@ -2187,7 +2342,7 @@ viz <- left_join(GER_Orig_Dest_Avg_Developing %>% filter(reporter.ISO %in% condu
 
 g <- ggplot() + 
   geom_polygon(data = map,
-               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) + 
   coord_fixed(1.3) +
   theme_bw() + 
   geom_curve(data = viz, 
@@ -2205,8 +2360,8 @@ g <- ggplot() +
                    size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
   guides(col = FALSE, fill = FALSE) +
-  scale_color_brewer(type = "qual", palette = "Paired") +
-  scale_fill_brewer(type = "qual", palette = "Paired") +
+  scale_color_manual(values = carto_pal(10, "Bold")) +
+  scale_fill_manual(values = carto_pal(10, "Bold")) +
   labs(title = "Destinations of top origins in developing countries",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
@@ -2516,7 +2671,7 @@ g <- ggplot(viz,
   geom_label(stat = "stratum", label.strata = TRUE, size = 3, hjust = "inward") +
   scale_x_discrete(limits = c("GNI per capita", "Sector"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
+  scale_fill_manual(values = wes_palette("BottleRocket2")) +
   labs(title = "Trade mis-invoicing in low and lower middle income",
        subtitle = "according to GNI per capita and top 10 sectors",
        y = "Yearly average outflow in billion USD") +
@@ -2556,7 +2711,7 @@ g <- ggplot(viz,
   geom_label(stat = "stratum", label.strata = TRUE, size = 3, hjust = "inward") +
   scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
+  scale_fill_manual(values = wes_palette("Darjeeling1")) +
   labs(title = "Trade mis-invoicing in low and lower middle income",
        subtitle = "according to GNI per capita",
        y = "Yearly average outflow in billion USD") +
