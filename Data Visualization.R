@@ -28,6 +28,8 @@
 # .. Merge geographic data
 # .. Average gross IFF
 # Cartogram World
+# .. Country size proportional to gross outflows
+# .. Country size proportional to gross outflows as % of GDP
 # Origins and Destinations
 # .. Origins pie chart Africa
 # .. Origins pie chart World
@@ -79,8 +81,10 @@ library(ggmap)
 library(ggpubr)
 library(ggrepel)
 library(ggsunburst)
+library(ggthemes)
 library(mapproj)
 library(maptools)
+library(paletteer)
 library(rcartocolor)
 library(RColorBrewer)
 library(reshape2)
@@ -963,18 +967,50 @@ ggsave(g,
 
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 
+# .. Country size proportional to gross outflows ####
 data(wrld_simpl)
 wrld_simpl@data <- left_join(wrld_simpl@data, GER_Orig_Avg %>%
-                               select(reporter.ISO, Tot_IFF_hi_GDP),
+                               select(reporter.ISO, Tot_IFF_hi_bn),
                              by = c("ISO3" = "reporter.ISO"))
 rownames(wrld_simpl@data) <- wrld_simpl@data$ISO3
-World_cartogram <- cartogram_cont(wrld_simpl, "Tot_IFF_hi_GDP", itermax = 5, threshold = 0.1)
+# World_cartogram <- cartogram_cont(wrld_simpl, "Tot_IFF_hi_bn")
+# save(World_cartogram, file = "Figures/World Cartogram")
+load("Figures/World Cartogram")
 
 viz <- tidy(World_cartogram)
 viz <- viz %>% left_join(. , World_cartogram@data, by = c("id" = "ISO3")) 
 
 g <- ggplot() +
-  geom_polygon(data = viz, aes(fill = Tot_IFF_hi_GDP, x = long, y = lat, group = group) , color = "white", lwd = 0.2) +
+  geom_polygon(data = viz, aes(fill = Tot_IFF_hi_bn, x = long, y = lat, group = group) , color = "white", lwd = 0.2) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1,
+                       breaks = c(50, 150)) +
+  labs(title = "Total outflows averaged over 2000-2016",
+       subtitle = "Country size is proportional to gross outflows") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Cartogram GER World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Country size proportional to gross outflows as % of GDP ####
+data(wrld_simpl)
+wrld_simpl@data <- left_join(wrld_simpl@data, GER_Orig_Avg %>%
+                               select(reporter.ISO, Tot_IFF_hi_GDP),
+                             by = c("ISO3" = "reporter.ISO"))
+rownames(wrld_simpl@data) <- wrld_simpl@data$ISO3
+# World_cartogram <- cartogram_cont(wrld_simpl, "Tot_IFF_hi_GDP")
+# save(World_cartogram, file = "Figures/World Cartogram GDP")
+load("Figures/World Cartogram GDP")
+
+viz <- tidy(World_cartogram)
+viz <- viz %>% left_join(. , World_cartogram@data, by = c("id" = "ISO3")) 
+
+g <- ggplot() +
+  geom_polygon(data = viz, aes(fill = Tot_IFF_hi_GDP*100, x = long, y = lat, group = group) , color = "white", lwd = 0.2) +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
@@ -984,7 +1020,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/Cartogram GER World.png",
+       file = "Figures/Cartogram GER World Percent GDP.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1209,6 +1245,7 @@ ggsave(g,
 
 
 tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
+gdocs20 <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", "#5574A6", "#3B3EAC")
 
 
 # .. Treemap in Africa ####
