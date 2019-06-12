@@ -56,6 +56,7 @@ library(kableExtra)
 library(lfe)
 library(reshape2)
 library(scales)
+library(stargazer)
 library(tidyverse)
 options(scipen = 999)
 
@@ -426,6 +427,8 @@ summary(fit_censor)
 mean(exp(fitted(fit_censor)))
 # 1.048686
 
+save(fit_censor, file = "Results/fit_censor")
+
 panel <- panel_censor
 fit <- fit_censor
 
@@ -604,6 +607,11 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
 summary(fit)
 mean(exp(fitted(fit)))
 # 3.171489
+
+save(fit, file = "Results/fit")
+
+stargazer(fit, type = "html", style = "aer",
+          out = "Results/Regression table.html")
 
 
 # .. Compute fitted values when predictors are 0 ####
