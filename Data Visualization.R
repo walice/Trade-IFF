@@ -23,6 +23,7 @@
 # .. Merge geographic data
 # .. Average gross IFF
 # .. Average net IFF
+# .. Average gross, percent GDP, percent trade
 # Cartogram Africa
 # Average IFF World
 # .. Merge geographic data
@@ -339,6 +340,75 @@ g <- ggplot(Net_Year_Africa %>%
             size = 3, position = position_dodge(1), vjust = -0.4)
 ggsave(g,
        file = "Figures/Net Africa Total Percent GDP high.png",
+       width = 6, height = 5, units = "in")
+
+viz <- full_join(GER_Year_Africa %>% 
+                   select(year, 
+                          GER_Tot_IFF_hi = Tot_IFF_hi, 
+                          GER_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          GER_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 Net_Year_Africa %>%
+                   select(year, 
+                          Net_Tot_IFF_hi = Tot_IFF_hi, 
+                          Net_Tot_IFF_hi_GDP = Tot_IFF_hi_GDP, 
+                          Net_Tot_IFF_hi_Trade = Tot_IFF_hi_trade),
+                 by = c("year"))
+
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_hi" | variable == "GER_Tot_IFF_hi"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/GER and Net Africa Total high.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_hi_GDP" | variable == "GER_Tot_IFF_hi_GDP"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/GER and Net Africa Total Percent GDP high.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_hi_Trade" | variable == "GER_Tot_IFF_hi_Trade"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of trade") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/GER and Net Africa Total Percent Trade high.png",
        width = 6, height = 5, units = "in")
 
 
@@ -851,6 +921,56 @@ g <- ggplot() +
        subtitle = "High estimate")
 ggsave(g,
        file = "Figures/Net Total Average IFF high.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Average gross, percent GDP, percent trade ####
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  labs(title = "Total gross outflows averaged over 2000-2016") +
+  theme(legend.position = "bottom",
+        legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/GER Total Average Africa IFF high.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_GDP*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
+  labs(title = "Total gross outflows averaged over 2000-2016") +
+  theme(legend.position = "bottom",
+        legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/GER Total Average Africa IFF Percent GDP high.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_hi_trade*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% trade)", direction = -1) +
+  labs(title = "Total gross outflows averaged over 2000-2016") +
+  theme(legend.position = "bottom",
+        legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/GER Total Average Africa IFF Percent Trade high.png",
        width = 6, height = 5, units = "in")
 
 
