@@ -608,6 +608,13 @@ summary(fit)
 mean(exp(fitted(fit)))
 # 3.171489
 
+d <- panel %>% distinct(dist) %>%
+  mutate(y = coef(fit)["dist"]*dist + coef(fit)["dist.sq"]*dist^2)
+ggplot(d, aes(x = dist, y = y)) + 
+  geom_line()
+
+kable(vif(fit), digits = 3, format = "rst")
+
 save(fit, file = "Results/fit")
 
 stargazer(fit, type = "html", style = "aer",
