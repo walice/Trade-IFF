@@ -633,6 +633,8 @@ for (v in 1:length(coef)){
 }
 coef
 panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+mean(panel$fitted_IFF)
+# 0.9393725
 
 coef <- coef(fit)
 for (v in 1:length(coef)){
@@ -642,6 +644,8 @@ for (v in 1:length(coef)){
 }
 coef
 panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+mean(panel$fitted_nonIFF)
+# 3.360852
 
 rm(coef, v, IFF.preds)
 
