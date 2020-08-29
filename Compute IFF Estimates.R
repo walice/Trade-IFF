@@ -887,6 +887,22 @@ GER_Orig_Dest_Year <- full_join(GER_Imp_Dest, GER_Exp_Dest,
                                        "pDev" = "pDev"))
 rm(GER_Imp_Dest, GER_Exp_Dest)
 
+GER_Orig_Dest_Year_std <- left_join(GER_Orig_Dest_Year %>% mutate(year = as.integer(year)),
+                                    WDI,
+                                    by = c("reporter.ISO" = "ISO3166.3", 
+                                           "year")) %>%
+  rename(rGDP = GDP,
+         rGNPpc = GNPpc)
+GER_Orig_Dest_Year_std <- left_join(GER_Orig_Dest_Year_std %>% mutate(year = as.integer(year)),
+                                    WDI,
+                                    by = c("partner.ISO" = "ISO3166.3", 
+                                           "year")) %>%
+  rename(pGDP = GDP,
+         pGNPpc = GNPpc)
+GER_Orig_Dest_Year_std <- GER_Orig_Dest_Year_std %>%
+  mutate(rImp_IFF_hi_GDP = Imp_IFF_hi / rGDP,
+         pImp_IFF_hi_GDP = Imp_IFF_hi / pGDP)
+
 GER_Orig_Year <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, year) %>%
   summarize(Imp_IFF_lo = sum(Imp_IFF_lo, na.rm = T),
@@ -1180,6 +1196,9 @@ GER_Developing <- GER_Year_Developing %>%
 
 save(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.Rdata")
 write.csv(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.csv",
+          row.names = F)
+save(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.Rdata")
+write.csv(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.csv",
           row.names = F)
 save(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.Rdata")
 write.csv(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.csv",
