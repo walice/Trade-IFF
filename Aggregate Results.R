@@ -1,4 +1,4 @@
-# Compute IFF Estimates
+# Aggregate Results
 # Alice Lepissier
 # alice.lepissier@gmail.com
 # Prepared for UNECA
@@ -7,32 +7,6 @@
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
-# Create Variables
-# .. Implement weighting by quantities (not used)
-# .. Create dependent variable and predictors
-# .. Variable transformation
-# Remove Outliers
-# .. Truncate panel and remove CIF ratios greater than 10,000 (not used)
-# .. Estimate regression
-# .. Identify and remove outliers
-# Low Estimates
-# .. Censor the data-set to get lower-bounds
-# .. Estimate CIF rates
-# .. Compute fitted values when predictors are 0
-# .. Compute FOB imports
-# .. Estimate fixed effects regression
-# .. Harmonization procedure
-# .. Compute IFF
-# .. Move export IFF to mirror
-# High Estimates
-# .. Estimate CIF rates
-# .. Compute fitted values when predictors are 0
-# .. Compute FOB imports
-# .. Estimate fixed effects regression
-# .. Harmonization procedure
-# .. Compute IFF
-# .. Move export IFF to mirror
-# Merge Results
 # Aggregate by Destination
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
@@ -40,6 +14,8 @@
 # .. Aggregate results using Gross Excluding Reversals
 # .. Aggregate results using Net Aggregation
 # Headline Figures
+# .. For Africa
+# .. For developing countries
 # Pilot Country Results
 
 
@@ -53,7 +29,6 @@
 setwd("/home/alice/IFFe/") # Virtual server
 library(car)
 library(kableExtra)
-library(lfe)
 library(reshape2)
 library(scales)
 library(stargazer)
@@ -63,753 +38,12 @@ options(scipen = 999)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# CREATE VARIABLES          ####
-## ## ## ## ## ## ## ## ## ## ##
-
-#source("Scripts/Data Preparation.R")
-load("Data/Panel/panel.Rdata")
-
-length(unique(panel$id)) == nrow(panel)
-# TRUE, 20864314 obs
-
-panel %>%
-  filter(pExport_value == 0 & is.na(pReExport_value)) %>% nrow
-# There is no case where a mirrored Re-Export value is missing while
-# the mirrored Export value exists.
-
-panel %>%
-  filter(pExport_quantity == 0 & is.na(pReExport_quantity)) %>% nrow
-# There is no case where a mirrored Re-Export quantity is missing while
-# the mirrored Export quantity exists.
-
-panel %>%
-  filter(pExport_weight == 0 & is.na(pReExport_weight)) %>% nrow
-# There is no case where a mirrored Re-Export weight is missing while
-# the mirrored Export weight exists.
-
-
-# .. Implement weighting by quantities (not used) ####
-panel <- panel %>%
-  mutate(NetExport_value = Export_value - ReExport_value,
-         pNetExport_value = pExport_value - pReExport_value,
-         pNetExport_quantity = pExport_quantity - pReExport_quantity,
-         pNetExport_weight = pExport_weight - pReExport_weight)
-
-summary(panel$Import_quantity)
-summary(panel$pNetExport_quantity)
-summary(panel$Import_weight)
-summary(panel$pNetExport_weight)
-
-panel <- panel %>%
-  mutate(Import_U = Import_value / Import_quantity,
-         pNetExport_U = pNetExport_value / pNetExport_quantity)
-summary(panel$Import_U)
-summary(panel$pNetExport_U)
-panel %>% filter(is.finite(Import_U) & is.finite(pNetExport_U)) %>% nrow
-# 0
-
-panel <- panel %>%
-  mutate(Import_U = Import_value / Import_weight,
-         pNetExport_U = pNetExport_value / pNetExport_weight)
-summary(panel$Import_U)
-summary(panel$pNetExport_U)
-panel %>% filter(is.finite(Import_U) & is.finite(pNetExport_U)) %>% nrow
-# 0
-
-panel <- panel %>%
-  mutate(Import_w = ifelse(pNetExport_quantity < Import_quantity,
-                           Import_value - (Import_quantity - pNetExport_quantity) * Import_U,
-                           Import_value),
-         pNetExport_w = ifelse(pNetExport_quantity > Import_quantity,
-                               pNetExport_value - (pNetExport_quantity - Import_quantity) * pNetExport_U,
-                               pNetExport_value))
-
-summary(panel$Import_w)
-# Inf
-summary(panel$pNetExport_w)
-# Inf
-
-# It is not possible to implement the weighting by quantities.
-# There is simply not enough data.
-
-panel <- panel %>%
-  select(-ends_with("quantity"), -ends_with("weight"), -ends_with("_U"), -ends_with("_w"))
-
-
-# .. Create dependent variables and predictors ####
-panel <- panel %>% 
-  mutate(ratio_CIF = Import_value / pNetExport_value) %>%
-  filter(is.finite(ratio_CIF))
-nrow(panel)
-# 8080386
-
-summary(panel$ratio_CIF)
-hist(panel$ratio_CIF)
-
-panel <- panel %>%
-  mutate(ln.ratio_CIF = log(ratio_CIF)) %>%
-  filter(is.finite(ln.ratio_CIF))
-nrow(panel)
-# 7605946
-
-summary(panel$year)
-panel <- panel %>% 
-  group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(ln.ratio_CIF_lag = dplyr::lag(ln.ratio_CIF, n = 1)) %>%
-  ungroup() %>%
-  filter(is.finite(ln.ratio_CIF_lag))
-nrow(panel)
-# 6812396
-summary(panel$year)
-
-panel <- panel %>% 
-  group_by(reporter.ISO, partner.ISO, commodity.code) %>%
-  mutate(Import_fut = dplyr::lead(Import_value, n = 1)) %>%
-  ungroup() %>%
-  filter(is.finite(Import_fut))
-nrow(panel)
-# 6147496
-summary(panel$year)
-
-panel <- panel %>%
-  mutate(FutImport_misrep = Import_fut / Import_value,
-         ReExport_misrep = pReExport_value / Import_value) %>%
-  filter(is.finite(FutImport_misrep) & is.finite(ReExport_misrep))
-nrow(panel)
-# 6147496
-
-panel <- panel %>%
-  filter(complete.cases(ratio_CIF, ln.ratio_CIF, ln.ratio_CIF_lag,
-                        dist, contig, rLandlocked, pLandlocked,
-                        FutImport_misrep, ReExport_misrep, 
-                        tariff, rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual))
-nrow(panel)
-# 3662664
-
-
-# .. Variable transformation ####
-panel <- panel %>%
-  mutate(dist.sq = I(dist^2))
-
-panel <- panel %>%
-  mutate(rCorruption = 100 - rCorruption,
-         pCorruption = 100 - pCorruption,
-         rRegulatory.qual = 100 - rRegulatory.qual,
-         pRegulatory.qual = 100 - pRegulatory.qual)
-
-panel <- panel %>%
-  rename(rPoorRegulation = rRegulatory.qual,
-         pPoorRegulation = pRegulatory.qual)
-
-hist(panel$ln.ratio_CIF)
-hist(panel$FutImport_misrep)
-hist(log(panel$FutImport_misrep))
-hist(panel$ReExport_misrep)
-hist(log(panel$ReExport_misrep))
-hist(panel$tariff)
-hist(log(panel$tariff))
-hist(panel$rCorruption)
-hist(panel$pCorruption)
-hist(panel$rPoorRegulation)
-hist(panel$pPoorRegulation)
-hist(panel$dist)
-hist(panel$dist.sq)
-
-ihs <- function(x){
-  x <- log(x + sqrt(x^2 + 1))
-  return(x)
-}
-
-# Check whether there are zeros in the data
-summary(log(panel$FutImport_misrep))
-# Fine to log
-summary(log(panel$ReExport_misrep))
-# Need inverse hyperbolic sine transformation
-summary(log(panel$tariff))
-# Need inverse hyperbolic sine transformation
-
-panel <- panel %>%
-  mutate(ln.FutImport_misrep = log(FutImport_misrep),
-         ihs.ReExport_misrep = ihs(ReExport_misrep),
-         ihs.tariff = ihs(tariff))
-hist(panel$ln.FutImport_misrep)
-hist(panel$ihs.ReExport_misrep)
-hist(panel$ihs.tariff)
-
-rm(ihs)
-nrow(panel)
-# 3662664
-save(panel, file = "Data/Panel/panel_clean.Rdata")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# REMOVE OUTLIERS           ####
-## ## ## ## ## ## ## ## ## ## ##
-
-# .. Truncate panel and remove CIF ratios greater than 10,000 (not used) ####
-summary(panel$ratio_CIF)
-
-# panel <- panel %>%
-#   filter(ratio_CIF < 10^4)
-# nrow(panel)
-# # 3657496
-# panel <- panel %>%
-#   filter(ratio_CIF < 10^3)
-# nrow(panel)
-# # 3641071
-
-panel %>% filter(ratio_CIF > 10^4) %>% nrow
-# 5168
-panel %>% filter(ratio_CIF > 10^3) %>% nrow
-# 21585
-
-
-# .. Estimate regression ####
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-summary(fit)
-mean(exp(fitted(fit)))
-# 3.236832
-max(panel$ratio_CIF)
-# 2354224577
-mean(panel$ratio_CIF)
-# 2908.841
-
-
-# .. Identify and remove outliers ####
-panel$CD <- cooks.distance(fit)
-summary(panel$CD)
-
-while(max(panel$CD) > 2){
-  panel <- panel %>%
-    filter(CD <= 2)
-  fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-              contig + 
-              rLandlocked +
-              pLandlocked +
-              ln.FutImport_misrep +
-              ihs.ReExport_misrep +
-              ln.ratio_CIF_lag +
-              tariff + 
-              rCorruption + pCorruption +
-              rPoorRegulation + pPoorRegulation,
-            data = panel)
-  panel$CD <- cooks.distance(fit)
-}
-nrow(panel)
-# 3662664
-summary(panel$CD)
-
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 2090821
-mean(panel$ratio_CIF)
-# 2908.841
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 105.5524
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 39245.07
-mean(panel$ratio_CIF)
-# 105.5524
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 94.42078
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 20457.06
-mean(panel$ratio_CIF)
-# 94.42078
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 93.56875
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 65150.41
-mean(panel$ratio_CIF)
-# 93.56875
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 93.15954
-
-rm(Bonferonni.out, outliers, obs)
-nrow(panel)
-# 3656537
-save(panel, file = "Data/Panel/panel_nooutliers.Rdata")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# LOW ESTIMATES             ####
-## ## ## ## ## ## ## ## ## ## ##
-
-load("Data/Panel/panel_nooutliers.Rdata")
-
-# .. Censor the data-set to get lower-bounds ####
-panel %>% filter(ratio_CIF > 2 | ratio_CIF < 0.5) %>% nrow
-# 1658201
-panel_censor <- panel %>% 
-  filter(ratio_CIF <= 2) %>% 
-  filter(ratio_CIF >= 0.5)
-nrow(panel_censor)
-# 1998336
-mean(panel_censor$ratio_CIF)
-# 1.101944
-plot(density(panel_censor$ratio_CIF))
-
-
-# .. Estimate CIF rates ####
-fit_censor <- lm(ln.ratio_CIF ~ dist + dist.sq +
-                   contig + 
-                   rLandlocked +
-                   pLandlocked +
-                   ln.FutImport_misrep +
-                   ihs.ReExport_misrep +
-                   ln.ratio_CIF_lag +
-                   tariff + 
-                   rCorruption + pCorruption +
-                   rPoorRegulation + pPoorRegulation,
-                 data = panel_censor)
-summary(fit_censor)
-mean(exp(fitted(fit_censor)))
-# 1.048686
-
-save(fit_censor, file = "Results/fit_censor")
-
-panel <- panel_censor
-fit <- fit_censor
-
-rm(fit_censor, panel_censor)
-
-
-# .. Compute fitted values when predictors are 0 ####
-IFF.preds <- c("tariff", "rCorruption", "pCorruption",
-               "rPoorRegulation", "pPoorRegulation")
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (!(names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
-  }
-}
-coef
-panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if ((names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
-  }
-}
-coef
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-
-rm(coef, v, IFF.preds)
-
-
-# .. Compute FOB imports ####
-summary(panel$fitted_IFF)
-summary(panel$fitted_nonIFF)
-
-panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
-
-
-# .. Estimate fixed effects regression ####
-panel <- panel %>%
-  mutate(rep_dist = abs(log(FOB_Import/pNetExport_value))) %>%
-  filter(is.finite(rep_dist))
-nrow(panel)
-# 1998336
-
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.factor(.)))
-
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
-                 partner.ISO + year,
-               data = panel)
-FE <- getfe(FE.out, se = T) 
-
-FE <- FE %>%
-  group_by(fe) %>%
-  mutate(min = min(effect)) %>%
-  ungroup()
-
-FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
-attr(FE$sigma, "extra") <- NULL
-
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.character(.)))
-
-
-# .. Harmonization procedure ####
-panel <- left_join(panel, FE %>% 
-                     filter(fe == "reporter.ISO") %>%
-                     select(idx, sigma) %>%
-                     mutate(idx = as.character(idx)),
-                   by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma = sigma)
-
-panel <- left_join(panel, FE %>% 
-                     filter(fe == "partner.ISO") %>%
-                     select(idx, sigma) %>%
-                     mutate(idx = as.character(idx)),
-                   by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma = sigma)
-
-panel <- panel %>%
-  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-summary(panel$w_r)
-summary(panel$w_p)
-
-panel <- panel %>%
-  mutate(w = w_r + w_p)
-summary(panel$w)
-
-panel <- panel %>%
-  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
-
-
-# .. Compute IFF ####
-panel <- panel %>%
-  mutate(Imp_IFF_lo = FOB_Import_IFF - RV,
-         Exp_IFF_lo = RV - pNetExport_value)
-summary(panel$Imp_IFF_lo)
-summary(panel$Exp_IFF_lo)
-
-
-# .. Move export IFF to mirror ####
-panel_mirror <- panel %>%
-  select(reporter, reporter.ISO, rRegion, rIncome, rDev,
-         partner, partner.ISO, pRegion, pIncome, pDev,
-         commodity.code, year,
-         section.code, section,
-         SITC.code, SITC.section,
-         Exp_IFF_lo)
-
-panel_mirror$id <- paste(panel_mirror$partner.ISO,
-                         panel_mirror$reporter.ISO,
-                         panel_mirror$commodity.code,
-                         panel_mirror$year, sep = "_")
-
-panel_mirror <- panel_mirror %>%
-  rename(pExp_IFF_lo = Exp_IFF_lo)
-
-panel <- full_join(panel, panel_mirror,
-                   by = c("id" = "id",
-                          "reporter" = "partner",
-                          "reporter.ISO" = "partner.ISO",
-                          "rRegion" = "pRegion",
-                          "rIncome" = "pIncome",
-                          "rDev" = "pDev",
-                          "partner.ISO" = "reporter.ISO",
-                          "partner" = "reporter",
-                          "pRegion" = "rRegion",
-                          "pIncome" = "rIncome",
-                          "pDev" = "rDev",
-                          "year" = "year",
-                          "commodity.code" = "commodity.code",
-                          "section.code" = "section.code",
-                          "section" = "section",
-                          "SITC.code" = "SITC.code",
-                          "SITC.section" = "SITC.section"))
-
-panel %>%
-  filter(duplicated(panel$id)) %>% nrow
-# 0
-rm(panel_mirror)
-
-panel_lo <- panel
-save(panel_lo, file = "Results/panel_lo.Rdata")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# HIGH ESTIMATES            ####
-## ## ## ## ## ## ## ## ## ## ##
-
-# .. Estimate CIF rates ####
-load("Data/Panel/panel_nooutliers.Rdata")
-
-nrow(panel)
-# 3656537
-max(panel$ratio_CIF)
-# 52568627
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-summary(fit)
-mean(exp(fitted(fit)))
-# 3.171489
-
-d <- panel %>% distinct(dist) %>%
-  mutate(y = coef(fit)["dist"]*dist + coef(fit)["dist.sq"]*dist^2)
-ggplot(d, aes(x = dist, y = y)) + 
-  geom_line()
-
-kable(vif(fit), digits = 3, format = "rst")
-
-save(fit, file = "Results/fit")
-
-stargazer(fit, type = "html", style = "aer",
-          out = "Results/Regression table.html")
-
-
-# .. Compute fitted values when predictors are 0 ####
-IFF.preds <- c("tariff", "rCorruption", "pCorruption",
-               "rPoorRegulation", "pPoorRegulation")
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (!(names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
-  }
-}
-coef
-panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-mean(panel$fitted_IFF)
-# 0.9393725
-
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if ((names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
-  }
-}
-coef
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
-mean(panel$fitted_nonIFF)
-# 3.360852
-
-rm(coef, v, IFF.preds)
-
-
-# .. Compute FOB imports ####
-summary(panel$fitted_IFF)
-summary(panel$fitted_nonIFF)
-
-panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
-
-
-# .. Estimate fixed effects regression ####
-panel <- panel %>%
-  mutate(rep_dist = abs(log(FOB_Import/pNetExport_value))) %>%
-  filter(is.finite(rep_dist))
-nrow(panel)
-# 3656537
-
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.factor(.)))
-
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
-                 partner.ISO + year,
-               data = panel)
-FE <- getfe(FE.out, se = T) 
-
-FE <- FE %>%
-  group_by(fe) %>%
-  mutate(min = min(effect)) %>%
-  ungroup()
-
-FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
-attr(FE$sigma, "extra") <- NULL
-
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.character(.)))
-
-
-# .. Harmonization procedure ####
-panel <- left_join(panel, FE %>% 
-                     filter(fe == "reporter.ISO") %>%
-                     select(idx, sigma) %>%
-                     mutate(idx = as.character(idx)),
-                   by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma = sigma)
-
-panel <- left_join(panel, FE %>% 
-                     filter(fe == "partner.ISO") %>%
-                     select(idx, sigma) %>%
-                     mutate(idx = as.character(idx)),
-                   by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma = sigma)
-
-panel <- panel %>%
-  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-summary(panel$w_r)
-summary(panel$w_p)
-
-panel <- panel %>%
-  mutate(w = w_r + w_p)
-summary(panel$w)
-
-panel <- panel %>%
-  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
-
-
-# .. Compute IFF ####
-panel <- panel %>%
-  mutate(Imp_IFF_hi = FOB_Import_IFF - RV,
-         Exp_IFF_hi = RV - pNetExport_value)
-summary(panel$Imp_IFF_hi)
-summary(panel$Exp_IFF_hi)
-
-
-# .. Move export IFF to mirror ####
-panel_mirror <- panel %>%
-  select(reporter, reporter.ISO, rRegion, rIncome, rDev,
-         partner, partner.ISO, pRegion, pIncome, pDev,
-         commodity.code, year,
-         section.code, section,
-         SITC.code, SITC.section,
-         Exp_IFF_hi)
-
-panel_mirror$id <- paste(panel_mirror$partner.ISO,
-                         panel_mirror$reporter.ISO,
-                         panel_mirror$commodity.code,
-                         panel_mirror$year, sep = "_")
-
-panel_mirror <- panel_mirror %>%
-  rename(pExp_IFF_hi = Exp_IFF_hi)
-
-panel <- full_join(panel, panel_mirror,
-                   by = c("id" = "id",
-                          "reporter" = "partner",
-                          "reporter.ISO" = "partner.ISO",
-                          "rRegion" = "pRegion",
-                          "rIncome" = "pIncome",
-                          "rDev" = "pDev",
-                          "partner.ISO" = "reporter.ISO",
-                          "partner" = "reporter",
-                          "pRegion" = "rRegion",
-                          "pIncome" = "rIncome",
-                          "pDev" = "rDev",
-                          "year" = "year",
-                          "commodity.code" = "commodity.code",
-                          "section.code" = "section.code",
-                          "section" = "section",
-                          "SITC.code" = "SITC.code",
-                          "SITC.section" = "SITC.section"))
-
-panel %>%
-  filter(duplicated(panel$id)) %>% nrow
-# 0
-rm(panel_mirror)
-
-panel_hi <- panel
-save(panel_hi, file = "Results/panel_hi.Rdata")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
-# MERGE RESULTS             ####
-## ## ## ## ## ## ## ## ## ## ##
-
-all <- full_join(panel_lo %>%
-                   select(id, reporter.ISO, partner.ISO, commodity.code, year,
-                          reporter, rRegion, rIncome, rDev,
-                          partner, pRegion, pIncome, pDev,
-                          section.code, section,
-                          SITC.code, SITC.section,
-                          Imp_IFF_lo, pExp_IFF_lo),
-                 panel_hi %>%
-                   select(id, reporter.ISO, partner.ISO, commodity.code, year,
-                          reporter, rRegion, rIncome, rDev,
-                          partner, pRegion, pIncome, pDev,
-                          section.code, section,
-                          SITC.code, SITC.section,
-                          Imp_IFF_hi, pExp_IFF_hi),
-                 by = c("id", "reporter.ISO", "partner.ISO", "commodity.code", "year",
-                        "reporter", "rRegion", "rIncome", "rDev",
-                        "partner", "pRegion", "pIncome", "pDev",
-                        "section.code", "section",
-                        "SITC.code", "SITC.section"))
-nrow(all)
-# 6248254
-
-panel <- all
-rm(all, FE, FE.out, fit)
-rm(panel_hi, panel_lo)
-
-save(panel, file = "Results/panel_results.Rdata")
-
-
-
-## ## ## ## ## ## ## ## ## ## ##
 # AGGREGATE BY DESTINATION  ####
 ## ## ## ## ## ## ## ## ## ## ##
+
+#source("Scripts/Compute IFF Estimates.R")
+load("Results/panel_results.Rdata")
+
 
 # .. Aggregate results using Gross Excluding Reversals ####
 load("Data/WDI/WDI.Rdata")
@@ -2082,3 +1316,106 @@ write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_S
 save(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.Rdata")
 write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv",
           row.names = F)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# HEADLINE FIGURES          ####
+## ## ## ## ## ## ## ## ## ## ##
+
+
+# .. For Africa ####
+(Cumulative.gross.hi <- sum(GER_Year_Africa$Tot_IFF_hi_bn))
+# 1204.693
+
+(Cumulative.gross.hi.GDP <- Cumulative.gross.hi / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
+# 5.343715
+
+(Cumulative.gross.hi.trade <- Cumulative.gross.hi / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
+# 11.43427
+
+(Cumulative.gross.lo <- sum(GER_Year_Africa$Tot_IFF_lo_bn))
+# 337.3599
+
+(Cumulative.gross.lo.GDP <- Cumulative.gross.lo / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
+# 1.496444
+
+(Cumulative.gross.lo.trade <- Cumulative.gross.lo / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
+# 3.20203
+
+(Cumulative.net.hi <- sum(Net_Year_Africa$Tot_IFF_hi_bn))
+# 362.135
+
+(Cumulative.net.hi.GDP <- Cumulative.net.hi / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
+# 1.606249
+
+(Cumulative.net.lo <- sum(Net_Year_Africa$Tot_IFF_lo_bn))
+# 139.1025
+
+(Cumulative.net.lo.GDP <- Cumulative.net.lo / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
+# 0.616989
+
+(Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_Africa$Tot_IFF_hi_bn))
+# 83.31073
+
+(Gross.IFF.per.year.lo <- sum(GER_Orig_Avg_Africa$Tot_IFF_lo_bn))
+# 22.525
+
+(Net.IFF.per.year.hi <- sum(Net_Orig_Avg_Africa$Tot_IFF_hi_bn))
+# 26.4324
+
+(Net.IFF.per.year.lo <- sum(Net_Orig_Avg_Africa$Tot_IFF_lo_bn))
+# 9.264024
+
+
+# .. For developing countries ####
+(Cumulative.gross.hi <- sum(GER_Year_LMIC$Tot_IFF_hi_bn))
+# 3421.718
+
+(Cumulative.gross.hi.GDP <- Cumulative.gross.hi / (sum(GER_Year_LMIC$GDP) / 10^9)) * 100
+# 5.748657
+
+(Cumulative.gross.hi.trade <- Cumulative.gross.hi / (sum(GER_Year_LMIC$Total_value) / 10^9)) * 100
+# 12.95844
+
+(Cumulative.net.hi <- sum(Net_Year_LMIC$Tot_IFF_hi_bn))
+# 1472.748
+
+(Cumulative.net.hi.GDP <- Cumulative.net.hi / (sum(Net_Year_LMIC$GDP) / 10^9)) * 100
+# 2.474211
+
+(Gross.IFF.per.year.hi <- sum(GER_Orig_Avg_LMIC$Tot_IFF_hi_bn))
+# 224.5314
+
+(Net.IFF.per.year.hi <- sum(Net_Orig_Avg_LMIC$Tot_IFF_hi_bn))
+# 96.31417
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# PILOT COUNTRY RESULTS     ####
+## ## ## ## ## ## ## ## ## ## ##
+
+pilots <- c("EGY", "NGA", "SEN", "ZAF", "TZA", "TUN")
+
+ger.avg <- GER_Orig_Avg_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(ger.avg, digits = 2, format = "rst")
+
+net.avg <- Net_Orig_Avg_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(net.avg, digits = 2, format = "rst")
+
+ger.sum <- GER_Orig_Sum_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(ger.sum, digits = 2, format = "rst")
+
+net.sum <- Net_Orig_Sum_Africa %>%
+  filter(reporter.ISO %in% pilots) %>%
+  select(reporter, Tot_IFF_lo_bn, Tot_IFF_hi_bn)
+kable(net.sum, digits = 2, format = "rst")
+
+rm(net.avg, ger.avg, net.sum, ger.sum)
