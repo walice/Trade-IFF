@@ -1964,7 +1964,7 @@ g <- ggplot(GER_Dest_Avg_Africa %>%
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 10 destinations in Africa",
+       title = "Top 10 destinations from Africa",
        subtitle = "Yearly average outflows during 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
@@ -1984,7 +1984,7 @@ g <- ggplot(GER_Dest_Avg_LMIC %>%
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 10 destinations in low and lower middle income countries",
+       title = "Top 10 destinations from low & lower middle income countries",
        subtitle = "Yearly average outflows during 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
@@ -2004,7 +2004,7 @@ g <- ggplot(GER_Dest_Avg_Developing %>%
   geom_bar(stat = "identity") +
   geom_text(aes(label = paste0("$", round(Tot_IFF_hi/10^9), " billion")), position = position_stack(vjust = 0.5)) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 10 destinations in developing countries",
+       title = "Top 10 destinations from developing countries",
        subtitle = "Yearly average outflows during 2000-2016") +
   theme_classic() +
   theme(axis.line = element_blank(),
