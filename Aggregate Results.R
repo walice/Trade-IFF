@@ -17,6 +17,7 @@
 # .. For Africa
 # .. For developing countries
 # Pilot Country Results
+# LMIC Results
 
 
 
@@ -242,6 +243,10 @@ GER_Orig_Dest_Year_Africa <- GER_Orig_Dest_Year %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
 
+GER_Orig_Dest_Year_LMIC <- GER_Orig_Dest_Year %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
 GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
@@ -448,6 +453,9 @@ write.csv(GER_Orig_Sum, file = "Results/Summary data-sets/GER_Orig_Sum.csv",
 
 save(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.Rdata")
 write.csv(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.csv",
+          row.names = F)
+save(GER_Orig_Dest_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Year_LMIC.Rdata")
+write.csv(GER_Orig_Dest_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Year_LMIC.csv",
           row.names = F)
 save(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
 write.csv(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.csv",
@@ -1419,3 +1427,59 @@ net.sum <- Net_Orig_Sum_Africa %>%
 kable(net.sum, digits = 2, format = "rst")
 
 rm(net.avg, ger.avg, net.sum, ger.sum)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# LMIC RESULTS              ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Proportion of LMIC outflows to LMICs ####
+load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
+load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
+
+load("Results/Summary data-sets/GER_Orig_Dest_Year_LMIC.Rdata")
+
+# GER_Orig_Dest_Year_LMIC_toLMICs <- GER_Orig_Dest_Year_LMIC %>%
+#   filter(pIncome == "LIC" | pIncome == "LMC") %>%
+#   group_by(reporter, reporter.ISO, rRegion, rDev) %>%
+#     summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+#               Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+#               Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+#               Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+#     ungroup()
+
+GER_Orig_Dest_Avg_LMIC_toLMICs <- GER_Orig_Dest_Avg_LMIC %>%
+  filter(pIncome == "LIC" | pIncome == "LMC")
+
+GER_Orig_Avg_LMIC_toLMICs <- GER_Orig_Dest_Avg_LMIC_toLMICs %>%
+  group_by(reporter, reporter.ISO, rRegion, rDev) %>%
+  summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
+            Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
+            Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
+            Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
+  ungroup()
+
+sum(GER_Orig_Avg_LMIC_toLMICs$Tot_IFF_hi_bn) / sum(GER_Orig_Avg_LMIC$Tot_IFF_hi_bn)
+# 0.1454214
+
+
+# .. Compare net and gross ####
+load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
+load("Results/Summary data-sets/Net_Orig_Avg_LMIC.Rdata")
+
+viz <- full_join(GER_Orig_Avg_LMIC %>% 
+                   select(reporter,
+                          GER_Tot_IFF_hi = Tot_IFF_hi),
+                 Net_Orig_Avg_LMIC %>%
+                   select(reporter,
+                          Net_Tot_IFF_hi = Tot_IFF_hi),
+                 by = c("reporter"))
+
+ggplot(viz %>%  
+         melt(id.vars = "reporter"),
+       aes(x = reporter, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  coord_flip() + 
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross"))
