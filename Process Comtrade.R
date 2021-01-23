@@ -16,8 +16,7 @@
 # PREAMBLE                  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-#setwd("C:/boxsync/alepissier/PhD/Miscellany/Comtrade raw database/") # Alice work
-setwd("/home/alice/IFFe/") # Virtual server
+setwd("/scratch/alepissier/IFFe/") # Virtual server
 library(tidyverse)
 
 
@@ -216,6 +215,26 @@ yr2017total <- yr2017 %>%
   filter(Partner.ISO == "WLD")
 yr2017 <- yr2017 %>% filter(Aggregate.Level == 2)
 
+yr2018 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2018_freq-A_px-HS_pub-20201211_fmt-csv_ex-20210114.csv",
+                     sep = ",", header = TRUE, quote = "\"", fill = TRUE,
+                     colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
+nrow2018 <- nrow(yr2018)
+yr2018total <- yr2018 %>% 
+  filter(Aggregate.Level == 0) %>%
+  filter(Partner.ISO == "WLD")
+yr2018 <- yr2018 %>% filter(Aggregate.Level == 2)
+
+yr2019 <- read.table("Data/Comtrade/Bulk downloads/Raw database/type-C_r-ALL_ps-2019_freq-A_px-HS_pub-20201230_fmt-csv_ex-20210114.csv",
+                     sep = ",", header = TRUE, quote = "\"", fill = TRUE,
+                     colClasses = c("NULL", NA, "NULL", "NULL", NA, "NULL", "NULL", NA, "NULL", NA, NA,
+                                    "NULL", NA, NA, NA, NA, "NULL", "NULL", NA, NA, NA, "NULL"))
+nrow2019 <- nrow(yr2019)
+yr2019total <- yr2019 %>% 
+  filter(Aggregate.Level == 0) %>%
+  filter(Partner.ISO == "WLD")
+yr2019 <- yr2019 %>% filter(Aggregate.Level == 2)
+
 
 
 ## ## ## ## ## ## ## ## ## ## ##
@@ -241,11 +260,14 @@ summary <- list(year_1999 = paste(nrow1999, "observations in year 1999"),
                 year_2015 = paste(nrow2015, "observations in year 2015"),
                 year_2016 = paste(nrow2016, "observations in year 2016"),
                 year_2017 = paste(nrow2017, "observations in year 2017"),
+                year_2018 = paste(nrow2018, "observations in year 2018"),
+                year_2019 = paste(nrow2019, "observations in year 2019"),
                 total_observations = paste(sum(nrow1999, nrow2000, nrow2001, nrow2002, 
                                                nrow2003, nrow2004, nrow2005, nrow2006, 
                                                nrow2007, nrow2008, nrow2009, nrow2010, 
                                                nrow2011, nrow2012, nrow2013, nrow2014, 
-                                               nrow2015, nrow2016, nrow2017), "total observations"))
+                                               nrow2015, nrow2016, nrow2017, nrow2018, nrow2019),
+                                           "total observations"))
 capture.output(summary, file = "Data/Comtrade/Size of database up to 6-digit level.txt")
 
 write.csv(yr1999, "Data/Comtrade/2-digit level yearly data/yr_1999.csv", row.names = FALSE)
@@ -305,30 +327,36 @@ save(yr2016, file = "Data/Comtrade/2-digit level yearly data/yr_2016.Rdata")
 write.csv(yr2017, "Data/Comtrade/2-digit level yearly data/yr_2017.csv", row.names = FALSE)
 save(yr2017, file = "Data/Comtrade/2-digit level yearly data/yr_2017.Rdata")
 
+write.csv(yr2018, "Data/Comtrade/2-digit level yearly data/yr_2018.csv", row.names = FALSE)
+save(yr2018, file = "Data/Comtrade/2-digit level yearly data/yr_2018.Rdata")
+
+write.csv(yr2019, "Data/Comtrade/2-digit level yearly data/yr_2019.csv", row.names = FALSE)
+save(yr2019, file = "Data/Comtrade/2-digit level yearly data/yr_2019.Rdata")
+
 comtrade <- rbind(yr1999, yr2000, yr2001, yr2002, yr2003, 
                   yr2004, yr2005, yr2006, yr2007, yr2008, 
                   yr2009, yr2010, yr2011, yr2012, yr2013, 
-                  yr2014, yr2015, yr2016, yr2017)
+                  yr2014, yr2015, yr2016, yr2017, yr2018, yr2019)
 
 comtrade_total <- rbind(yr1999total, yr2000total, yr2001total, yr2002total, yr2003total, 
                         yr2004total, yr2005total, yr2006total, yr2007total, yr2008total, 
                         yr2009total, yr2010total, yr2011total, yr2012total, yr2013total, 
-                        yr2014total, yr2015total, yr2016total, yr2017total)
+                        yr2014total, yr2015total, yr2016total, yr2017total, yr2018total, yr2019total)
 
 rm(yr1999, yr2000, yr2001, yr2002, yr2003, 
    yr2004, yr2005, yr2006, yr2007, yr2008, 
    yr2009, yr2010, yr2011, yr2012, yr2013, 
-   yr2014, yr2015, yr2016, yr2017, 
+   yr2014, yr2015, yr2016, yr2017, yr2018, yr2019, 
    summary,
    nrow1999, nrow2000, nrow2001, nrow2002, 
    nrow2003, nrow2004, nrow2005, nrow2006, 
    nrow2007, nrow2008, nrow2009, nrow2010, 
    nrow2011, nrow2012, nrow2013, nrow2014, 
-   nrow2015, nrow2016, nrow2017,
+   nrow2015, nrow2016, nrow2017, nrow2018, nrow2019,
    yr1999total, yr2000total, yr2001total, yr2002total, yr2003total, 
    yr2004total, yr2005total, yr2006total, yr2007total, yr2008total, 
    yr2009total, yr2010total, yr2011total, yr2012total, yr2013total, 
-   yr2014total, yr2015total, yr2016total, yr2017total)
+   yr2014total, yr2015total, yr2016total, yr2017total, yr2018total, yr2019total)
 
 save(comtrade_total, file = "Data/Comtrade/comtrade_total.Rdata")
 save(comtrade, file = "Data/Comtrade/comtrade.Rdata")
