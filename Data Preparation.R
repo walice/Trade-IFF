@@ -45,9 +45,9 @@
 # PREAMBLE                  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-#setwd("C:/cloudstorage/googledrive/Projects/UN Consultancy/Illicit Financial Flows/IFF estimates") # Alice work
-setwd("/home/alice/IFFe/") # Virtual server
+setwd("/scratch/alepissier/IFFe/") # Virtual server
 library(data.table)
+library(readxl)
 library(stringr)
 library(tidyverse)
 library(WDI)
@@ -59,7 +59,10 @@ library(xlsx)
 # CODES MASTERLIST          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-codes <- read.xlsx2("Data/Codes_Masterlist.xlsx", sheetName = "Codes") %>%
+download.file("https://github.com/walice/Codes-Masterlist/raw/master/Codes_Masterlist.xlsx",
+              "Data/Codes_Masterlist.xlsx")
+
+codes <- read_excel("Data/Codes_Masterlist.xlsx", sheet = "Codes") %>%
   mutate_all(as.character)
 
 
@@ -113,7 +116,7 @@ colnames(comtrade)[colnames(comtrade) == "Re-Export_value"] <- "ReExport_value"
 colnames(comtrade)[colnames(comtrade) == "Re-Export_quantity"] <- "ReExport_quantity"
 colnames(comtrade)[colnames(comtrade) == "Re-Export_weight"] <- "ReExport_weight"
 nrow(comtrade)
-# 16486069
+# 18335160
 
 
 # .. Create mirror variables ####
@@ -150,7 +153,7 @@ comtrade <- full_join(comtrade, comtrade_mirror,
                              "commodity.code" = "commodity.code"))
 
 nrow(comtrade)
-# 21463108
+# 23920190
 rm(comtrade_mirror)
 
 comtrade %>% distinct(reporter.ISO) %>% nrow
@@ -192,7 +195,7 @@ nrow(ReExport_quantity)
 levels(ReExport_quantity$reporter)
 # "China, Macao SAR"
 range(ReExport_quantity$year)
-# 2012
+# 2012 2012
 
 Import_weight <- comtrade %>% 
   filter(!is.na(Import_weight) & Import_weight != 0) %>%
@@ -225,7 +228,7 @@ nrow(ReExport_weight)
 levels(ReExport_weight$reporter)
 # "China, Macao SAR"
 range(ReExport_weight$year)
-# 2012
+# 2012 2012
 
 rm(Import_quantity, Export_quantity, ReExport_quantity,
    Import_weight, Export_weight, ReExport_weight)
@@ -262,7 +265,7 @@ comtrade_total <- comtrade_total %>%
   spread(temp, value, fill = 0)
 
 nrow(comtrade_total)
-# 3129
+# 3412
 
 
 # .. Compute total trade ####
@@ -271,9 +274,10 @@ comtrade_total <- comtrade_total %>%
   select(reporter.ISO, year, Total_value) %>%
   mutate(reporter.ISO = as.character(reporter.ISO))
 comtrade_total %>% distinct(reporter.ISO) %>% nrow
-# 197
+# 198
 
 save(comtrade_total, file = "Data/Comtrade/comtrade_total_clean.Rdata")
+rm(comtrade_total)
 
 
 
@@ -316,40 +320,41 @@ rm(dist, geo)
 # IMPORT WGI                ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-WGI <- read.csv("Data/World Bank/World Governance Indicators.csv") %>%
-  rename(corruption = Control.of.Corruption..Percentile.Rank..CC.PER.RNK.,
-         regulatory.qual = Regulatory.Quality..Percentile.Rank..RQ.PER.RNK.) %>%
-  mutate(Country.Code = as.character(Country.Code)) %>%
-  mutate_at(vars(corruption, regulatory.qual, Time),
-          funs(as.numeric(as.character(.)))) %>%
-  filter(complete.cases(.)) %>%
-  select(-c(Time.Code, Country.Name))
+WGI <- WDI(indicator = c(corruption = "CC.PER.RNK", 
+                         regulatory.qual = "RQ.PER.RNK"),
+           start = 1998, extra = TRUE) %>%
+  select(year, iso3c, corruption, regulatory.qual) %>%
+  filter(!is.na(iso3c)) %>%
+  filter(!(is.na(corruption) & is.na(regulatory.qual))) %>%
+  mutate(iso3c = as.character(iso3c)) %>%
+  arrange(year, iso3c)
+save(WGI, file = "Data/World Bank/WGI.Rdata")
 
 
 # .. Interpolate missing data ####
-WGI %>% distinct(Time)
+WGI %>% distinct(year)
 # Missing data for 1999 and 2001, so interpolate from either year
 
 WGI98 <- WGI %>%
-  filter(Time == 1998)
+  filter(year == 1998)
 WGI00 <- WGI %>%
-  filter(Time == 2000)
+  filter(year == 2000)
 WGI02 <- WGI %>%
-  filter(Time == 2002)
+  filter(year == 2002)
 
 WGI99 <- full_join(WGI98, WGI00,
-                   by = "Country.Code") %>%
-  mutate(Time = 1999)
+                   by = "iso3c") %>%
+  mutate(year = 1999)
 WGI99$corruption <- rowMeans(WGI99[, c("corruption.x", "corruption.y")], na.rm = TRUE)
 WGI99$regulatory.qual <- rowMeans(WGI99[, c("regulatory.qual.x", "regulatory.qual.y")], na.rm = TRUE)
-WGI99 <- WGI99 %>% select(Country.Code, Time, corruption, regulatory.qual)
+WGI99 <- WGI99 %>% select(iso3c, year, corruption, regulatory.qual)
 
 WGI01 <- full_join(WGI00, WGI02,
-                   by = "Country.Code") %>%
-  mutate(Time = 2001)
+                   by = "iso3c") %>%
+  mutate(year = 2001)
 WGI01$corruption <- rowMeans(WGI01[, c("corruption.x", "corruption.y")], na.rm = TRUE)
 WGI01$regulatory.qual <- rowMeans(WGI01[, c("regulatory.qual.x", "regulatory.qual.y")], na.rm = TRUE)
-WGI01 <- WGI01 %>% select(Country.Code, Time, corruption, regulatory.qual)
+WGI01 <- WGI01 %>% select(iso3c, year, corruption, regulatory.qual)
 
 WGI <- rbind(WGI, WGI99, WGI01)
 rm(WGI98, WGI99, WGI00, WGI01, WGI02)
@@ -357,14 +362,14 @@ rm(WGI98, WGI99, WGI00, WGI01, WGI02)
 
 # .. Merge with reporters and partners ####
 panel <- left_join(panel, WGI,
-                   by = c("reporter.ISO" = "Country.Code",
-                          "year" = "Time")) %>%
+                   by = c("reporter.ISO" = "iso3c",
+                          "year" = "year")) %>%
   rename(rCorruption = corruption,
          rRegulatory.qual = regulatory.qual)
 
 panel <- left_join(panel, WGI,
-                   by = c("partner.ISO" = "Country.Code",
-                          "year" = "Time")) %>%
+                   by = c("partner.ISO" = "iso3c",
+                          "year" = "year")) %>%
   rename(pCorruption = corruption,
          pRegulatory.qual = regulatory.qual)
 
@@ -377,7 +382,7 @@ rm(WGI)
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Import average tariff line data ####
-tariff <- read.csv("Data/WITS/DataJobID-1514178_1514178_IFFtriffs.csv") %>%
+tariff <- read.csv("Data/WITS/DataJobID-2109586_2109586_2digitmisinvoicingnon.csv") %>%
   select(Reporter.Name, Partner.Name, Product, Tariff.Year, Simple.Average) %>%
   rename(reporter = Reporter.Name,
          partner = Partner.Name,
@@ -395,7 +400,7 @@ tariff <- left_join(tariff, codes %>%
 tariff %>% 
   filter(is.na(reporter.ISO)) %>%
   distinct(reporter)
-# European Union; All countries  All --- All
+# European Union
 
 tariff <- left_join(tariff, codes %>%
                       select(Country, ISO3166.3),
@@ -405,14 +410,14 @@ tariff <- left_join(tariff, codes %>%
 tariff %>% 
   filter(is.na(partner.ISO)) %>%
   distinct(partner)
-# All countries  All --- All; Bunkers; Unspecified;
+# Bunkers; Unspecified;
 # Special Categories; Free Zones; Neutral Zone; Other Asia, nes
 
 tariff <- tariff %>%
   filter(!is.na(reporter.ISO) & !is.na(partner.ISO))
 
 tariff %>% distinct(reporter.ISO) %>% nrow
-# 181
+# 195
 tariff %>% distinct(partner.ISO) %>% nrow
 # 240
 
@@ -489,7 +494,7 @@ HStoSITC <- left_join(HStoSITC, SITC,
                       by = c("SITC.code" = "SITC.Code"))
 
 HStoSITC %>% filter(is.na(SITC.section))
-# SITC codes I and II
+# SITC code I
 
 
 # .. Merge SITC with panel ####
@@ -550,27 +555,31 @@ rm(WDI)
 
 # .. Merge reporters ####
 panel <- left_join(panel, codes %>% 
-                   select(c(ISO3166.3, UN_Region, WB_Income_Group_Code, UN_Developing.Developed)) %>%
+                   select(c(ISO3166.3, UN_Region, WB_Income_Group, 
+                            `UN_Developing-Developed`, UNDP_HDI_Group)) %>%
                    distinct(ISO3166.3, .keep_all = T),
                  by = c("reporter.ISO" = "ISO3166.3")) %>%
   rename(rRegion = UN_Region,
-         rIncome = WB_Income_Group_Code,
-         rDev = UN_Developing.Developed)
+         rIncome = WB_Income_Group,
+         rDev = `UN_Developing-Developed`,
+         rHDI = UNDP_HDI_Group)
 
 
 # .. Merge partners ####
 panel <- left_join(panel, codes %>% 
-                     select(c(ISO3166.3, UN_Region, WB_Income_Group_Code, UN_Developing.Developed)) %>%
+                     select(c(ISO3166.3, UN_Region, WB_Income_Group, 
+                              `UN_Developing-Developed`, UNDP_HDI_Group)) %>%
                      distinct(ISO3166.3, .keep_all = T),
                    by = c("partner.ISO" = "ISO3166.3")) %>%
   rename(pRegion = UN_Region,
-         pIncome = WB_Income_Group_Code,
-         pDev = UN_Developing.Developed)
+         pIncome = WB_Income_Group,
+         pDev = `UN_Developing-Developed`,
+         pHDI = UNDP_HDI_Group)
 
 
 # .. Import country names ####
 panel <- left_join(panel, aggregate(Country ~ ISO3166.3, 
-                                     data = codes, head, 1),
+                                    data = codes, head, 1),
                    by = c("reporter.ISO" = "ISO3166.3")) %>%
   select(-reporter) %>%
   rename(reporter = Country)
@@ -612,7 +621,7 @@ panel <- panel %>%
          pImport_weight, pExport_weight, pReExport_weight,
          contig, dist, rLandlocked, pLandlocked, tariff,
          rCorruption, pCorruption, rRegulatory.qual, pRegulatory.qual,
-         reporter, partner, rRegion, rDev, rIncome, pRegion, pIncome, pDev,
+         reporter, partner, rRegion, rDev, rHDI, rIncome, pRegion, pIncome, pDev, pHDI,
          GDP)
 
 missing <- panel %>% 
