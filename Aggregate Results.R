@@ -26,7 +26,7 @@
 # PREAMBLE                  ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-setwd("/home/alice/IFFe/") # Virtual server
+setwd("/home/alepissier/IFFe/") # Virtual server
 library(car)
 library(kableExtra)
 library(reshape2)
