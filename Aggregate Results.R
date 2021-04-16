@@ -1,24 +1,51 @@
 # Aggregate Results
 # Alice Lepissier
 # alice.lepissier@gmail.com
-# Prepared for UNECA
+# Originally prepared for the United Nations Economic Commission for Africa (UNECA)
 
 ## ## ## ## ## ## ## ## ## ## ##
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
-# Aggregate by Destination
+# GER by Destination
 # .. Aggregate results using Gross Excluding Reversals
-# .. Aggregate results using Net Aggregation
-# Aggregate by Sector
+# .. GER Import/Export IFF for Reporter-Partner-Year
+# .. GER IFF for Reporter-Year (sum over Partner)
+# .. GER IFF for Reporter (sum over Partner, average across Year)
+# .. GER IFF for Reporter (sum over Partner, sum over Year)
+# .. GER IFF for Reporter-Partner (average across Year)
+# .. GER IFF for Reporter-Partner (sum over Year)
+# .. GER IFF for Partner (sum over Reporter, average across Year)
+# .. GER IFF for Partner (sum over Reporter, sum over Year)
+# .. Total GER IFF per year
+# .. Headline: cumulative GER IFF during 2000-2018
+# Net by Destination
+# .. Net Import/Export IFF for Reporter-Partner-Year
+# .. Net IFF for Reporter-Year (sum over Partner)
+# .. Net IFF for Reporter (sum over Partner, average across Year)
+# .. Net IFF for Reporter (sum over Partner, sum over Year)
+# .. Net IFF for Reporter-Partner (average across Year)
+# .. Net IFF for Reporter-Partner (sum over Year)
+# .. Net IFF for Partner (sum over Reporter, sum over Year)
+# .. Total Net IFF per year
+# .. Headline: cumulative Net IFF during 2000-2018
+# GER by Sector
 # .. Aggregate results using Gross Excluding Reversals
-# .. Aggregate results using Net Aggregation
+# .. GER Import/Export IFF for Reporter-Sector-Year
+# .. GER IFF for Reporter-Sector (average across Year)
+# .. GER IFF for Reporter-Sector (sum over Year)
+# .. GER IFF for Sector (sum over Reporter, average across Year)
+# .. GER IFF for Sector (sum over Reporter, sum over Year)
+# Net by Sector
+# .. Net Import/Export IFF for Reporter-Sector-Year
+# .. Net IFF for Reporter-Sector (average across Year)
+# .. Net IFF for Reporter-Sector (sum over Year)
+# .. Net IFF for Sector (sum over Reporter, sum over Year)
 # Headline Results
 # .. For Africa
 # .. For low and lower-middle income countries
 # .. For developing countries
-# .. For low HDI countries
-# LMIC Results
+# .. For low-HDI countries
 
 
 
@@ -27,6 +54,8 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 setwd("/home/alepissier/IFFe/") # Virtual server
+data.disk <- "/scratch/alepissier/IFFe/"
+# source("Scripts/Compute IFF Estimates.R")
 library(car)
 library(kableExtra)
 library(reshape2)
@@ -38,16 +67,15 @@ options(scipen = 999)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# AGGREGATE BY DESTINATION  ####
+# GER BY DESTINATION        ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-#source("Scripts/Compute IFF Estimates.R")
 load("Results/panel_results.Rdata")
-
-# .. Aggregate results using Gross Excluding Reversals ####
 load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
 load(paste0(data.disk, "Data/Comtrade/comtrade_total_clean.Rdata"))
 
+
+# .. Aggregate results using Gross Excluding Reversals ####
 GER_Imp_Dest <- panel %>%
   filter(Imp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
@@ -64,6 +92,8 @@ GER_Exp_Dest <- panel %>%
   summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
   ungroup()
 
+
+# .. GER Import/Export IFF for Reporter-Partner-Year ####
 GER_Orig_Dest_Year <- full_join(GER_Imp_Dest, GER_Exp_Dest,
                                 by = c("reporter" = "reporter",
                                        "reporter.ISO" = "reporter.ISO",
@@ -78,8 +108,20 @@ GER_Orig_Dest_Year <- full_join(GER_Imp_Dest, GER_Exp_Dest,
                                        "pIncome" = "pIncome",
                                        "pDev" = "pDev",
                                        "pHDI" = "pHDI"))
+save(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.Rdata")
+write.csv(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.csv",
+          row.names = F)
 rm(GER_Imp_Dest, GER_Exp_Dest)
 
+# Africa
+GER_Orig_Dest_Year_Africa <- GER_Orig_Dest_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.Rdata")
+write.csv(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.csv",
+          row.names = F)
+
+# Standardized by GDP (for import only)
 GER_Orig_Dest_Year_std <- left_join(GER_Orig_Dest_Year %>% mutate(year = as.integer(year)),
                                     WDI,
                                     by = c("reporter.ISO" = "ISO3166.3", 
@@ -95,7 +137,12 @@ GER_Orig_Dest_Year_std <- left_join(GER_Orig_Dest_Year_std %>% mutate(year = as.
 GER_Orig_Dest_Year_std <- GER_Orig_Dest_Year_std %>%
   mutate(rImp_IFF_GDP = Imp_IFF / rGDP,
          pImp_IFF_GDP = Imp_IFF / pGDP)
+save(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.Rdata")
+write.csv(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.csv",
+          row.names = F)
 
+
+# .. GER IFF for Reporter-Year (sum over Partner) ####
 GER_Orig_Year <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -112,7 +159,44 @@ GER_Orig_Year <- left_join(GER_Orig_Year,
                            comtrade_total,
                            by = c("reporter.ISO", "year")) %>%
   mutate(Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.Rdata")
+write.csv(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.csv",
+          row.names = F)
 
+# Africa
+GER_Orig_Year_Africa <- GER_Orig_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
+write.csv(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Year_LMIC <- GER_Orig_Year %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(GER_Orig_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Year_LMIC.Rdata")
+write.csv(GER_Orig_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Year_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+GER_Orig_Year_Developing <- GER_Orig_Year %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+save(GER_Orig_Year_Developing, file = "Results/Summary data-sets/GER_Orig_Year_Developing.Rdata")
+write.csv(GER_Orig_Year_Developing, file = "Results/Summary data-sets/GER_Orig_Year_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+GER_Orig_Year_LowHDI <- GER_Orig_Year %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+save(GER_Orig_Year_LowHDI, file = "Results/Summary data-sets/GER_Orig_Year_LowHDI.Rdata")
+write.csv(GER_Orig_Year_LowHDI, file = "Results/Summary data-sets/GER_Orig_Year_LowHDI.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter (sum over Partner, average across Year) ####
 GER_Orig_Avg <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
@@ -122,7 +206,44 @@ GER_Orig_Avg <- GER_Orig_Year %>%
             Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
             Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
   ungroup()
+save(GER_Orig_Avg, file = "Results/Summary data-sets/GER_Orig_Avg.Rdata")
+write.csv(GER_Orig_Avg, file = "Results/Summary data-sets/GER_Orig_Avg.csv",
+          row.names = F)
 
+# Africa
+GER_Orig_Avg_Africa <- GER_Orig_Avg %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
+write.csv(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Avg_LMIC <- GER_Orig_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(GER_Orig_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
+write.csv(GER_Orig_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Avg_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+GER_Orig_Avg_Developing <- GER_Orig_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+save(GER_Orig_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Avg_Developing.Rdata")
+write.csv(GER_Orig_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Avg_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+GER_Orig_Avg_LowHDI <- GER_Orig_Avg %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+save(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_LowHDI.Rdata")
+write.csv(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_LowHDI.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter (sum over Partner, sum over Year) ####
 GER_Orig_Sum <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -130,7 +251,20 @@ GER_Orig_Sum <- GER_Orig_Year %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Orig_Sum, file = "Results/Summary data-sets/GER_Orig_Sum.Rdata")
+write.csv(GER_Orig_Sum, file = "Results/Summary data-sets/GER_Orig_Sum.csv",
+          row.names = F)
 
+# Africa
+GER_Orig_Sum_Africa <- GER_Orig_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
+write.csv(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter-Partner (average across Year) ####
 GER_Orig_Dest_Avg <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, 
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
@@ -163,7 +297,44 @@ GER_Orig_Dest_Avg <- left_join(GER_Orig_Dest_Avg,
                                by = c("partner.ISO" = "ISO3166.3")) %>%
   rename(pGDP = GDP,
          pGNPpc = GNPpc)
+save(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+write.csv(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.csv",
+          row.names = F)
 
+# Africa
+GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
+write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
+write.csv(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+GER_Orig_Dest_Avg_Developing <- GER_Orig_Dest_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+save(GER_Orig_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
+write.csv(GER_Orig_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+GER_Orig_Dest_Avg_LowHDI <- GER_Orig_Dest_Avg %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+save(GER_Orig_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LowHDI.Rdata")
+write.csv(GER_Orig_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LowHDI.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter-Partner (sum over Year) ####
 GER_Orig_Dest_Sum <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
@@ -173,46 +344,17 @@ GER_Orig_Dest_Sum <- GER_Orig_Dest_Year %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
-GER_Orig_Dest_Year_Africa <- GER_Orig_Dest_Year %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-GER_Orig_Dest_Avg_Developing <- GER_Orig_Dest_Avg %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-GER_Orig_Dest_Avg_LowHDI <- GER_Orig_Dest_Avg %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
+# Africa
 GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
+save(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
+write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.csv",
+          row.names = F)
 
-GER_Dest <- GER_Orig_Dest_Sum %>%
-  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
 
-GER_Dest_Sum_Africa <- GER_Orig_Dest_Sum_Africa %>%
-  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
+# .. GER IFF for Partner (sum over Reporter, average across Year) ####
+# Africa
 GER_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -220,7 +362,11 @@ GER_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Dest_Avg_Africa.Rdata")
+write.csv(GER_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Dest_Avg_Africa.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 GER_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -228,7 +374,11 @@ GER_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
+write.csv(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.csv",
+          row.names = F)
 
+# Developing countries
 GER_Dest_Avg_Developing <- GER_Orig_Dest_Avg_Developing %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -236,7 +386,11 @@ GER_Dest_Avg_Developing <- GER_Orig_Dest_Avg_Developing %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
+write.csv(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.csv",
+          row.names = F)
 
+# Low-HDI countries
 GER_Dest_Avg_LowHDI <- GER_Orig_Dest_Avg_LowHDI %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -244,43 +398,38 @@ GER_Dest_Avg_LowHDI <- GER_Orig_Dest_Avg_LowHDI %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.Rdata")
+write.csv(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.csv",
+          row.names = F)
 
-GER_Orig_Year_Africa <- GER_Orig_Year %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
 
-GER_Orig_Year_LMIC <- GER_Orig_Year %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
+# .. GER IFF for Partner (sum over Reporter, sum over Year) ####
+GER_Dest_Sum <- GER_Orig_Dest_Sum %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Dest_Sum, file = "Results/Summary data-sets/GER_Dest_Sum.Rdata")
+write.csv(GER_Dest_Sum, file = "Results/Summary data-sets/GER_Dest_Sum.csv",
+          row.names = F)
 
-GER_Orig_Year_Developing <- GER_Orig_Year %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
+# Africa
+GER_Dest_Sum_Africa <- GER_Orig_Dest_Sum_Africa %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Africa.Rdata")
+write.csv(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Africa.csv",
+          row.names = F)
 
-GER_Orig_Year_LowHDI <- GER_Orig_Year %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
 
-GER_Orig_Avg_Africa <- GER_Orig_Avg %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Avg_LMIC <- GER_Orig_Avg %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-GER_Orig_Avg_Developing <- GER_Orig_Avg %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-GER_Orig_Avg_LowHDI <- GER_Orig_Avg %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-GER_Orig_Sum_Africa <- GER_Orig_Sum %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
+# .. Total GER IFF per year ####
+# Africa
 GER_Year_Africa <- GER_Orig_Year_Africa %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -292,7 +441,11 @@ GER_Year_Africa <- GER_Orig_Year_Africa %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.Rdata")
+write.csv(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 GER_Year_LMIC <- GER_Orig_Year_LMIC %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -304,7 +457,11 @@ GER_Year_LMIC <- GER_Orig_Year_LMIC %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Year_LMIC, file = "Results/Summary data-sets/GER_Year_LMIC.Rdata")
+write.csv(GER_Year_LMIC, file = "Results/Summary data-sets/GER_Year_LMIC.csv",
+          row.names = F)
 
+# Developing countries
 GER_Year_Developing <- GER_Orig_Year_Developing %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -316,7 +473,11 @@ GER_Year_Developing <- GER_Orig_Year_Developing %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Year_Developing, file = "Results/Summary data-sets/GER_Year_Developing.Rdata")
+write.csv(GER_Year_Developing, file = "Results/Summary data-sets/GER_Year_Developing.csv",
+          row.names = F)
 
+# Low-HDI countries
 GER_Year_LowHDI <- GER_Orig_Year_LowHDI %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -328,153 +489,63 @@ GER_Year_LowHDI <- GER_Orig_Year_LowHDI %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Year_LowHDI, file = "Results/Summary data-sets/GER_Year_LowHDI.Rdata")
+write.csv(GER_Year_LowHDI, file = "Results/Summary data-sets/GER_Year_LowHDI.csv",
+          row.names = F)
 
+
+# .. Headline: cumulative GER IFF during 2000-2018 ####
+# Africa
 GER_Africa <- GER_Year_Africa %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(GER_Africa, file = "Results/Summary data-sets/GER_Africa.Rdata")
+write.csv(GER_Africa, file = "Results/Summary data-sets/GER_Africa.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 GER_LMIC <- GER_Year_LMIC %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(GER_LMIC, file = "Results/Summary data-sets/GER_LMIC.Rdata")
+write.csv(GER_LMIC, file = "Results/Summary data-sets/GER_LMIC.csv",
+          row.names = F)
 
+# Developing countries
 GER_Developing <- GER_Year_Developing %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(GER_Developing, file = "Results/Summary data-sets/GER_Developing.Rdata")
+write.csv(GER_Developing, file = "Results/Summary data-sets/GER_Developing.csv",
+          row.names = F)
 
+# Low-HDI countries during 2000-2018
 GER_LowHDI <- GER_Year_LowHDI %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
-
-save(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.Rdata")
-write.csv(GER_Orig_Dest_Year, file = "Results/Summary data-sets/GER_Orig_Dest_Year.csv",
-          row.names = F)
-save(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.Rdata")
-write.csv(GER_Orig_Dest_Year_std, file = "Results/Summary data-sets/GER_Orig_Dest_Year_std.csv",
-          row.names = F)
-
-save(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.Rdata")
-write.csv(GER_Orig_Year, file = "Results/Summary data-sets/GER_Orig_Year.csv",
-          row.names = F)
-save(GER_Orig_Avg, file = "Results/Summary data-sets/GER_Orig_Avg.Rdata")
-write.csv(GER_Orig_Avg, file = "Results/Summary data-sets/GER_Orig_Avg.csv",
-          row.names = F)
-save(GER_Orig_Sum, file = "Results/Summary data-sets/GER_Orig_Sum.Rdata")
-write.csv(GER_Orig_Sum, file = "Results/Summary data-sets/GER_Orig_Sum.csv",
-          row.names = F)
-
-save(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.Rdata")
-write.csv(GER_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Year_Africa.csv",
-          row.names = F)
-
-save(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
-write.csv(GER_Orig_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Year_Africa.csv",
-          row.names = F)
-save(GER_Orig_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Year_LMIC.Rdata")
-write.csv(GER_Orig_Year_LMIC, file = "Results/Summary data-sets/GER_Orig_Year_LMIC.csv",
-          row.names = F)
-save(GER_Orig_Year_Developing, file = "Results/Summary data-sets/GER_Orig_Year_Developing.Rdata")
-write.csv(GER_Orig_Year_Developing, file = "Results/Summary data-sets/GER_Orig_Year_Developing.csv",
-          row.names = F)
-save(GER_Orig_Year_LowHDI, file = "Results/Summary data-sets/GER_Orig_Year_LowHDI.Rdata")
-write.csv(GER_Orig_Year_LowHDI, file = "Results/Summary data-sets/GER_Orig_Year_LowHDI.csv",
-          row.names = F)
-
-save(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
-write.csv(GER_Orig_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Avg_Africa.csv",
-          row.names = F)
-save(GER_Orig_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
-write.csv(GER_Orig_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Avg_LMIC.csv",
-          row.names = F)
-save(GER_Orig_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Avg_Developing.Rdata")
-write.csv(GER_Orig_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Avg_Developing.csv",
-          row.names = F)
-save(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_LowHDI.Rdata")
-write.csv(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_LowHDI.csv",
-          row.names = F)
-
-save(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
-write.csv(GER_Orig_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sum_Africa.csv",
-          row.names = F)
-
-save(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
-write.csv(GER_Orig_Dest_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_Avg.csv",
-          row.names = F)
-save(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
-write.csv(GER_Orig_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.csv",
-          row.names = F)
-save(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
-write.csv(GER_Orig_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.csv",
-          row.names = F)
-save(GER_Orig_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
-write.csv(GER_Orig_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.csv",
-          row.names = F)
-save(GER_Orig_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LowHDI.Rdata")
-write.csv(GER_Orig_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_LowHDI.csv",
-          row.names = F)
-
-save(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
-write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.csv",
-          row.names = F)
-
-save(GER_Dest, file = "Results/Summary data-sets/GER_Dest.Rdata")
-write.csv(GER_Dest, file = "Results/Summary data-sets/GER_Dest.csv",
-          row.names = F)
-save(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Africa.Rdata")
-write.csv(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Africa.csv",
-          row.names = F)
-
-save(GER_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Dest_Avg_Africa.Rdata")
-write.csv(GER_Dest_Avg_Africa, file = "Results/Summary data-sets/GER_Dest_Avg_Africa.csv",
-          row.names = F)
-save(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
-write.csv(GER_Dest_Avg_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_LMIC.csv",
-          row.names = F)
-save(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
-write.csv(GER_Dest_Avg_Developing, file = "Results/Summary data-sets/GER_Dest_Avg_Developing.csv",
-          row.names = F)
-save(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.Rdata")
-write.csv(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.csv",
-          row.names = F)
-
-save(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.Rdata")
-write.csv(GER_Year_Africa, file = "Results/Summary data-sets/GER_Year_Africa.csv",
-          row.names = F)
-save(GER_Year_LMIC, file = "Results/Summary data-sets/GER_Year_LMIC.Rdata")
-write.csv(GER_Year_LMIC, file = "Results/Summary data-sets/GER_Year_LMIC.csv",
-          row.names = F)
-save(GER_Year_Developing, file = "Results/Summary data-sets/GER_Year_Developing.Rdata")
-write.csv(GER_Year_Developing, file = "Results/Summary data-sets/GER_Year_Developing.csv",
-          row.names = F)
-save(GER_Year_LowHDI, file = "Results/Summary data-sets/GER_Year_LowHDI.Rdata")
-write.csv(GER_Year_LowHDI, file = "Results/Summary data-sets/GER_Year_LowHDI.csv",
-          row.names = F)
-
-save(GER_Africa, file = "Results/Summary data-sets/GER_Africa.Rdata")
-write.csv(GER_Africa, file = "Results/Summary data-sets/GER_Africa.csv",
-          row.names = F)
-save(GER_LMIC, file = "Results/Summary data-sets/GER_LMIC.Rdata")
-write.csv(GER_LMIC, file = "Results/Summary data-sets/GER_LMIC.csv",
-          row.names = F)
-save(GER_Developing, file = "Results/Summary data-sets/GER_Developing.Rdata")
-write.csv(GER_Developing, file = "Results/Summary data-sets/GER_Developing.csv",
-          row.names = F)
 save(GER_LowHDI, file = "Results/Summary data-sets/GER_LowHDI.Rdata")
 write.csv(GER_LowHDI, file = "Results/Summary data-sets/GER_LowHDI.csv",
           row.names = F)
 
 
-# .. Aggregate results using Net Aggregation ####
+
+## ## ## ## ## ## ## ## ## ## ##
+# NET BY DESTINATION        ####
+## ## ## ## ## ## ## ## ## ## ##
+
 load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
 load(paste0(data.disk, "Data/Comtrade/comtrade_total_clean.Rdata"))
 
+
+# .. Net Import/Export IFF for Reporter-Partner-Year ####
 Net_Orig_Dest_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI,
@@ -482,7 +553,20 @@ Net_Orig_Dest_Year <- panel %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
   ungroup()
+save(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.Rdata")
+write.csv(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.csv",
+          row.names = F)
 
+# Africa
+Net_Orig_Dest_Year_Africa <- Net_Orig_Dest_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.Rdata")
+write.csv(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.csv",
+          row.names = F)
+
+
+# .. Net IFF for Reporter-Year (sum over Partner) ####
 Net_Orig_Year <- Net_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -499,7 +583,44 @@ Net_Orig_Year <- left_join(Net_Orig_Year,
                            comtrade_total,
                            by = c("reporter.ISO", "year")) %>%
   mutate(Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Orig_Year, file = "Results/Summary data-sets/Net_Orig_Year.Rdata")
+write.csv(Net_Orig_Year, file = "Results/Summary data-sets/Net_Orig_Year.csv",
+          row.names = F)
 
+# Africa
+Net_Orig_Year_Africa <- Net_Orig_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
+write.csv(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+Net_Orig_Year_LMIC <- Net_Orig_Year %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(Net_Orig_Year_LMIC, file = "Results/Summary data-sets/Net_Orig_Year_LMIC.Rdata")
+write.csv(Net_Orig_Year_LMIC, file = "Results/Summary data-sets/Net_Orig_Year_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+Net_Orig_Year_Developing <- Net_Orig_Year %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+save(Net_Orig_Year_Developing, file = "Results/Summary data-sets/Net_Orig_Year_Developing.Rdata")
+write.csv(Net_Orig_Year_Developing, file = "Results/Summary data-sets/Net_Orig_Year_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+Net_Orig_Year_LowHDI <- Net_Orig_Year %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+save(Net_Orig_Year_LowHDI, file = "Results/Summary data-sets/Net_Orig_Year_LowHDI.Rdata")
+write.csv(Net_Orig_Year_LowHDI, file = "Results/Summary data-sets/Net_Orig_Year_LowHDI.csv",
+          row.names = F)
+
+
+# .. Net IFF for Reporter (sum over Partner, average across Year) ####
 Net_Orig_Avg <- Net_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
@@ -509,7 +630,44 @@ Net_Orig_Avg <- Net_Orig_Year %>%
             Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
             Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
   ungroup()
+save(Net_Orig_Avg, file = "Results/Summary data-sets/Net_Orig_Avg.Rdata")
+write.csv(Net_Orig_Avg, file = "Results/Summary data-sets/Net_Orig_Avg.csv",
+          row.names = F)
 
+# Africa
+Net_Orig_Avg_Africa <- Net_Orig_Avg %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.Rdata")
+write.csv(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+Net_Orig_Avg_LMIC <- Net_Orig_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(Net_Orig_Avg_LMIC, file = "Results/Summary data-sets/Net_Orig_Avg_LMIC.Rdata")
+write.csv(Net_Orig_Avg_LMIC, file = "Results/Summary data-sets/Net_Orig_Avg_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+Net_Orig_Avg_Developing <- Net_Orig_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+save(Net_Orig_Avg_Developing, file = "Results/Summary data-sets/Net_Orig_Avg_Developing.Rdata")
+write.csv(Net_Orig_Avg_Developing, file = "Results/Summary data-sets/Net_Orig_Avg_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+Net_Orig_Avg_LowHDI <- Net_Orig_Avg %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+save(Net_Orig_Avg_LowHDI, file = "Results/Summary data-sets/Net_Orig_Avg_LowHDI.Rdata")
+write.csv(Net_Orig_Avg_LowHDI, file = "Results/Summary data-sets/Net_Orig_Avg_LowHDI.csv",
+          row.names = F)
+
+
+# .. Net IFF for Reporter (sum over Partner, sum over Year) ####
 Net_Orig_Sum <- Net_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -517,16 +675,20 @@ Net_Orig_Sum <- Net_Orig_Year %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.Rdata")
+write.csv(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.csv",
+          row.names = F)
 
-Net_Orig_Dest_Sum <- Net_Orig_Dest_Year %>%
-  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
-           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
-  ungroup() %>%
-  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
-         Tot_IFF_bn = Tot_IFF / 10^9)
+# Africa
+Net_Orig_Sum_Africa <- Net_Orig_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.Rdata")
+write.csv(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.csv",
+          row.names = F)
 
+
+# .. Net IFF for Reporter-Partner (average across Year) ####
 Net_Orig_Dest_Avg <- Net_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
@@ -559,67 +721,57 @@ Net_Orig_Dest_Avg <- left_join(Net_Orig_Dest_Avg,
                                by = c("partner.ISO" = "ISO3166.3")) %>%
   rename(pGDP = GDP,
          pGNPpc = GNPpc)
+save(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
+write.csv(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.csv",
+          row.names = F)
 
-Net_Orig_Dest_Year_Africa <- Net_Orig_Dest_Year %>%
+
+# .. Net IFF for Reporter-Partner (sum over Year) ####
+Net_Orig_Dest_Sum <- Net_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+
+# Africa
+Net_Orig_Dest_Sum_Africa <- Net_Orig_Dest_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
+save(Net_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Sum_Africa.Rdata")
+write.csv(Net_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Sum_Africa.csv",
+          row.names = F)
 
-Net_Orig_Dest_Africa <- Net_Orig_Dest_Sum %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
 
-Net_Dest <- Net_Orig_Dest_Sum %>%
+# .. Net IFF for Partner (sum over Reporter, sum over Year) ####
+Net_Dest_Sum <- Net_Orig_Dest_Sum %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(Net_Dest_Sum, file = "Results/Summary data-sets/Net_Dest_Sum.Rdata")
+write.csv(Net_Dest_Sum, file = "Results/Summary data-sets/Net_Dest_Sum.csv",
+          row.names = F)
 
-Net_Dest_Africa <- Net_Orig_Dest_Africa %>%
+# Africa
+Net_Dest_Sum_Africa <- Net_Orig_Dest_Sum_Africa %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(Net_Dest_Sum_Africa, file = "Results/Summary data-sets/Net_Dest_Sum_Africa.Rdata")
+write.csv(Net_Dest_Sum_Africa, file = "Results/Summary data-sets/Net_Dest_Sum_Africa.csv",
+          row.names = F)
 
-Net_Orig_Year_Africa <- Net_Orig_Year %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
 
-Net_Orig_Year_LMIC <- Net_Orig_Year %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-Net_Orig_Year_Developing <- Net_Orig_Year %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-Net_Orig_Year_LowHDI <- Net_Orig_Year %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-Net_Orig_Avg_Africa <- Net_Orig_Avg %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-Net_Orig_Avg_LMIC <- Net_Orig_Avg %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-Net_Orig_Avg_Developing <- Net_Orig_Avg %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-Net_Orig_Avg_LowHDI <- Net_Orig_Avg %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-Net_Orig_Sum_Africa <- Net_Orig_Sum %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
+# .. Total Net IFF per year ####
+# Africa
 Net_Year_Africa <- Net_Orig_Year_Africa %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -631,7 +783,11 @@ Net_Year_Africa <- Net_Orig_Year_Africa %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.Rdata")
+write.csv(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 Net_Year_LMIC <- Net_Orig_Year_LMIC %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -643,7 +799,11 @@ Net_Year_LMIC <- Net_Orig_Year_LMIC %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Year_LMIC, file = "Results/Summary data-sets/Net_Year_LMIC.Rdata")
+write.csv(Net_Year_LMIC, file = "Results/Summary data-sets/Net_Year_LMIC.csv",
+          row.names = F)
 
+# Developing countries
 Net_Year_Developing <- Net_Orig_Year_Developing %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -655,7 +815,11 @@ Net_Year_Developing <- Net_Orig_Year_Developing %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Year_Developing, file = "Results/Summary data-sets/Net_Year_Developing.Rdata")
+write.csv(Net_Year_Developing, file = "Results/Summary data-sets/Net_Year_Developing.csv",
+          row.names = F)
 
+# Low-HDI countries
 Net_Year_LowHDI <- Net_Orig_Year_LowHDI %>%
   group_by(year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -667,115 +831,48 @@ Net_Year_LowHDI <- Net_Orig_Year_LowHDI %>%
   ungroup() %>%
   mutate(Tot_IFF_GDP = Tot_IFF / GDP,
          Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Year_LowHDI, file = "Results/Summary data-sets/Net_Year_LowHDI.Rdata")
+write.csv(Net_Year_LowHDI, file = "Results/Summary data-sets/Net_Year_LowHDI.csv",
+          row.names = F)
 
+
+# .. Headline: cumulative Net IFF during 2000-2018 ####
+# Africa
 Net_Africa <- Net_Year_Africa %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(Net_Africa, file = "Results/Summary data-sets/Net_Africa.Rdata")
+write.csv(Net_Africa, file = "Results/Summary data-sets/Net_Africa.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 Net_LMIC <- Net_Year_LMIC %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(Net_LMIC, file = "Results/Summary data-sets/Net_LMIC.Rdata")
+write.csv(Net_LMIC, file = "Results/Summary data-sets/Net_LMIC.csv",
+          row.names = F)
 
+# Developing countries
 Net_Developing <- Net_Year_Developing %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
+save(Net_Developing, file = "Results/Summary data-sets/Net_Developing.Rdata")
+write.csv(Net_Developing, file = "Results/Summary data-sets/Net_Developing.csv",
+          row.names = F)
 
+# Low-HDI countries
 Net_LowHDI <- Net_Year_LowHDI %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
-
-save(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.Rdata")
-write.csv(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.csv",
-          row.names = F)
-
-save(Net_Orig_Year, file = "Results/Summary data-sets/Net_Orig_Year.Rdata")
-write.csv(Net_Orig_Year, file = "Results/Summary data-sets/Net_Orig_Year.csv",
-          row.names = F)
-
-save(Net_Orig_Avg, file = "Results/Summary data-sets/Net_Orig_Avg.Rdata")
-write.csv(Net_Orig_Avg, file = "Results/Summary data-sets/Net_Orig_Avg.csv",
-          row.names = F)
-save(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.Rdata")
-write.csv(Net_Orig_Sum, file = "Results/Summary data-sets/Net_Orig_Sum.csv",
-          row.names = F)
-
-save(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
-write.csv(Net_Orig_Dest_Avg, file = "Results/Summary data-sets/Net_Orig_Dest_Avg.csv",
-          row.names = F)
-save(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.Rdata")
-write.csv(Net_Orig_Dest_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Year_Africa.csv",
-          row.names = F)
-
-save(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
-write.csv(Net_Orig_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Year_Africa.csv",
-          row.names = F)
-save(Net_Orig_Year_LMIC, file = "Results/Summary data-sets/Net_Orig_Year_LMIC.Rdata")
-write.csv(Net_Orig_Year_LMIC, file = "Results/Summary data-sets/Net_Orig_Year_LMIC.csv",
-          row.names = F)
-save(Net_Orig_Year_Developing, file = "Results/Summary data-sets/Net_Orig_Year_Developing.Rdata")
-write.csv(Net_Orig_Year_Developing, file = "Results/Summary data-sets/Net_Orig_Year_Developing.csv",
-          row.names = F)
-save(Net_Orig_Year_LowHDI, file = "Results/Summary data-sets/Net_Orig_Year_LowHDI.Rdata")
-write.csv(Net_Orig_Year_LowHDI, file = "Results/Summary data-sets/Net_Orig_Year_LowHDI.csv",
-          row.names = F)
-
-save(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.Rdata")
-write.csv(Net_Orig_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Avg_Africa.csv",
-          row.names = F)
-save(Net_Orig_Avg_LMIC, file = "Results/Summary data-sets/Net_Orig_Avg_LMIC.Rdata")
-write.csv(Net_Orig_Avg_LMIC, file = "Results/Summary data-sets/Net_Orig_Avg_LMIC.csv",
-          row.names = F)
-save(Net_Orig_Avg_Developing, file = "Results/Summary data-sets/Net_Orig_Avg_Developing.Rdata")
-write.csv(Net_Orig_Avg_Developing, file = "Results/Summary data-sets/Net_Orig_Avg_Developing.csv",
-          row.names = F)
-save(Net_Orig_Avg_LowHDI, file = "Results/Summary data-sets/Net_Orig_Avg_LowHDI.Rdata")
-write.csv(Net_Orig_Avg_LowHDI, file = "Results/Summary data-sets/Net_Orig_Avg_LowHDI.csv",
-          row.names = F)
-
-save(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.Rdata")
-write.csv(Net_Orig_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sum_Africa.csv",
-          row.names = F)
-save(Net_Orig_Dest_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Africa.Rdata")
-write.csv(Net_Orig_Dest_Africa, file = "Results/Summary data-sets/Net_Orig_Dest_Africa.csv",
-          row.names = F)
-
-save(Net_Dest, file = "Results/Summary data-sets/Net_Dest.Rdata")
-write.csv(Net_Dest, file = "Results/Summary data-sets/Net_Dest.csv",
-          row.names = F)
-save(Net_Dest_Africa, file = "Results/Summary data-sets/Net_Dest_Africa.Rdata")
-write.csv(Net_Dest_Africa, file = "Results/Summary data-sets/Net_Dest_Africa.csv",
-          row.names = F)
-
-save(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.Rdata")
-write.csv(Net_Year_Africa, file = "Results/Summary data-sets/Net_Year_Africa.csv",
-          row.names = F)
-save(Net_Year_LMIC, file = "Results/Summary data-sets/Net_Year_LMIC.Rdata")
-write.csv(Net_Year_LMIC, file = "Results/Summary data-sets/Net_Year_LMIC.csv",
-          row.names = F)
-save(Net_Year_Developing, file = "Results/Summary data-sets/Net_Year_Developing.Rdata")
-write.csv(Net_Year_Developing, file = "Results/Summary data-sets/Net_Year_Developing.csv",
-          row.names = F)
-save(Net_Year_LowHDI, file = "Results/Summary data-sets/Net_Year_LowHDI.Rdata")
-write.csv(Net_Year_LowHDI, file = "Results/Summary data-sets/Net_Year_LowHDI.csv",
-          row.names = F)
-
-save(Net_Africa, file = "Results/Summary data-sets/Net_Africa.Rdata")
-write.csv(Net_Africa, file = "Results/Summary data-sets/Net_Africa.csv",
-          row.names = F)
-save(Net_LMIC, file = "Results/Summary data-sets/Net_LMIC.Rdata")
-write.csv(Net_LMIC, file = "Results/Summary data-sets/Net_LMIC.csv",
-          row.names = F)
-save(Net_Developing, file = "Results/Summary data-sets/Net_Developing.Rdata")
-write.csv(Net_Developing, file = "Results/Summary data-sets/Net_Developing.csv",
-          row.names = F)
 save(Net_LowHDI, file = "Results/Summary data-sets/Net_LowHDI.Rdata")
 write.csv(Net_LowHDI, file = "Results/Summary data-sets/Net_LowHDI.csv",
           row.names = F)
@@ -783,7 +880,7 @@ write.csv(Net_LowHDI, file = "Results/Summary data-sets/Net_LowHDI.csv",
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# AGGREGATE BY SECTOR       ####
+# GER BY SECTOR             ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
@@ -826,6 +923,8 @@ GER_Exp_Sect_disag <- panel %>%
   summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
   ungroup()
 
+
+# .. GER Import/Export IFF for Reporter-Sector-Year ####
 GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                 by = c("reporter" = "reporter",
                                        "reporter.ISO" = "reporter.ISO",
@@ -838,6 +937,15 @@ GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                        "section" = "section"))
 rm(GER_Imp_Sect, GER_Exp_Sect)
 
+# Africa
+GER_Orig_Sect_Year_Africa <- GER_Orig_Sect_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
+write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
+          row.names = F)
+
+# Disaggregated sectors
 GER_Orig_Sect_Year_disag <- full_join(GER_Imp_Sect_disag, GER_Exp_Sect_disag,
                                       by = c("reporter" = "reporter",
                                              "reporter.ISO" = "reporter.ISO",
@@ -850,6 +958,8 @@ GER_Orig_Sect_Year_disag <- full_join(GER_Imp_Sect_disag, GER_Exp_Sect_disag,
                                              "commodity" = "commodity"))
 rm(GER_Imp_Sect_disag, GER_Exp_Sect_disag)
 
+
+# .. GER IFF for Reporter-Sector (average across Year) ####
 GER_Orig_Sect_Avg <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, section.code, section) %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
@@ -874,7 +984,34 @@ WDI <- left_join(WDI, weights %>%
 GER_Orig_Sect_Avg <- left_join(GER_Orig_Sect_Avg,
                                WDI,
                                by = c("reporter.ISO" = "ISO3166.3"))
+save(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
+write.csv(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.csv",
+          row.names = F)
 
+# Africa
+GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
+write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Sect_Avg_LMIC <- GER_Orig_Sect_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+# Developing countries
+GER_Orig_Sect_Avg_Developing <- GER_Orig_Sect_Avg %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
+# Low-HDI countries
+GER_Orig_Sect_Avg_LowHDI <- GER_Orig_Sect_Avg %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+
+# Disaggregated sectors
 GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, commodity.code, commodity) %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
@@ -883,6 +1020,28 @@ GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
+# Africa (disaggregated sectors)
+GER_Orig_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_disag %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+
+# Low and lower-middle income countries (disaggregated sectors)
+GER_Orig_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_disag %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+# Developing countries (disaggregated sectors)
+GER_Orig_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_disag %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
+# Low-HDI countries (disaggregated sectors)
+GER_Orig_Sect_Avg_LowHDI_disag <- GER_Orig_Sect_Avg_disag %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+
+
+# .. GER IFF for Reporter-Sector (sum over Year) ####
 GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -891,6 +1050,31 @@ GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
+# Africa
+GER_Orig_Sect_Sum_Africa <- GER_Orig_Sect_Sum %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.Rdata")
+write.csv(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Sect_Sum_LMIC <- GER_Orig_Sect_Sum %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+
+# Developing countries
+GER_Orig_Sect_Sum_Developing <- GER_Orig_Sect_Sum %>%
+  filter(rDev == "Developing") %>%
+  select(-rDev)
+
+# Low-HDI countries
+GER_Orig_Sect_Sum_LowHDI <- GER_Orig_Sect_Sum %>%
+  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
+  select(-rHDI)
+
+
+# .. GER IFF for Sector-Year (sum over Reporter)
 GER_Sect_Year <- GER_Orig_Sect_Year %>%
   group_by(section.code, section, year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -899,90 +1083,9 @@ GER_Sect_Year <- GER_Orig_Sect_Year %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
-GER_Orig_Sect_Year_Africa <- GER_Orig_Sect_Year %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
 
-GER_Orig_Sect_Avg_Africa <- GER_Orig_Sect_Avg %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_disag %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Sect_Avg_LMIC <- GER_Orig_Sect_Avg %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-GER_Orig_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_disag %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-GER_Orig_Sect_Avg_Developing <- GER_Orig_Sect_Avg %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-GER_Orig_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_disag %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-GER_Orig_Sect_Avg_LowHDI <- GER_Orig_Sect_Avg %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-GER_Orig_Sect_Avg_LowHDI_disag <- GER_Orig_Sect_Avg_disag %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-GER_Orig_Sect_Sum_Africa <- GER_Orig_Sect_Sum %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-GER_Orig_Sect_Sum_LMIC <- GER_Orig_Sect_Sum %>%
-  filter(rIncome == "LIC" | rIncome == "LMC") %>%
-  select(-rIncome)
-
-GER_Orig_Sect_Sum_Developing <- GER_Orig_Sect_Sum %>%
-  filter(rDev == "Developing") %>%
-  select(-rDev)
-
-GER_Orig_Sect_Sum_LowHDI <- GER_Orig_Sect_Sum %>%
-  filter(rHDI == "Lo HDI" | rHDI == "Med HDI") %>%
-  select(-rHDI)
-
-GER_Sect_Africa <- GER_Orig_Sect_Sum_Africa %>%
-  group_by(section.code, section) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
-GER_Sect_LMIC <- GER_Orig_Sect_Sum_LMIC %>%
-  group_by(section.code, section) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
-GER_Sect_Developing <- GER_Orig_Sect_Sum_Developing %>%
-  group_by(section.code, section) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
-GER_Sect_LowHDI <- GER_Orig_Sect_Sum_LowHDI %>%
-  group_by(section.code, section) %>%
-  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(Exp_IFF, na.rm = T),
-            Tot_IFF = sum(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
+# .. GER IFF for Sector (sum over Reporter, average across Year) ####
+# Africa
 GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -990,7 +1093,11 @@ GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
+write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
+          row.names = F)
 
+# Africa (disaggregated sectors)
 GER_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_Africa_disag %>%
   group_by(commodity.code, commodity) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -998,7 +1105,11 @@ GER_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_Africa_disag %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
+write.csv(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.csv",
+          row.names = F)
 
+# Low and lower-middle income countries
 GER_Sect_Avg_LMIC <- GER_Orig_Sect_Avg_LMIC %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1006,7 +1117,11 @@ GER_Sect_Avg_LMIC <- GER_Orig_Sect_Avg_LMIC %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
+write.csv(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.csv",
+          row.names = F)
 
+# Low and lower-middle income countries (disaggregated sectors)
 GER_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_LMIC_disag %>%
   group_by(commodity.code, commodity) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1014,7 +1129,11 @@ GER_Sect_Avg_LMIC_disag <- GER_Orig_Sect_Avg_LMIC_disag %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
+write.csv(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.csv",
+          row.names = F)
 
+# Developing countries
 GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1022,7 +1141,11 @@ GER_Sect_Avg_Developing <- GER_Orig_Sect_Avg_Developing %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
+write.csv(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.csv",
+          row.names = F)
 
+# Developing countries (disaggregated sectors)
 GER_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_Developing_disag %>%
   group_by(commodity.code, commodity) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1030,7 +1153,11 @@ GER_Sect_Avg_Developing_disag <- GER_Orig_Sect_Avg_Developing_disag %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.Rdata")
+write.csv(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.csv",
+          row.names = F)
 
+# Low-HDI countries
 GER_Sect_Avg_LowHDI <- GER_Orig_Sect_Avg_LowHDI %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1038,7 +1165,11 @@ GER_Sect_Avg_LowHDI <- GER_Orig_Sect_Avg_LowHDI %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
+save(GER_Sect_Avg_LowHDI, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI.Rdata")
+write.csv(GER_Sect_Avg_LowHDI, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI.csv",
+          row.names = F)
 
+# Low-HDI countries (disaggregated sectors)
 GER_Sect_Avg_LowHDI_disag <- GER_Orig_Sect_Avg_LowHDI_disag %>%
   group_by(commodity.code, commodity) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1046,61 +1177,67 @@ GER_Sect_Avg_LowHDI_disag <- GER_Orig_Sect_Avg_LowHDI_disag %>%
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
-
-save(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.Rdata")
-write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Year_Africa.csv",
-          row.names = F)
-save(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
-
-write.csv(GER_Orig_Sect_Avg, file = "Results/Summary data-sets/GER_Orig_Sect_Avg.csv",
-          row.names = F)
-save(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.Rdata")
-write.csv(GER_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_Africa.csv",
-          row.names = F)
-save(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.Rdata")
-write.csv(GER_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_Sect_Sum_Africa.csv",
-          row.names = F)
-
-save(GER_Sect_Africa, file = "Results/Summary data-sets/GER_Sect_Africa.Rdata")
-write.csv(GER_Sect_Africa, file = "Results/Summary data-sets/GER_Sect_Africa.csv",
-          row.names = F)
-save(GER_Sect_LMIC, file = "Results/Summary data-sets/GER_Sect_LMIC.Rdata")
-write.csv(GER_Sect_LMIC, file = "Results/Summary data-sets/GER_Sect_LMIC.csv",
-          row.names = F)
-save(GER_Sect_Developing, file = "Results/Summary data-sets/GER_Sect_Developing.Rdata")
-write.csv(GER_Sect_Developing, file = "Results/Summary data-sets/GER_Sect_Developing.csv",
-          row.names = F)
-save(GER_Sect_LowHDI, file = "Results/Summary data-sets/GER_Sect_LowHDI.Rdata")
-write.csv(GER_Sect_LowHDI, file = "Results/Summary data-sets/GER_Sect_LowHDI.csv",
-          row.names = F)
-
-save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
-write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
-          row.names = F)
-save(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
-write.csv(GER_Sect_Avg_Africa_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Africa_disag.csv",
-          row.names = F)
-save(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
-write.csv(GER_Sect_Avg_LMIC, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC.csv",
-          row.names = F)
-save(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
-write.csv(GER_Sect_Avg_LMIC_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.csv",
-          row.names = F)
-save(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
-write.csv(GER_Sect_Avg_Developing, file = "Results/Summary data-sets/GER_Sect_Avg_Developing.csv",
-          row.names = F)
-save(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.Rdata")
-write.csv(GER_Sect_Avg_Developing_disag, file = "Results/Summary data-sets/GER_Sect_Avg_Developing_disag.csv",
-          row.names = F)
-save(GER_Sect_Avg_LowHDI, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI.Rdata")
-write.csv(GER_Sect_Avg_LowHDI, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI.csv",
-          row.names = F)
 save(GER_Sect_Avg_LowHDI_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI_disag.Rdata")
 write.csv(GER_Sect_Avg_LowHDI_disag, file = "Results/Summary data-sets/GER_Sect_Avg_LowHDI_disag.csv",
           row.names = F)
 
 
-# .. Aggregate results using Net Aggregation ####
+# .. GER IFF for Sector (sum over Reporter, sum over Year) ####
+# Africa
+GER_Sect_Sum_Africa <- GER_Orig_Sect_Sum_Africa %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Sect_Sum_Africa.Rdata")
+write.csv(GER_Sect_Sum_Africa, file = "Results/Summary data-sets/GER_Sect_Sum_Africa.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Sect_Sum_LMIC <- GER_Orig_Sect_Sum_LMIC %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Sum_LMIC, file = "Results/Summary data-sets/GER_Sect_Sum_LMIC.Rdata")
+write.csv(GER_Sect_Sum_LMIC, file = "Results/Summary data-sets/GER_Sect_Sum_LMIC.csv",
+          row.names = F)
+
+# Developing countries
+GER_Sect_Sum_Developing <- GER_Orig_Sect_Sum_Developing %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Sum_Developing, file = "Results/Summary data-sets/GER_Sect_Sum_Developing.Rdata")
+write.csv(GER_Sect_Sum_Developing, file = "Results/Summary data-sets/GER_Sect_Sum_Developing.csv",
+          row.names = F)
+
+# Low-HDI countries
+GER_Sect_Sum_LowHDI <- GER_Orig_Sect_Sum_LowHDI %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Sum_LowHDI, file = "Results/Summary data-sets/GER_Sect_Sum_LowHDI.Rdata")
+write.csv(GER_Sect_Sum_LowHDI, file = "Results/Summary data-sets/GER_Sect_Sum_LowHDI.csv",
+          row.names = F)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# NET BY SECTOR             ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Net Import/Export IFF for Reporter-Sector-Year ####
 Net_Orig_Sect_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rHDI,
            year, section.code, section) %>%
@@ -1108,6 +1245,16 @@ Net_Orig_Sect_Year <- panel %>%
             Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
   ungroup()
 
+# Africa
+Net_Orig_Sect_Year_Africa <- Net_Orig_Sect_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.Rdata")
+write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.csv",
+          row.names = F)
+
+
+# .. Net IFF for Reporter-Sector (average across Year) ####
 Net_Orig_Sect_Avg <- Net_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
@@ -1116,6 +1263,16 @@ Net_Orig_Sect_Avg <- Net_Orig_Sect_Year %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
+# Africa
+Net_Orig_Sect_Avg_Africa <- Net_Orig_Sect_Avg %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion)
+save(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.Rdata")
+write.csv(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.csv",
+          row.names = F)
+
+
+# .. Net IFF for Reporter-Sector (sum over Year) ####
 Net_Orig_Sect_Sum <- Net_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
@@ -1124,38 +1281,25 @@ Net_Orig_Sect_Sum <- Net_Orig_Sect_Year %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 
-Net_Orig_Sect_Year_Africa <- Net_Orig_Sect_Year %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
-Net_Orig_Sect_Avg_Africa <- Net_Orig_Sect_Avg %>%
-  filter(rRegion == "Africa") %>%
-  select(-rRegion)
-
+# Africa
 Net_Orig_Sect_Sum_Africa <- Net_Orig_Sect_Sum %>%
   filter(rRegion == "Africa") %>%
   select(-rRegion)
+save(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.Rdata")
+write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.csv",
+          row.names = F)
 
-Net_Sect_Africa <- Net_Orig_Sect_Sum_Africa %>%
+
+# .. Net IFF for Sector (sum over Reporter, sum over Year) ####
+Net_Sect_Sum_Africa <- Net_Orig_Sect_Sum_Africa %>%
   group_by(section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(Exp_IFF, na.rm = T),
             Tot_IFF = sum(Tot_IFF, na.rm = T),
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
   ungroup()
-
-save(Net_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.Rdata")
-write.csv(GER_Orig_Sect_Year_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Year_Africa.csv",
-          row.names = F)
-save(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.Rdata")
-write.csv(Net_Orig_Sect_Avg_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Avg_Africa.csv",
-          row.names = F)
-save(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.Rdata")
-write.csv(Net_Orig_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Orig_Sect_Sum_Africa.csv",
-          row.names = F)
-
-save(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.Rdata")
-write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv",
+save(Net_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Sect_Sum_Africa.Rdata")
+write.csv(Net_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Sect_Sum_Africa.csv",
           row.names = F)
 
 
@@ -1163,7 +1307,6 @@ write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv
 ## ## ## ## ## ## ## ## ## ## ##
 # HEADLINE RESULTS          ####
 ## ## ## ## ## ## ## ## ## ## ##
-
 
 # .. For Africa ####
 (Cumulative.gross <- sum(GER_Year_Africa$Tot_IFF_bn))
@@ -1234,7 +1377,7 @@ write.csv(Net_Sect_Africa, file = "Results/Summary data-sets/Net_Sect_Africa.csv
 # 596.3079
 
 
-# .. For low HDI countries ####
+# .. For low-HDI countries ####
 (Cumulative.gross <- sum(GER_Year_LowHDI$Tot_IFF_bn))
 # 2807.377
 

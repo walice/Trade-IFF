@@ -1,7 +1,7 @@
 # Data Preparation
 # Alice Lepissier
 # alice.lepissier@gmail.com
-# Prepared for UNECA
+# Originally prepared for the United Nations Economic Commission for Africa (UNECA)
 
 ## ## ## ## ## ## ## ## ## ## ##
 # INDEX                     ####
@@ -46,6 +46,7 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 setwd("/scratch/alepissier/IFFe/") # Virtual server
+# source("Scripts/Process Comtrade.R")
 library(data.table)
 library(readxl)
 library(stringr)
@@ -71,7 +72,6 @@ codes <- read_excel("Data/Codes_Masterlist.xlsx", sheet = "Codes") %>%
 # IMPORT COMTRADE           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-#source("Scripts/Process Comtrade.R")
 load("Data/Comtrade/comtrade.Rdata")
 
 comtrade <- comtrade %>%

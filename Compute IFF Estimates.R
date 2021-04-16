@@ -1,7 +1,7 @@
 # Compute IFF Estimates
 # Alice Lepissier
 # alice.lepissier@gmail.com
-# Prepared for UNECA
+# Originally prepared for the United Nations Economic Commission for Africa (UNECA)
 
 ## ## ## ## ## ## ## ## ## ## ##
 # INDEX                     ####
@@ -22,12 +22,6 @@
 # .. Harmonization procedure
 # .. Compute IFF
 # .. Move export IFF to mirror
-# Aggregate by Destination
-# .. Aggregate results using Gross Excluding Reversals
-# .. Aggregate results using Net Aggregation
-# Aggregate by Sector
-# .. Aggregate results using Gross Excluding Reversals
-# .. Aggregate results using Net Aggregation
 
 
 
@@ -37,6 +31,7 @@
 
 setwd("/home/alepissier/IFFe/") # Virtual server
 data.disk <- "/scratch/alepissier/IFFe/"
+# source("Scripts/Data Preparation.R")
 library(car)
 library(kableExtra)
 library(lfe)
@@ -52,7 +47,6 @@ options(scipen = 999)
 # CREATE VARIABLES          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-#source("Scripts/Data Preparation.R")
 load(paste0(data.disk, "Data/Panel/panel.Rdata"))
 
 length(unique(panel$id)) == nrow(panel)

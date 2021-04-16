@@ -1,7 +1,7 @@
 # Data Visualization
 # Alice Lepissier
 # alice.lepissier@gmail.com
-# Prepared for UNECA
+# Originally prepared for the United Nations Economic Commission for Africa (UNECA)
 
 ## ## ## ## ## ## ## ## ## ## ##
 # INDEX                     ####
@@ -45,7 +45,6 @@
 # .. Stacked bar charts of top average outflows in Africa
 # .. Stacked bar charts of top average outflows in LMIC
 # .. Stacked bar charts of top average outflows in Developing
-# .. Flow maps of top total destinations in pilots
 # .. Flow maps of top destinations in conduits
 # .. Flow maps of top inflows in World
 # Conduits Charts
@@ -64,6 +63,7 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 setwd("/home/alepissier/IFFe/") # Virtual server
+# source("Scripts/Aggregate Results.R")
 library(broom)
 library(cartogram)
 library(disco)
@@ -72,7 +72,6 @@ library(ggalluvial)
 library(ggmap)
 library(ggpubr)
 library(ggrepel)
-# install_github("didacs/ggsunburst")
 library(ggsunburst)
 library(ggthemes)
 library(mapproj)
@@ -777,7 +776,7 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.border = element_blank(),
-                    panel.grid = element_blank()) 
+                    panel.grid = element_blank())
 
 
 # .. Average gross IFF ####
@@ -879,7 +878,7 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     panel.border = element_blank(),
-                    panel.grid = element_blank()) 
+                    panel.grid = element_blank())
 
 
 # .. Average gross IFF ####
@@ -1098,7 +1097,6 @@ Origins <- GER_Orig_Sum %>%
   mutate(size = ifelse(rRegion == "Africa" & node == "LIC", 0.51, size),
          size = ifelse(rRegion == "Americas" & node == "LMC", 0.51, size)) # Just for rounding display, everything is correct
 
-
 write.table(Origins, file = "Figures/Origins.csv", row.names = F, sep = ",")
 sb <- sunburst_data("Figures/Origins.csv", sep = ",", type = "node_parent",
                     node_attributes = c("rRegion", "size"))
@@ -1178,7 +1176,6 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 # SECTOR CHARTS             ####
 ## ## ## ## ## ## ## ## ## ## ##
-
 
 tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
 gdocs20 <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", "#5574A6", "#3B3EAC")
@@ -1517,208 +1514,6 @@ g <- ggplot(GER_Dest_Avg_Developing %>%
 ggsave(g,
        file = "Figures/Top 10 destinations GER average Developing.png",
        width = 6, height = 5, units = "in")
-
-
-# # .. Flow maps of top total destinations in pilots ####
-# load("Results/Summary data-sets/GER_Orig_Dest_Sum_Africa.Rdata")
-# 
-# centroids <- codes %>%
-#   dplyr::select(ISO3166.3, Longitude, Latitude) %>%
-#   mutate_at(vars(Longitude, Latitude),
-#             funs(as.numeric))
-# 
-# GER_Orig_Dest_Sum_Africa <- GER_Orig_Dest_Sum_Africa %>%
-#   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
-#   rename(rLongitude = Longitude,
-#          rLatitude = Latitude) %>%
-#   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
-#   rename(pLongitude = Longitude,
-#          pLatitude = Latitude)
-# 
-# plot_my_connection = function( dep_lon, dep_lat, arr_lon, arr_lat, ...){
-#   inter <- gcIntermediate(c(dep_lon, dep_lat), c(arr_lon, arr_lat), n = 50, addStartEnd = TRUE, breakAtDateLine = F)             
-#   inter <- data.frame(inter)
-#   diff_of_lon = abs(dep_lon) + abs(arr_lon)
-#   if (diff_of_lon > 180) {
-#     lines(subset(inter, lon >= 0), ...)
-#     lines(subset(inter, lon < 0), ...)
-#   } else {
-#     lines(inter, ...)
-#   }
-# }
-# 
-# # Egypt
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "EGY") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Egypt.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(1,2,5,7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(1,2,5),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
-# viz2 <- viz[c(7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # Nigeria
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "NGA") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Nigeria.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(3,8,9,1),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(3,9),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
-# viz2 <- viz[c(1,8),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # Senegal
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "SEN") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Senegal.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # South Africa
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "ZAF") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map South Africa.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(3,9,4,10),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(4,9),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
-# viz2 <- viz[c(3,10),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # Tanzania
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "TZA") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Tanzania.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(8,9),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(8,9),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # Tunisia
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "TUN") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Tunisia.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(2,8,6),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(2),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
-# viz2 <- viz[c(8,6),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
-# 
-# # Sudan
-# viz <- GER_Orig_Dest_Sum_Africa %>%
-#   filter(reporter.ISO == "SDN") %>%
-#   top_n(10, Tot_IFF_hi) %>%
-#   mutate(scale = round((10 - 1) * (Tot_IFF_hi - min(Tot_IFF_hi))/(max(Tot_IFF_hi) - min(Tot_IFF_hi)) + 1))
-# 
-# pdf("Figures/Pilots/Flow map Sudan.pdf", 
-#     height = 4.5, width = 6)
-# maps::map("world", col = "#f2f2f2", fill = TRUE, bg = "white", lwd = 0.05,
-#           mar = rep(0, 4), border = 0, wrap = c(-180, 180, NA)) 
-# for(i in 1:nrow(viz)){
-#   plot_my_connection(viz$rLongitude[i], viz$rLatitude[i], viz$pLongitude[i], viz$pLatitude[i], 
-#                      col = "skyblue", lwd = viz$scale[i])
-# }
-# points(x = viz$rLongitude, y = viz$rLatitude, col = "slateblue", cex = 2, pch = 20)
-# points(x = viz$pLongitude, y = viz$pLatitude, col = "slateblue", cex = 2, pch = 20)
-# viz2 <- viz[-c(10,4,3,9,7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 4) # right
-# viz2 <- viz[c(3),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 2) # left
-# viz2 <- viz[c(10,9),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 3) # above
-# viz2 <- viz[c(4,7),]
-# text(viz2$partner, x = viz2$pLongitude, y = viz2$pLatitude, col = "slateblue", cex = 0.7, pos = 1) # below
-# title("Top 10 destinations of gross outflows, 2000-2016", cex.main = 0.8)
-# dev.off()
 
 
 # .. Flow maps of top destinations in conduits ####

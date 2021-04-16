@@ -1,7 +1,7 @@
 # Process Comtrade
 # Alice Lepissier
 # alice.lepissier@gmail.com
-# Prepared for UNECA
+# Originally prepared for the United Nations Economic Commission for Africa (UNECA)
 
 ## ## ## ## ## ## ## ## ## ## ##
 # INDEX                     ####
