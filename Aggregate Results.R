@@ -24,6 +24,7 @@
 # .. GER Import/Export IFF for Reporter-Partner-Year
 # .. GER IFF for Reporter-Year (sum over Partner)
 # .. GER IFF for Reporter (sum over Partner, average across Year)
+# .. Total GER IFF inflows per year
 # Net by Destination
 # .. Net Import/Export IFF for Reporter-Partner-Year
 # .. Net IFF for Reporter-Year (sum over Partner)
@@ -631,6 +632,26 @@ Inflow_GER_Orig_Avg <- Inflow_GER_Orig_Year %>%
   ungroup()
 save(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 write.csv(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.csv",
+          row.names = F)
+
+
+# .. Total GER IFF inflows per year ####
+# LMIC
+Inflow_GER_Year_LMIC <- Inflow_GER_Orig_Year %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome) %>%
+  group_by(year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP,
+         Tot_IFF_trade = Tot_IFF / Total_value)
+save(Inflow_GER_Year_LMIC, file = "Results/Summary data-sets/Inflow_GER_Year_LMIC.Rdata")
+write.csv(Inflow_GER_Year_LMIC, file = "Results/Summary data-sets/Inflow_GER_Year_LMIC.csv",
           row.names = F)
 
 

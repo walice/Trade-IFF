@@ -399,6 +399,7 @@ ggsave(g,
 # .. LMIC ####
 load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
 load("Results/Summary data-sets/Net_Year_LMIC.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Year_LMIC.Rdata")
 
 viz <- full_join(GER_Year_LMIC %>% 
                    select(year, 
@@ -410,6 +411,13 @@ viz <- full_join(GER_Year_LMIC %>%
                           Net_Tot_IFF = Tot_IFF, 
                           Net_Tot_IFF_GDP = Tot_IFF_GDP, 
                           Net_Tot_IFF_Trade = Tot_IFF_trade),
+                 by = c("year"))
+
+viz <- full_join(viz, Inflow_GER_Year_LMIC %>%
+                   select(year, 
+                          In_GER_Tot_IFF = Tot_IFF, 
+                          In_GER_Tot_IFF_GDP = Tot_IFF_GDP, 
+                          In_GER_Tot_IFF_Trade = Tot_IFF_trade),
                  by = c("year"))
 
 # GER and Net dollar value
@@ -470,6 +478,33 @@ g <- ggplot(viz %>%
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/GER and Net LMIC Total Percent Trade.png",
+       width = 6, height = 5, units = "in")
+
+# GER In, GER Out and Net dollar value
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF" | 
+                       variable == "GER_Tot_IFF" |
+                       variable == "In_GER_Tot_IFF"), 
+            aes(x = year, y = value, fill = fct_relevel(variable,
+                                                        "GER_Tot_IFF",
+                                                        "In_GER_Tot_IFF",
+                                                        "Net_Tot_IFF"))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_brewer(name = "Estimate", 
+                    labels = c("Gross outflows", "Gross inflows", "Net flows"),
+                    type = "qual", palette = "Set2", direction = -1) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in low and lower-middle income",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/GER Out, In and Net LMIC Total.png",
        width = 6, height = 5, units = "in")
 
 
