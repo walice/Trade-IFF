@@ -447,6 +447,22 @@ write.csv(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Af
 
 
 # .. Total GER IFF outflows per year ####
+# World
+GER_Year <- GER_Orig_Year %>%
+  group_by(year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP,
+         Tot_IFF_trade = Tot_IFF / Total_value)
+save(GER_Year, file = "Results/Summary data-sets/GER_Year.Rdata")
+write.csv(GER_Year, file = "Results/Summary data-sets/GER_Year.csv",
+          row.names = F)
+
 # Africa
 GER_Year_Africa <- GER_Orig_Year_Africa %>%
   group_by(year) %>%
@@ -636,6 +652,22 @@ write.csv(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig
 
 
 # .. Total GER IFF inflows per year ####
+# World
+Inflow_GER_Year <- Inflow_GER_Orig_Year %>%
+  group_by(year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP,
+         Tot_IFF_trade = Tot_IFF / Total_value)
+save(Inflow_GER_Year, file = "Results/Summary data-sets/Inflow_GER_Year.Rdata")
+write.csv(Inflow_GER_Year, file = "Results/Summary data-sets/Inflow_GER_Year.csv",
+          row.names = F)
+
 # LMIC
 Inflow_GER_Year_LMIC <- Inflow_GER_Orig_Year %>%
   filter(rIncome == "LIC" | rIncome == "LMC") %>%
@@ -890,6 +922,22 @@ write.csv(Net_Dest_Sum_Africa, file = "Results/Summary data-sets/Net_Dest_Sum_Af
 
 
 # .. Total Net IFF per year ####
+# World
+Net_Year <- Net_Orig_Year %>%
+  group_by(year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP,
+         Tot_IFF_trade = Tot_IFF / Total_value)
+save(Net_Year, file = "Results/Summary data-sets/Net_Year.Rdata")
+write.csv(Net_Year, file = "Results/Summary data-sets/Net_Year.csv",
+          row.names = F)
+
 # Africa
 Net_Year_Africa <- Net_Orig_Year_Africa %>%
   group_by(year) %>%
