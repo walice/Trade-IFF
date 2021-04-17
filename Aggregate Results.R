@@ -7,8 +7,8 @@
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
-# GER by Destination
-# .. Aggregate results using Gross Excluding Reversals
+# GER Out by Destination
+# .. Aggregate outflows using Gross Excluding Reversals
 # .. GER Import/Export IFF for Reporter-Partner-Year
 # .. GER IFF for Reporter-Year (sum over Partner)
 # .. GER IFF for Reporter (sum over Partner, average across Year)
@@ -17,8 +17,13 @@
 # .. GER IFF for Reporter-Partner (sum over Year)
 # .. GER IFF for Partner (sum over Reporter, average across Year)
 # .. GER IFF for Partner (sum over Reporter, sum over Year)
-# .. Total GER IFF per year
+# .. Total GER IFF outflows per year
 # .. Headline: cumulative GER IFF during 2000-2018
+# GER In by Destination
+# .. Aggregate inflows using Gross Excluding Reversals
+# .. GER Import/Export IFF for Reporter-Partner-Year
+# .. GER IFF for Reporter-Year (sum over Partner)
+# .. GER IFF for Reporter (sum over Partner, average across Year)
 # Net by Destination
 # .. Net Import/Export IFF for Reporter-Partner-Year
 # .. Net IFF for Reporter-Year (sum over Partner)
@@ -29,8 +34,8 @@
 # .. Net IFF for Partner (sum over Reporter, sum over Year)
 # .. Total Net IFF per year
 # .. Headline: cumulative Net IFF during 2000-2018
-# GER by Sector
-# .. Aggregate results using Gross Excluding Reversals
+# GER Out by Sector
+# .. Aggregate outflows using Gross Excluding Reversals
 # .. GER Import/Export IFF for Reporter-Sector-Year
 # .. GER IFF for Reporter-Sector (average across Year)
 # .. GER IFF for Reporter-Sector (sum over Year)
@@ -68,7 +73,7 @@ options(scipen = 999)
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# GER BY DESTINATION        ####
+# GER OUT BY DESTINATION    ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 load("Results/panel_results.Rdata")
@@ -76,7 +81,7 @@ load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
 load(paste0(data.disk, "Data/Comtrade/comtrade_total_clean.Rdata"))
 
 
-# .. Aggregate results using Gross Excluding Reversals ####
+# .. Aggregate outflows using Gross Excluding Reversals ####
 GER_Imp_Dest <- panel %>%
   filter(Imp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
@@ -440,7 +445,7 @@ write.csv(GER_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Dest_Sum_Af
           row.names = F)
 
 
-# .. Total GER IFF per year ####
+# .. Total GER IFF outflows per year ####
 # Africa
 GER_Year_Africa <- GER_Orig_Year_Africa %>%
   group_by(year) %>%
@@ -545,6 +550,87 @@ GER_LowHDI <- GER_Year_LowHDI %>%
             Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T))
 save(GER_LowHDI, file = "Results/Summary data-sets/GER_LowHDI.Rdata")
 write.csv(GER_LowHDI, file = "Results/Summary data-sets/GER_LowHDI.csv",
+          row.names = F)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# GER IN BY DESTINATION     ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Aggregate inflows using Gross Excluding Reversals ####
+GER_Imp_Dest <- panel %>%
+  filter(Imp_IFF < 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
+           year,
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T)) %>%
+  ungroup()
+
+GER_Exp_Dest <- panel %>%
+  filter(pExp_IFF < 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
+           year,
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  ungroup()
+
+
+# .. GER Import/Export IFF for Reporter-Partner-Year ####
+Inflow_GER_Orig_Dest_Year <- full_join(GER_Imp_Dest, GER_Exp_Dest,
+                                       by = c("reporter" = "reporter",
+                                              "reporter.ISO" = "reporter.ISO",
+                                              "rRegion" = "rRegion",
+                                              "rIncome" = "rIncome",
+                                              "rDev" = "rDev",
+                                              "rHDI" = "rHDI",
+                                              "year" = "year",
+                                              "partner" = "partner",
+                                              "partner.ISO" = "partner.ISO",
+                                              "pRegion" = "pRegion",
+                                              "pIncome" = "pIncome",
+                                              "pDev" = "pDev",
+                                              "pHDI" = "pHDI"))
+save(Inflow_GER_Orig_Dest_Year, file = "Results/Summary data-sets/Inflow_GER_Orig_Dest_Year.Rdata")
+write.csv(Inflow_GER_Orig_Dest_Year, file = "Results/Summary data-sets/Inflow_GER_Orig_Dest_Year.csv",
+          row.names = F)
+rm(GER_Imp_Dest, GER_Exp_Dest)
+
+
+# .. GER IFF for Reporter-Year (sum over Partner) ####
+Inflow_GER_Orig_Year <- Inflow_GER_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+Inflow_GER_Orig_Year <- left_join(Inflow_GER_Orig_Year %>% mutate(year = as.integer(year)),
+                                  WDI,
+                                  by = c("reporter.ISO" = "ISO3166.3", 
+                                         "year")) %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP)
+Inflow_GER_Orig_Year <- left_join(Inflow_GER_Orig_Year,
+                                  comtrade_total,
+                                  by = c("reporter.ISO", "year")) %>%
+  mutate(Tot_IFF_trade = Tot_IFF / Total_value)
+save(Inflow_GER_Orig_Year, file = "Results/Summary data-sets/Inflow_GER_Orig_Year.Rdata")
+write.csv(Inflow_GER_Orig_Year, file = "Results/Summary data-sets/Inflow_GER_Orig_Year.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter (sum over Partner, average across Year) ####
+Inflow_GER_Orig_Avg <- Inflow_GER_Orig_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T),
+            Tot_IFF = mean(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = mean(Tot_IFF_bn, na.rm = T),
+            Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
+            Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
+  ungroup()
+save(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
+write.csv(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.csv",
           row.names = F)
 
 
@@ -892,7 +978,7 @@ write.csv(Net_LowHDI, file = "Results/Summary data-sets/Net_LowHDI.csv",
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# GER BY SECTOR             ####
+# GER OUT BY SECTOR         ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
@@ -902,7 +988,7 @@ panel <- left_join(panel, HS %>% select(chapter, chapter.description),
   rename(commodity = chapter.description)
 
 
-# .. Aggregate results using Gross Excluding Reversals ####
+# .. Aggregate outflows using Gross Excluding Reversals ####
 GER_Imp_Sect <- panel %>%
   filter(Imp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
