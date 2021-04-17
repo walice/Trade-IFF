@@ -8,46 +8,34 @@
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
 # Codes Masterlist
-# Yearly IFF Africa
-# Yearly IFF LMIC
-# Yearly IFF Developing
-# Yearly IFF Low HDI
-# Yearly IFF Conduits
+# Yearly IFF Bar Charts
+# .. Africa
+# .. LMIC
+# .. Developing
+# .. Low-HDI
+# Line Charts
 # .. Line chart for conduits in Africa
 # .. Line chart for conduits in LMIC
 # .. Line chart for conduits in Developing
-# Average IFF Africa
-# .. Merge geographic data
-# .. Average gross IFF
-# .. Average gross, percent GDP
-# .. Average gross, percent trade
-# .. Average net IFF
-# Average IFF World
-# .. Merge geographic data
-# .. Average gross IFF
-# .. Average gross, percent GDP
-# .. Average gross, percent trade
-# .. Average net IFF
-# Origins and Destinations
-# .. Origins pie chart Africa
-# .. Origins pie chart World
-# .. Destinations pie chart Africa
-# .. Destinations pie chart World
-# .. Origins sunburst World
-# .. Destinations sunburst World
-# Sector Charts
-# .. Treemap in Africa
-# .. Treemap in LMIC
-# .. Treemap in Developing
-# .. Stacked bar chart of commodities in top sectors
-# .. Stacked bar charts of top sectors in conduits
-# Destination Charts
-# .. Stacked bar charts of top average outflows in Africa
-# .. Stacked bar charts of top average outflows in LMIC
-# .. Stacked bar charts of top average outflows in Developing
-# .. Flow maps of top destinations in conduits
-# .. Flow maps of top inflows in World
-# Conduits Charts
+# Choropleth Maps
+# .. Africa
+# .. World
+# Pie and Doughnut Charts
+# .. Africa
+# .. World
+# .. Sunburst charts for World
+# Treemap Charts
+# .. Africa, yearly average
+# .. LMIC, yearly average
+# .. Developing, yearly average
+# Stacked Bar Charts
+# .. Stacked bar charts of commodities in top sectors
+# .. Horizontal stacked bar charts of top sectors in conduits
+# .. Stacked bar charts of top yearly average destinations in groups
+# Flow Maps
+# .. Destination flow maps of conduits
+# .. Provenance flow maps of top inflows in World
+# Lollipop Charts
 # .. Top conduits in World
 # .. Top conduits in Africa
 # .. Top conduits in LMIC
@@ -100,9 +88,10 @@ codes <- read_excel("/scratch/alepissier/IFFe/Data/Codes_Masterlist.xlsx", sheet
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# YEARLY IFF AFRICA         ####
+# YEARLY IFF BAR CHARTS     ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+# .. Africa ####
 load("Results/Summary data-sets/GER_Year_Africa.Rdata")
 load("Results/Summary data-sets/Net_Year_Africa.Rdata")
 
@@ -346,6 +335,7 @@ viz <- full_join(GER_Year_Africa %>%
                           Net_Tot_IFF_Trade = Tot_IFF_trade),
                  by = c("year"))
 
+# GER and Net dollar value
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -365,6 +355,7 @@ ggsave(g,
        file = "Figures/GER and Net Africa Total.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of GDP
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -384,6 +375,7 @@ ggsave(g,
        file = "Figures/GER and Net Africa Total Percent GDP.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of trade
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -404,11 +396,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# YEARLY IFF LMIC           ####
-## ## ## ## ## ## ## ## ## ## ##
-
+# .. LMIC ####
 load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
 load("Results/Summary data-sets/Net_Year_LMIC.Rdata")
 
@@ -424,6 +412,7 @@ viz <- full_join(GER_Year_LMIC %>%
                           Net_Tot_IFF_Trade = Tot_IFF_trade),
                  by = c("year"))
 
+# GER and Net dollar value
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -443,6 +432,7 @@ ggsave(g,
        file = "Figures/GER and Net LMIC Total.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of GDP
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -462,6 +452,7 @@ ggsave(g,
        file = "Figures/GER and Net LMIC Total Percent GDP.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of trade
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -482,11 +473,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# YEARLY IFF DEVELOPING     ####
-## ## ## ## ## ## ## ## ## ## ##
-
+# .. Developing ####
 load("Results/Summary data-sets/GER_Year_Developing.Rdata")
 load("Results/Summary data-sets/Net_Year_Developing.Rdata")
 
@@ -502,6 +489,7 @@ viz <- full_join(GER_Year_Developing %>%
                           Net_Tot_IFF_Trade = Tot_IFF_trade),
                  by = c("year"))
 
+# GER and Net dollar value
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -521,6 +509,7 @@ ggsave(g,
        file = "Figures/GER and Net Developing Total.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of GDP
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -540,6 +529,7 @@ ggsave(g,
        file = "Figures/GER and Net Developing Total Percent GDP.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of trade
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -560,11 +550,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# YEARLY IFF LOW HDI        ####
-## ## ## ## ## ## ## ## ## ## ##
-
+# .. Low-HDI ####
 load("Results/Summary data-sets/GER_Year_LowHDI.Rdata")
 load("Results/Summary data-sets/Net_Year_LowHDI.Rdata")
 
@@ -580,6 +566,7 @@ viz <- full_join(GER_Year_LowHDI %>%
                           Net_Tot_IFF_Trade = Tot_IFF_trade),
                  by = c("year"))
 
+# GER and Net dollar value
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -599,6 +586,7 @@ ggsave(g,
        file = "Figures/GER and Net Low HDI Total.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of GDP
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -618,6 +606,7 @@ ggsave(g,
        file = "Figures/GER and Net Low HDI Total Percent GDP.png",
        width = 6, height = 5, units = "in")
 
+# GER and Net as % of trade
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -640,9 +629,10 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# YEARLY IFF CONDUITS       ####
+# LINE CHARTS               ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 labels.grne <- c(Net_Tot_IFF = "Net estimates",
                  GER_Tot_IFF = "Gross estimates", 
                  Net_Tot_IFF_GDP = "Net estimates",
@@ -652,7 +642,13 @@ labels.grne <- c(Net_Tot_IFF = "Net estimates",
 # .. Line chart for conduits in Africa ####
 load("Results/Summary data-sets/GER_Orig_Year_Africa.Rdata")
 load("Results/Summary data-sets/Net_Orig_Year_Africa.Rdata")
-conduits <- c("MUS", "UGA", "MWI", "SYC", "MLI")
+
+conduits <- GER_Orig_Avg %>%
+  filter(rRegion == "Africa") %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
 
 Conduits_Gross <- GER_Orig_Year_Africa %>%
   filter(reporter.ISO %in% conduits)
@@ -688,7 +684,13 @@ ggsave(g,
 # .. Line chart for conduits in LMIC ####
 load("Results/Summary data-sets/GER_Orig_Year_LMIC.Rdata")
 load("Results/Summary data-sets/Net_Orig_Year_LMIC.Rdata")
-conduits <- c("MDA", "PNG", "VNM", "NIC", "SLV")
+
+conduits <- GER_Orig_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
 
 Conduits_Gross <- GER_Orig_Year_LMIC %>%
   filter(reporter.ISO %in% conduits)
@@ -724,7 +726,13 @@ ggsave(g,
 # .. Line chart for conduits in Developing ####
 load("Results/Summary data-sets/GER_Orig_Year_Developing.Rdata")
 load("Results/Summary data-sets/Net_Orig_Year_Developing.Rdata")
-conduits <- c("SGP", "HKG", "MDV", "GUY", "PLW")
+
+conduits <- GER_Orig_Avg %>%
+  filter(rDev == "Developing") %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
 
 Conduits_Gross <- GER_Orig_Year_Developing %>%
   filter(reporter.ISO %in% conduits)
@@ -759,10 +767,10 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# AVERAGE IFF AFRICA        ####
+# CHOROPLETH MAPS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Merge geographic data ####
+# .. Africa ####
 map <- map_data("world")
 map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3, UN_Region),
                  by = c("region" = "Country")) %>%
@@ -778,8 +786,7 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     panel.border = element_blank(),
                     panel.grid = element_blank())
 
-
-# .. Average gross IFF ####
+# Average gross IFF dollar value
 load("Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, GER_Orig_Avg_Africa,
@@ -801,8 +808,7 @@ ggsave(g,
        file = "Figures/GER Total Average Africa IFF.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average gross, percent GDP ####
+# Average gross IFF as % of GDP
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
@@ -819,8 +825,7 @@ ggsave(g,
        file = "Figures/GER Total Average Africa IFF Percent GDP.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average gross, percent trade ####
+# Average gross IFF as % of trade
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
@@ -837,8 +842,7 @@ ggsave(g,
        file = "Figures/GER Total Average Africa IFF Percent Trade.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average net IFF ####
+# Average net IFF dollar value
 load("Results/Summary data-sets/Net_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, Net_Orig_Avg_Africa,
@@ -859,12 +863,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# AVERAGE IFF WORLD         ####
-## ## ## ## ## ## ## ## ## ## ##
-
-# .. Merge geographic data ####
+# .. World ####
 map <- map_data("world")
 map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
                  by = c("region" = "Country")) %>%
@@ -880,8 +879,7 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     panel.border = element_blank(),
                     panel.grid = element_blank())
 
-
-# .. Average gross IFF ####
+# Average gross IFF dollar value
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 
 viz <- left_join(map, GER_Orig_Avg,
@@ -903,8 +901,7 @@ ggsave(g,
        file = "Figures/GER Total Average World IFF.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average gross, percent GDP ####
+# Average gross IFF as % of GDP
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
@@ -920,8 +917,7 @@ ggsave(g,
        file = "Figures/GER Total Average World IFF Percent GDP.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average gross, percent trade ####
+# Average gross IFF as % of trade
 g <- ggplot() + 
   geom_polygon(data = viz,
                aes(x = long, y = lat, group = group, 
@@ -937,8 +933,7 @@ ggsave(g,
        file = "Figures/GER Total Average World IFF Percent Trade.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Average net IFF ####
+# Average net IFF dollar value
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
 
 viz <- left_join(map, Net_Orig_Avg,
@@ -963,10 +958,11 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# ORIGINS AND DESTINATIONS  ####
+# PIE AND DOUGHNUT CHARTS   ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Origins pie chart Africa ####
+# .. Africa ####
+# Origins pie chart, cumulative IFF
 load("Results/Summary data-sets/GER_Orig_Sum_Africa.Rdata")
 
 Origins <- left_join(GER_Orig_Sum_Africa, codes %>% 
@@ -996,8 +992,35 @@ ggsave(g,
        file = "Figures/Origins pie chart Africa.png",
        width = 6, height = 5, units = "in")
 
+# Destinations pie chart, cumulative IFF
+load("Results/Summary data-sets/GER_Dest_Sum_Africa.Rdata")
 
-# .. Origins pie chart World ####
+Destinations <- GER_Dest_Sum_Africa %>%
+  filter(pRegion != "") %>%
+  group_by(pRegion) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Pct_IFF = Tot_IFF / sum(Tot_IFF) * 100)
+
+g <- ggplot(Destinations,
+            aes(x = "", y = Pct_IFF, fill = pRegion)) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y") +
+  geom_text(aes(label = ifelse(Pct_IFF < 3, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
+            position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of African outflows, 2000-2018") +
+  theme_classic() +
+  scale_fill_brewer(type = "qual", palette = "Pastel1") +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Destinations pie chart Africa.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. World ####
+# Origins pie chart, cumulative IFF
 load("Results/Summary data-sets/GER_Orig_Sum.Rdata")
 
 Origins <- GER_Orig_Sum %>%
@@ -1023,38 +1046,10 @@ ggsave(g,
        file = "Figures/Origins pie chart World.png",
        width = 6, height = 5, units = "in")
 
+# Destinations pie chart, cumulative IFF
+load("Results/Summary data-sets/GER_Dest_Sum.Rdata")
 
-# .. Destinations pie chart Africa ####
-load("Results/Summary data-sets/GER_Dest_Africa.Rdata")
-
-Destinations <- GER_Dest_Africa %>%
-  filter(pRegion != "") %>%
-  group_by(pRegion) %>%
-  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
-  ungroup() %>%
-  mutate(Pct_IFF = Tot_IFF / sum(Tot_IFF) * 100)
-
-g <- ggplot(Destinations,
-            aes(x = "", y = Pct_IFF, fill = pRegion)) +
-  geom_bar(width = 1, stat = "identity") +
-  coord_polar("y") +
-  geom_text(aes(label = ifelse(Pct_IFF < 3, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
-            position = position_stack(vjust = 0.5)) +
-  labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of African outflows, 2000-2018") +
-  theme_classic() +
-  scale_fill_brewer(type = "qual", palette = "Pastel1") +
-  theme(axis.line = element_blank(),
-        axis.text = element_blank(),
-        axis.ticks = element_blank())
-ggsave(g,
-       file = "Figures/Destinations pie chart Africa.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Destinations pie chart World ####
-load("Results/Summary data-sets/GER_Dest.Rdata")
-
-Destinations <- GER_Dest %>%
+Destinations <- GER_Dest_Sum %>%
   filter(pRegion != "") %>%
   group_by(pRegion) %>%
   summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
@@ -1078,7 +1073,8 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Origins sunburst World ####
+# .. Sunburst charts for World ####
+# Origins, cumulative IFF
 load("Results/Summary data-sets/GER_Orig_Sum.Rdata")
 
 Origins <- GER_Orig_Sum %>%
@@ -1123,11 +1119,10 @@ ggsave(g,
        file = "Figures/Origins sunburst World.png",
        width = 6, height = 5, units = "in")
 
+# Destinations, cumulative IFF
+load("Results/Summary data-sets/GER_Dest_Sum.Rdata")
 
-# .. Destinations sunburst World ####
-load("Results/Summary data-sets/GER_Dest.Rdata")
-
-Destinations <- GER_Dest %>%
+Destinations <- GER_Dest_Sum %>%
   filter(pRegion != "" & pIncome != "") %>%
   group_by(pRegion, pIncome) %>%
   summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
@@ -1174,14 +1169,14 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# SECTOR CHARTS             ####
+# TREEMAP CHARTS            ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
 gdocs20 <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", "#5574A6", "#3B3EAC")
 
 
-# .. Treemap in Africa ####
+# .. Africa, yearly average ####
 load("Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 
 g <- ggplot(GER_Sect_Avg_Africa %>%
@@ -1203,7 +1198,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Treemap in LMIC ####
+# .. LMIC, yearly average ####
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 
 g <- ggplot(GER_Sect_Avg_LMIC %>%
@@ -1225,7 +1220,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Treemap in Developing ####
+# .. Developing, yearly average ####
 load("Results/Summary data-sets/GER_Sect_Avg_Developing.Rdata")
 
 g <- ggplot(GER_Sect_Avg_Developing %>%
@@ -1247,12 +1242,19 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Stacked bar chart of commodities in top sectors ####
+
+## ## ## ## ## ## ## ## ## ## ##
+# STACKED BAR CHARTS        ####
+## ## ## ## ## ## ## ## ## ## ##
+
+
+# .. Stacked bar charts of commodities in top sectors ####
 load("Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_Developing_disag.Rdata")
 load("/scratch/alepissier/IFFe/Data/UN Stats/HS.Rdata")
 
+# Africa, yearly average
 viz <- left_join(GER_Sect_Avg_Africa_disag, HS %>% select(-chapter.description),
                  by = c("commodity.code" = "chapter")) %>%
   filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
@@ -1279,6 +1281,7 @@ ggsave(g,
        file = "Figures/Top commodities in Africa.png",
        width = 6, height = 5, units = "in")
 
+# LMIC, yearly average
 viz <- left_join(GER_Sect_Avg_LMIC_disag, HS %>% select(-chapter.description),
                  by = c("commodity.code" = "chapter")) %>%
   filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
@@ -1305,6 +1308,7 @@ ggsave(g,
        file = "Figures/Top commodities in LMIC.png",
        width = 6, height = 5, units = "in")
 
+# Developing, yearly average
 viz <- left_join(GER_Sect_Avg_Developing_disag, HS %>% select(-chapter.description),
                  by = c("commodity.code" = "chapter")) %>%
   filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
@@ -1332,7 +1336,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Stacked bar charts of top sectors in conduits ####
+# .. Horizontal stacked bar charts of top sectors in conduits ####
 load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
 
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
@@ -1357,6 +1361,7 @@ conduits_Developing <- GER_Orig_Avg %>%
   select(reporter.ISO) %>%
   pull
 
+# Africa
 top <- GER_Orig_Sect_Avg %>%
   filter(reporter.ISO %in% conduits_Africa) %>%
   group_by(reporter) %>%
@@ -1388,6 +1393,7 @@ ggsave(g,
        file = "Figures/Top 5 sectors GER in conduits Africa.png",
        width = 6, height = 5, units = "in")
 
+# LMIC
 top <- GER_Orig_Sect_Avg %>%
   filter(reporter.ISO %in% conduits_LMIC) %>%
   group_by(reporter) %>%
@@ -1419,6 +1425,7 @@ ggsave(g,
        file = "Figures/Top 5 sectors GER in conduits LMIC.png",
        width = 6, height = 5, units = "in")
 
+# Developing
 top <- GER_Orig_Sect_Avg %>%
   filter(reporter.ISO %in% conduits_Developing) %>%
   group_by(reporter) %>%
@@ -1451,12 +1458,8 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-
-## ## ## ## ## ## ## ## ## ## ##
-# DESTINATIONS CHARTS       ####
-## ## ## ## ## ## ## ## ## ## ##
-
-# .. Stacked bar charts of top average outflows in Africa ####
+# .. Stacked bar charts of top yearly average destinations in groups ####
+# Africa
 load("Results/Summary data-sets/GER_Dest_Avg_Africa.Rdata")
 
 g <- ggplot(GER_Dest_Avg_Africa %>%
@@ -1475,8 +1478,7 @@ ggsave(g,
        file = "Figures/Top 10 destinations GER average Africa.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Stacked bar charts of top average outflows in LMIC ####
+# LMIC
 load("Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
 
 g <- ggplot(GER_Dest_Avg_LMIC %>%
@@ -1495,8 +1497,7 @@ ggsave(g,
        file = "Figures/Top 10 destinations GER average LMIC.png",
        width = 6, height = 5, units = "in")
 
-
-# .. Stacked bar charts of top average outflows in Developing ####
+# Developing
 load("Results/Summary data-sets/GER_Dest_Avg_Developing.Rdata")
 
 g <- ggplot(GER_Dest_Avg_Developing %>%
@@ -1516,7 +1517,12 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Flow maps of top destinations in conduits ####
+
+## ## ## ## ## ## ## ## ## ## ##
+# FLOW MAPS                 ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Destination flow maps of conduits ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
@@ -1557,6 +1563,7 @@ centroids <- codes %>%
   mutate_at(vars(Centroid_Longitude, Centroid_Latitude),
             funs(as.numeric))
 
+# Africa, yearly average dollar value
 GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
   dplyr::rename(rLongitude = Centroid_Longitude,
@@ -1608,6 +1615,7 @@ ggsave(g,
        file = "Figures/Flow map top destinations Africa.png",
        width = 6, height = 5, units = "in")
 
+# LMIC, yearly average dollar value
 GER_Orig_Dest_Avg_LMIC <- GER_Orig_Dest_Avg_LMIC %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
   dplyr::rename(rLongitude = Centroid_Longitude,
@@ -1659,6 +1667,7 @@ ggsave(g,
        file = "Figures/Flow map top destinations LMIC.png",
        width = 6, height = 5, units = "in")
 
+# Developing, yearly average dollar value
 GER_Orig_Dest_Avg_Developing <- GER_Orig_Dest_Avg_Developing %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
   dplyr::rename(rLongitude = Centroid_Longitude,
@@ -1711,7 +1720,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Flow maps of top inflows in World ####
+# .. Provenance flow maps of top inflows in World ####
 load("Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
 
@@ -1741,6 +1750,13 @@ centroids <- codes %>%
   mutate_at(vars(Centroid_Longitude, Centroid_Latitude),
             funs(as.numeric))
 
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+# Top inflows, dollar value
 viz <- Net_Orig_Dest_Avg %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
   dplyr::rename(rLongitude = Centroid_Longitude,
@@ -1754,12 +1770,6 @@ viz <- Net_Orig_Dest_Avg %>%
   top_n(5, abs(Tot_IFF)) %>%
   ungroup() %>%
   mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
-
-map <- map_data("world")
-map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
-                 by = c("region" = "Country")) %>%
-  dplyr::select(-subregion) %>%
-  filter(region != "Antarctica")
 
 viz <- left_join(viz %>% filter(reporter.ISO %in% top_inflows_dollar),
                  map,
@@ -1793,6 +1803,7 @@ ggsave(g,
        file = "Figures/Flow map provenance top inflows World.png",
        width = 6, height = 5, units = "in")
 
+# Top inflows, % of GDP
 viz <- Net_Orig_Dest_Avg %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
   dplyr::rename(rLongitude = Centroid_Longitude,
@@ -1806,12 +1817,6 @@ viz <- Net_Orig_Dest_Avg %>%
   top_n(5, abs(Tot_IFF)) %>%
   ungroup() %>%
   mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
-
-map <- map_data("world")
-map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
-                 by = c("region" = "Country")) %>%
-  dplyr::select(-subregion) %>%
-  filter(region != "Antarctica")
 
 viz <- left_join(viz %>% filter(reporter.ISO %in% top_inflows_GDP),
                  map,
@@ -1848,7 +1853,7 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# CONDUITS CHARTS           ####
+# LOLLIPOP CHARTS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Top conduits in World ####

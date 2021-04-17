@@ -34,6 +34,7 @@
 # .. GER Import/Export IFF for Reporter-Sector-Year
 # .. GER IFF for Reporter-Sector (average across Year)
 # .. GER IFF for Reporter-Sector (sum over Year)
+# .. GER IFF for Sector-Year (sum over Reporter)
 # .. GER IFF for Sector (sum over Reporter, average across Year)
 # .. GER IFF for Sector (sum over Reporter, sum over Year)
 # Net by Sector
@@ -354,6 +355,17 @@ write.csv(GER_Orig_Dest_Sum_Africa, file = "Results/Summary data-sets/GER_Orig_D
 
 
 # .. GER IFF for Partner (sum over Reporter, average across Year) ####
+GER_Dest_Avg <- GER_Orig_Dest_Avg %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Dest_Avg, file = "Results/Summary data-sets/GER_Dest_Avg.Rdata")
+write.csv(GER_Dest_Avg, file = "Results/Summary data-sets/GER_Dest_Avg.csv",
+          row.names = F)
+
 # Africa
 GER_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
   group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
@@ -1074,7 +1086,7 @@ GER_Orig_Sect_Sum_LowHDI <- GER_Orig_Sect_Sum %>%
   select(-rHDI)
 
 
-# .. GER IFF for Sector-Year (sum over Reporter)
+# .. GER IFF for Sector-Year (sum over Reporter) ####
 GER_Sect_Year <- GER_Orig_Sect_Year %>%
   group_by(section.code, section, year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
