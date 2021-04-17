@@ -575,6 +575,9 @@ write.csv(GER_LowHDI, file = "Results/Summary data-sets/GER_LowHDI.csv",
 # GER IN BY DESTINATION     ####
 ## ## ## ## ## ## ## ## ## ## ##
 
+load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
+load(paste0(data.disk, "Data/Comtrade/comtrade_total_clean.Rdata"))
+
 # .. Aggregate inflows using Gross Excluding Reversals ####
 GER_Imp_Dest <- panel %>%
   filter(Imp_IFF < 0) %>%

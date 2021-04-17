@@ -428,7 +428,9 @@ panel <- panel %>%
 FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
                  partner.ISO + year,
                data = panel)
-FE <- getfe(FE.out, se = T) 
+FE <- getfe(FE.out, se = T)
+save(FE, file = "Results/FE.Rdata")
+load("Results/FE.Rdata")
 
 FE <- FE %>%
   group_by(fe) %>%
