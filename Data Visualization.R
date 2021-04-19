@@ -666,6 +666,7 @@ ggsave(g,
 
 # .. World ####
 load("Results/Summary data-sets/GER_Year.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Year.Rdata")
 load("Results/Summary data-sets/Net_Year.Rdata")
 
 viz <- full_join(GER_Year %>% 
@@ -713,7 +714,7 @@ ggsave(g,
        file = "Figures/GER and Net World Total.png",
        width = 6, height = 5, units = "in")
 
-# Imports and Exports, GER and Net, dollar value
+# Imports and Exports, GER and Net, dollar value in 2005
 g <- ggplot(viz %>% 
               mutate(year = as.character(year)) %>% 
               melt(id.vars = "year") %>%
@@ -751,6 +752,108 @@ g <- ggplot(viz %>%
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/Import, Export, Net, GER, World Total 2005.png",
+       width = 6, height = 5, units = "in")
+
+# Imports and Exports, GER and Net, dollar value, average across the years
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
+load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
+
+GER_Avg <- GER_Orig_Avg %>%
+  summarize(GER_Imp_IFF_Avg = sum(Imp_IFF),
+            GER_Exp_IFF_Avg = sum(Exp_IFF))
+Inflow_GER_Avg <- Inflow_GER_Orig_Avg %>%
+  summarize(In_GER_Imp_IFF_Avg = sum(Imp_IFF),
+            In_GER_Exp_IFF_Avg = sum(Exp_IFF))
+Net_Avg <- Net_Orig_Avg %>%
+  summarize(Net_Imp_IFF_Avg = sum(Imp_IFF),
+            Net_Exp_IFF_Avg = sum(Exp_IFF))
+
+viz <- cbind(GER_Avg, Inflow_GER_Avg, Net_Avg)
+
+g <- ggplot(viz %>% 
+              melt() %>%
+              mutate(flowtype = ifelse(str_detect(variable, "Imp"), 
+                                       "Imports", "Exports")) %>%
+              mutate(flowtype = fct_rev(flowtype)), 
+            aes(x = "", y = value, fill = fct_relevel(variable,
+                                                        "GER_Imp_IFF_Avg",
+                                                        "In_GER_Imp_IFF_Avg",
+                                                        "Net_Imp_IFF_Avg",
+                                                        "GER_Exp_IFF_Avg",
+                                                        "In_GER_Exp_IFF_Avg",
+                                                        "Net_Exp_IFF_Avg"))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_brewer(name = "Estimate",
+                    labels = c("Outflows in Imports",
+                               "Inflows in Imports",
+                               "Net flows in Imports",
+                               "Outflows in Exports",
+                               "Inflows in Exports",
+                               "Net flows in Exports"),
+                    type = "qual", palette = "Set2") +
+  facet_wrap(~flowtype) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing globally (yearly average)",
+       subtitle = "Net and gross flows in imports and exports",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/Import, Export, Net, GER, World Total Yearly Average.png",
+       width = 6, height = 5, units = "in")
+
+# Instead of summing up the averages, take the yearly average of the sums
+load("Results/Summary data-sets/GER_Year.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Year.Rdata")
+load("Results/Summary data-sets/Net_Year.Rdata")
+
+GER_Avg <- GER_Year %>%
+  summarize(GER_Imp_IFF_Avg = mean(Imp_IFF),
+            GER_Exp_IFF_Avg = mean(Exp_IFF))
+Inflow_GER_Avg <- Inflow_GER_Year %>%
+  summarize(In_GER_Imp_IFF_Avg = mean(Imp_IFF),
+            In_GER_Exp_IFF_Avg = mean(Exp_IFF))
+Net_Avg <- Net_Year %>%
+  summarize(Net_Imp_IFF_Avg = mean(Imp_IFF),
+            Net_Exp_IFF_Avg = mean(Exp_IFF))
+
+viz <- cbind(GER_Avg, Inflow_GER_Avg, Net_Avg)
+
+g <- ggplot(viz %>% 
+              melt() %>%
+              mutate(flowtype = ifelse(str_detect(variable, "Imp"), 
+                                       "Imports", "Exports")) %>%
+              mutate(flowtype = fct_rev(flowtype)), 
+            aes(x = "", y = value, fill = fct_relevel(variable,
+                                                      "GER_Imp_IFF_Avg",
+                                                      "In_GER_Imp_IFF_Avg",
+                                                      "Net_Imp_IFF_Avg",
+                                                      "GER_Exp_IFF_Avg",
+                                                      "In_GER_Exp_IFF_Avg",
+                                                      "Net_Exp_IFF_Avg"))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_brewer(name = "Estimate",
+                    labels = c("Outflows in Imports",
+                               "Inflows in Imports",
+                               "Net flows in Imports",
+                               "Outflows in Exports",
+                               "Inflows in Exports",
+                               "Net flows in Exports"),
+                    type = "qual", palette = "Set2") +
+  facet_wrap(~flowtype) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing globally (yearly average)",
+       subtitle = "Net and gross flows in imports and exports",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/Import, Export, Net, GER, World Total Yearly Average_2.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1082,6 +1185,51 @@ g <- ggplot() +
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
        file = "Figures/Net Total Average World IFF.png",
+       width = 6, height = 5, units = "in")
+
+
+# Average gross inflow IFF dollar value
+load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
+
+viz <- left_join(map, Inflow_GER_Orig_Avg,
+                 by = c("ISO3166.3" = "reporter.ISO"))
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", option = "C") +
+  labs(title = "Total gross inflows averaged over 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/GER Inflows Total Average World IFF.png",
+       width = 6, height = 5, units = "in")
+
+# Average net inflow IFF dollar value
+load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
+
+viz <- left_join(map, Net_Orig_Avg %>%
+                   filter(Tot_IFF_bn < 0) %>%
+                   mutate(Tot_IFF_bn = abs(Tot_IFF_bn)),
+                 by = c("ISO3166.3" = "reporter.ISO"))
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", option = "C", direction = -1) +
+  labs(title = "Total net inflows averaged over 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Net Inflows Total Average World IFF.png",
        width = 6, height = 5, units = "in")
 
 
