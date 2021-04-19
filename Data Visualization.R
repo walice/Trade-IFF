@@ -41,8 +41,10 @@
 # .. Top conduits in LMIC
 # .. Top conduits in Developing
 # Sankey Diagram
-# .. Sankey diagram by GNI per capita and sector
-# .. Sankey diagram by reporter and partner GNI per capita
+# .. Sankey diagram by GNI per capita and sector in LMIC
+# .. Sankey diagram by reporter and partner GNI per capita in LMIC
+# .. Sankey diagram by region and sector in World
+# .. Sankey diagram by reporter and partner GNI per capita in World
 
 
 
@@ -980,7 +982,8 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  scale_fill_distiller(name = "IFF (billion USD)", 
+                       type = "div", palette = "Spectral") +
   labs(title = "Total flows averaged over 2000-2018",
        subtitle = "Net flows")
 ggsave(g,
@@ -1071,7 +1074,8 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
-  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  scale_fill_distiller(name = "IFF (billion USD)", 
+                       type = "div", palette = "Spectral") +
   labs(title = "Total outflows averaged over 2000-2018",
        subtitle = "Net flows") +
   theme(legend.position = "bottom") + 
@@ -2114,7 +2118,7 @@ ggsave(g,
 # SANKEY DIAGRAM            ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Sankey diagram by GNI per capita and sector ####
+# .. Sankey diagram by GNI per capita and sector in LMIC ####
 load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC.Rdata")
 
@@ -2154,7 +2158,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Sankey diagram by reporter and partner GNI per capita ####
+# .. Sankey diagram by reporter and partner GNI per capita in LMIC ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 
 # viz <- GER_Orig_Dest_Avg_LMIC %>%
@@ -2192,4 +2196,74 @@ g <- ggplot(viz,
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey GNIpc reporter partner LMIC.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by region and sector in World ####
+load("Results/Summary data-sets/GER_Sect_Avg.Rdata")
+
+top_sectors <- GER_Sect_Avg %>%
+  top_n(10, Tot_IFF_bn) %>%
+  arrange(desc(Tot_IFF_bn)) %>%
+  pull(section)
+
+viz <- GER_Orig_Sect_Avg %>%
+  filter(section %in% top_sectors) %>%
+  group_by(rRegion, section, section.code) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  arrange(factor(section, levels = GER_Sect_Avg %>%
+                   arrange(desc(Tot_IFF_bn)) %>%
+                   pull(section)))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = rRegion, axis2 = fct_inorder(section),
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = rRegion)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Region", "Sector"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("Rushmore1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to region and top 10 sectors",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey region sector World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by reporter and partner GNI per capita in World ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- GER_Orig_Dest_Avg %>%
+  mutate(rGNPpc = rGNPpc / 10^3,
+         pGNPpc = pGNPpc / 10^3) %>%
+  mutate(rcut = cut(rGNPpc, breaks = c(0, 5, 30, 50, 105),
+                    labels = c("up to $5,000", "$5,001-$30,000",
+                               "$30,001-$50,000", "above $50,000")),
+         pcut = cut(pGNPpc, breaks = c(0, 5, 30, 50, 105),
+                    labels = c("up to $5,000", "$5,001-$30,000",
+                               "$30,001-$50,000", "above $50,000"))) %>%
+  filter(is.finite(rcut) & is.finite(pcut)) %>%
+  group_by(rcut, pcut) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = rcut, axis2 = pcut,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = rcut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to GNI per capita",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey GNIpc reporter partner World.png",
        width = 6, height = 5, units = "in")

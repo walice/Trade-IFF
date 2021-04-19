@@ -1189,6 +1189,9 @@ GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
   ungroup() %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
+save(GER_Orig_Sect_Avg_disag, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_disag.Rdata")
+write.csv(GER_Orig_Sect_Avg_disag, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_disag.csv",
+          row.names = F)
 
 # Africa (disaggregated sectors)
 GER_Orig_Sect_Avg_Africa_disag <- GER_Orig_Sect_Avg_disag %>%
@@ -1255,6 +1258,18 @@ GER_Sect_Year <- GER_Orig_Sect_Year %>%
 
 
 # .. GER IFF for Sector (sum over Reporter, average across Year) ####
+# World
+GER_Sect_Avg <- GER_Orig_Sect_Avg %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Avg, file = "Results/Summary data-sets/GER_Sect_Avg.Rdata")
+write.csv(GER_Sect_Avg, file = "Results/Summary data-sets/GER_Sect_Avg.csv",
+          row.names = F)
+
 # Africa
 GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
   group_by(section.code, section) %>%
@@ -1265,6 +1280,18 @@ GER_Sect_Avg_Africa <- GER_Orig_Sect_Avg_Africa %>%
   ungroup()
 save(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 write.csv(GER_Sect_Avg_Africa, file = "Results/Summary data-sets/GER_Sect_Avg_Africa.csv",
+          row.names = F)
+
+# Disaggregated sectors
+GER_Sect_Avg_disag <- GER_Orig_Sect_Avg_disag %>%
+  group_by(commodity.code, commodity) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Avg_disag, file = "Results/Summary data-sets/GER_Sect_Avg_disag.Rdata")
+write.csv(GER_Sect_Avg_disag, file = "Results/Summary data-sets/GER_Sect_Avg_disag.csv",
           row.names = F)
 
 # Africa (disaggregated sectors)
