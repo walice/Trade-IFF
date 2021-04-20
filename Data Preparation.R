@@ -37,6 +37,8 @@
 # .. Merge reporters
 # .. Merge partners
 # .. Import country names
+# Natural Resource Ratio
+# .. Compute proportion of natural resources in total trade
 # Export Clean Data
 
 
@@ -160,6 +162,13 @@ comtrade %>% distinct(reporter.ISO) %>% nrow
 # 237
 comtrade %>% distinct(partner.ISO) %>% nrow
 # 237
+
+comtrade %>% filter(duplicated(comtrade$id)) %>% nrow
+# 2
+
+comtrade <- comtrade %>%
+  filter(!duplicated(comtrade$id))
+
 save(comtrade, file = "Data/Comtrade/comtrade_clean.Rdata")
 
 
@@ -294,15 +303,20 @@ dist <- read.xlsx2("Data/CEPII/dist_cepii.xls",
 
 panel <- left_join(comtrade, dist %>% 
                      select(iso_o, iso_d, contig, dist),
-                      by = c("reporter.ISO" = "iso_o", 
-                             "partner.ISO" = "iso_d"))
+                   by = c("reporter.ISO" = "iso_o", 
+                          "partner.ISO" = "iso_d"))
+
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
+
 rm(comtrade)
 
 
 # .. Merge country geographic data ####
 geo <- read.xlsx2("Data/CEPII/geo_cepii.xls", sheetName = "geo_cepii") %>% 
   select(iso3, landlocked) %>%
-  mutate(iso3 = as.character(iso3))
+  mutate(iso3 = as.character(iso3)) %>%
+  filter(!duplicated(iso3))
 
 panel <- left_join(panel, geo,
                    by = c("reporter.ISO" = "iso3")) %>%
@@ -311,6 +325,9 @@ panel <- left_join(panel, geo,
 panel <- left_join(panel, geo,
                    by = c("partner.ISO" = "iso3")) %>%
   rename(pLandlocked = landlocked)
+
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
 
 rm(dist, geo)
 
@@ -372,6 +389,9 @@ panel <- left_join(panel, WGI,
                           "year" = "year")) %>%
   rename(pCorruption = corruption,
          pRegulatory.qual = regulatory.qual)
+
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
 
 rm(WGI)
 
@@ -441,6 +461,9 @@ panel <- left_join(panel, tariff %>% select(-c(reporter, partner)),
                           "commodity.code" = "commodity.code",
                           "year" = "year"))
 
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
+
 rm(tariff)
 
 
@@ -467,6 +490,9 @@ panel %>% filter(commodity.code == "77") %>% nrow
 
 panel %>% filter(commodity.code == "98") %>% nrow
 # 0, HS code 98 is reserved for special use by contracting parties
+
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
 
 save(HS, file = "Data/UN Stats/HS.Rdata")
 rm(HS)
@@ -514,6 +540,9 @@ panel <- left_join(panel, HStoSITC,
 
 table(panel$section, panel$SITC.section)
 
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
+
 rm(SITC, HStoSITC)
 
 
@@ -544,6 +573,9 @@ save(WDI, file = "Data/WDI/WDI.Rdata")
 panel <- left_join(panel, WDI,
                    by = c("reporter.ISO" = "ISO3166.3",
                           "year" = "year"))
+
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
 
 rm(WDI)
 
@@ -602,7 +634,40 @@ nopartner <- panel %>%
 # WLD
 panel <- panel %>% filter(!is.na(partner))
 
+panel %>% filter(duplicated(panel$id)) %>% nrow
+# 0
+
 rm(codes, noreporter, nopartner)
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# NATURAL RESOURCE RATIO    ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Compute proportion of natural resources in total trade ####
+load("Data/Comtrade/comtrade_total_clean.Rdata")
+
+panel <- left_join(panel, comtrade_total,
+                   by = c("reporter.ISO", "year"))
+
+natural_resources <- panel %>%
+  filter(natural.resource == "1") %>%
+  mutate(Total_nat.res = Import_value + Export_value + ReExport_value) %>%
+  group_by(reporter.ISO, year) %>%
+  summarize(Total_nat.res = sum(Total_nat.res, na.rm = TRUE)) %>%
+  filter(!is.na(Total_nat.res))
+
+natural_resources <- left_join(natural_resources, comtrade_total,
+                               by = c("reporter.ISO", "year")) %>%
+  mutate(nat_ratio = Total_nat.res / Total_value) %>%
+  select(reporter.ISO, year, nat_ratio) %>%
+  filter(is.finite(nat_ratio))
+
+hist(natural_resources$nat_ratio)
+
+save(natural_resources, file = "Data/natural_resources.Rdata")
+rm(natural_resources)
 
 
 
@@ -631,9 +696,6 @@ rm(missing)
 
 duplicates <- panel %>%
   filter(duplicated(panel$id))
-
-panel <- panel %>%
-  filter(!duplicated(panel$id))
 rm(duplicates)
 
 save(panel, file = "Data/Panel/panel.Rdata")
