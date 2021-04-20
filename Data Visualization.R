@@ -42,9 +42,9 @@
 # .. Top conduits in Developing
 # Sankey Diagram
 # .. Sankey diagram by GNI per capita and sector in LMIC
+# .. Sankey diagram by reporter and partner GNI per capita in World
 # .. Sankey diagram by reporter and partner GNI per capita in LMIC
 # .. Sankey diagram by region and sector in World
-# .. Sankey diagram by reporter and partner GNI per capita in World
 # .. Sankey diagram by natural resource dependence and SITC sectors
 # .. Sankey diagram by extreme natural resource dependence and partner region
 # .. Sankey diagram by natural resource dependence and partner GNI per capita
@@ -132,7 +132,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Africa Total.png",
+       file = "Figures/GER and Net_Yearly_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of GDP
@@ -152,7 +152,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Africa Total Percent GDP.png",
+       file = "Figures/GER and Net_Yearly_Percent GDP_Africa.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of trade
@@ -172,7 +172,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Africa Total Percent Trade.png",
+       file = "Figures/GER and Net_Yearly_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -217,7 +217,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net LMIC Total.png",
+       file = "Figures/GER and Net_Yearly_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of GDP
@@ -237,7 +237,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net LMIC Total Percent GDP.png",
+       file = "Figures/GER and Net_Yearly_Percent GDP_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of trade
@@ -257,7 +257,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net LMIC Total Percent Trade.png",
+       file = "Figures/GER and Net_Yearly_Percent Trade_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # GER In, GER Out and Net dollar value
@@ -284,7 +284,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER Out, In and Net LMIC Total.png",
+       file = "Figures/GER Out, In and Net_Yearly_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -321,7 +321,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Developing Total.png",
+       file = "Figures/GER and Net_Yearly_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of GDP
@@ -341,7 +341,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Developing Total Percent GDP.png",
+       file = "Figures/GER and Net_Yearly_Percent GDP_Developing.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of trade
@@ -361,7 +361,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Developing Total Percent Trade.png",
+       file = "Figures/GER and Net_Yearly_Percent Trade_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -398,7 +398,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Low HDI Total.png",
+       file = "Figures/GER and Net_Yearly_Dollars_Low HDI.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of GDP
@@ -418,7 +418,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Low HDI Total Percent GDP.png",
+       file = "Figures/GER and Net_Yearly_Percent GDP_Low HDI.png",
        width = 6, height = 5, units = "in")
 
 # GER and Net as % of trade
@@ -438,7 +438,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net Low HDI Total Percent Trade.png",
+       file = "Figures/GER and Net_Yearly_Percent Trade_Low HDI.png",
        width = 6, height = 5, units = "in")
 
 
@@ -489,7 +489,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/GER and Net World Total.png",
+       file = "Figures/GER and Net_Yearly_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 # Imports and Exports, GER and Net, dollar value in 2005
@@ -529,10 +529,10 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/Import, Export, Net, GER, World Total 2005.png",
+       file = "Figures/GER and Net Imports, Exports_2005_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
-# Imports and Exports, GER and Net, dollar value, average across the years
+# Imports and Exports, GER and Net, dollar value, sum the country averages across the years
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
@@ -580,10 +580,10 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/Import, Export, Net, GER, World Total Yearly Average.png",
+       file = "Figures/GER and Net Imports, Exports_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
-# Instead of summing up the averages, take the yearly average of the sums
+# Instead of summing up the country averages, take the yearly average of the sums
 load("Results/Summary data-sets/GER_Year.Rdata")
 load("Results/Summary data-sets/Inflow_GER_Year.Rdata")
 load("Results/Summary data-sets/Net_Year.Rdata")
@@ -631,7 +631,7 @@ g <- ggplot(viz %>%
             size = 2.5, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
-       file = "Figures/Import, Export, Net, GER, World Total Yearly Average_2.png",
+       file = "Figures/GER and Net Imports, Exports_Yearly Average2_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -685,7 +685,7 @@ g <- ggplot(Conduits_Year %>%
        y = "Illicit flow as % of GDP",
        color = "")
 ggsave(g,
-       file = "Figures/Gross and Net Yearly Conduits Africa Percent GDP.png",
+       file = "Figures/Conduits_GER and Net_Yearly Lines_Percent GDP_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -727,7 +727,7 @@ g <- ggplot(Conduits_Year %>%
        y = "Illicit flow as % of GDP",
        color = "")
 ggsave(g,
-       file = "Figures/Gross and Net Yearly Conduits LMIC Percent GDP.png",
+       file = "Figures/Conduits_GER and Net_Yearly Lines_Percent GDP_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -769,7 +769,7 @@ g <- ggplot(Conduits_Year %>%
        y = "Illicit flow as % of GDP",
        color = "")
 ggsave(g,
-       file = "Figures/Gross and Net Yearly Conduits Developing Percent GDP.png",
+       file = "Figures/Conduits_GER and Net_Yearly Lines_Percent GDP_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -813,7 +813,7 @@ g <- ggplot() +
         legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) +
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average Africa IFF.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 # Average gross IFF as % of GDP
@@ -830,7 +830,7 @@ g <- ggplot() +
         legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average Africa IFF Percent GDP.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Percent GDP_Africa.png",
        width = 6, height = 5, units = "in")
 
 # Average gross IFF as % of trade
@@ -847,7 +847,7 @@ g <- ggplot() +
         legend.margin = margin(t = -2, r = 0, b = 0, l = 0, unit = "cm")) + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average Africa IFF Percent Trade.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
 # Average net IFF dollar value
@@ -868,7 +868,7 @@ g <- ggplot() +
   labs(title = "Total flows averaged over 2000-2018",
        subtitle = "Net flows")
 ggsave(g,
-       file = "Figures/Net Total Average Africa IFF.png",
+       file = "Figures/Choro_Net_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -907,7 +907,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average World IFF.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 # Average gross IFF as % of GDP
@@ -923,7 +923,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average World IFF Percent GDP.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Percent GDP_World.png",
        width = 6, height = 5, units = "in")
 
 # Average gross IFF as % of trade
@@ -939,7 +939,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Total Average World IFF Percent Trade.png",
+       file = "Figures/Choro_GER Out_Yearly Average_Percent Trade_World.png",
        width = 6, height = 5, units = "in")
 
 # Average net IFF dollar value
@@ -962,9 +962,8 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/Net Total Average World IFF.png",
+       file = "Figures/Choro_Net_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
-
 
 # Average gross inflow IFF dollar value
 load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
@@ -984,7 +983,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/GER Inflows Total Average World IFF.png",
+       file = "Figures/Choro_GER In_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 # Average net inflow IFF dollar value
@@ -1007,7 +1006,7 @@ g <- ggplot() +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
-       file = "Figures/Net Inflows Total Average World IFF.png",
+       file = "Figures/Choro_Net In_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1044,7 +1043,7 @@ g <- ggplot(Origins,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Origins pie chart Africa.png",
+       file = "Figures/Pie_GER Origins_Cumulative_Africa.png",
        width = 6, height = 5, units = "in")
 
 # Destinations pie chart, cumulative IFF
@@ -1070,7 +1069,7 @@ g <- ggplot(Destinations,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Destinations pie chart Africa.png",
+       file = "Figures/Pie_GER Destinations_Cumulative_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1098,7 +1097,7 @@ g <- ggplot(Origins,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Origins pie chart World.png",
+       file = "Figures/Pie_GER Origins_Cumulative_World.png",
        width = 6, height = 5, units = "in")
 
 # Destinations pie chart, cumulative IFF
@@ -1124,7 +1123,7 @@ g <- ggplot(Destinations,
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Destinations pie chart World.png",
+       file = "Figures/Pie_GER Destinations_Cumulative_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1171,7 +1170,7 @@ g <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min =
        fill = "") +
   theme(plot.margin = unit(c(0.5, 0, 0, 0), "cm"))
 ggsave(g,
-       file = "Figures/Origins sunburst World.png",
+       file = "Figures/Sunburst_GER Origins_Cumulative_World.png",
        width = 6, height = 5, units = "in")
 
 # Destinations, cumulative IFF
@@ -1218,7 +1217,7 @@ g <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min =
        fill = "") +
   theme(plot.margin = unit(c(0.5, 0, 0, 0), "cm"))
 ggsave(g,
-       file = "Figures/Destinations sunburst World.png",
+       file = "Figures/Sunburst_GER Destinations_Cumulative_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1249,7 +1248,7 @@ g <- ggplot(GER_Sect_Avg_Africa %>%
   labs(title = "Top sectors in Africa",
        subtitle = "Average gross yearly outflow during 2000-2018")
 ggsave(g,
-       file = "Figures/Treemap sectors average Africa.png",
+       file = "Figures/Treemap sectors_Yearly Average_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1271,7 +1270,7 @@ g <- ggplot(GER_Sect_Avg_LMIC %>%
   labs(title = "Top sectors in low and lower middle income countries",
        subtitle = "Average gross yearly outflow during 2000-2018")
 ggsave(g,
-       file = "Figures/Treemap sectors average LMIC.png",
+       file = "Figures/Treemap sectors_Yearly Average_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1293,7 +1292,7 @@ g <- ggplot(GER_Sect_Avg_Developing %>%
   labs(title = "Top sectors in developing countries",
        subtitle = "Average gross yearly outflow during 2000-2018")
 ggsave(g,
-       file = "Figures/Treemap sectors average Developing.png",
+       file = "Figures/Treemap sectors_Yearly Average_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1333,7 +1332,7 @@ g <- ggplot(viz,
   theme(legend.text = element_text(size = 8)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
-       file = "Figures/Top commodities in Africa.png",
+       file = "Figures/Stacked_Top commodities in top sectors_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 # LMIC, yearly average
@@ -1360,7 +1359,7 @@ g <- ggplot(viz,
   theme(legend.text = element_text(size = 8)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
-       file = "Figures/Top commodities in LMIC.png",
+       file = "Figures/Stacked_Top commodities in top sectors_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing, yearly average
@@ -1387,7 +1386,7 @@ g <- ggplot(viz,
   theme(legend.text = element_text(size = 8)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
-       file = "Figures/Top commodities in Developing.png",
+       file = "Figures/Stacked_Top commodities in top sectors_Yearly Average_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1445,7 +1444,7 @@ g <- ggplot(viz,
   scale_fill_disco(palette = "rainbow") +
   theme(legend.text = element_text(size = 8))
 ggsave(g,
-       file = "Figures/Top 5 sectors GER in conduits Africa.png",
+       file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 # LMIC
@@ -1477,7 +1476,7 @@ g <- ggplot(viz,
   scale_fill_disco(palette = "rainbow") +
   theme(legend.text = element_text(size = 8))
 ggsave(g,
-       file = "Figures/Top 5 sectors GER in conduits LMIC.png",
+       file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing
@@ -1509,7 +1508,7 @@ g <- ggplot(viz,
   scale_fill_disco(palette = "rainbow") +
   theme(legend.text = element_text(size = 8))
 ggsave(g,
-       file = "Figures/Top 5 sectors GER in conduits Developing.png",
+       file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1530,7 +1529,7 @@ g <- ggplot(GER_Dest_Avg_Africa %>%
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Top 10 destinations GER average Africa.png",
+       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
 
 # LMIC
@@ -1549,7 +1548,7 @@ g <- ggplot(GER_Dest_Avg_LMIC %>%
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Top 10 destinations GER average LMIC.png",
+       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars__LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing
@@ -1568,7 +1567,7 @@ g <- ggplot(GER_Dest_Avg_Developing %>%
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Top 10 destinations GER average Developing.png",
+       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars__Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1577,7 +1576,7 @@ ggsave(g,
 # FLOW MAPS                 ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Destination flow maps of conduits ####
+# .. Top 5 destinations of % GDP conduits ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
@@ -1667,7 +1666,7 @@ g <- ggplot() +
   labs(title = "Destinations of top origins in Africa",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
-       file = "Figures/Flow map top destinations Africa.png",
+       file = "Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Africa.png",
        width = 6, height = 5, units = "in")
 
 # LMIC, yearly average dollar value
@@ -1719,7 +1718,7 @@ g <- ggplot() +
   labs(title = "Destinations of top origins in low and lower middle income",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
-       file = "Figures/Flow map top destinations LMIC.png",
+       file = "Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing, yearly average dollar value
@@ -1771,7 +1770,7 @@ g <- ggplot() +
   labs(title = "Destinations of top origins in developing countries",
        subtitle = "Top 10 origin countries by % of GDP")
 ggsave(g,
-       file = "Figures/Flow map top destinations Developing.png",
+       file = "Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1855,7 +1854,7 @@ g <- ggplot() +
   labs(title = "Provenance of inflows for top recipients of net inflows",
        subtitle = "Top 10 origin countries for net inflows in $")
 ggsave(g,
-       file = "Figures/Flow map provenance top inflows World.png",
+       file = "Figures/Flow map_Provenance of top 10 inflows_Dollars_Yearly Average_World.png",
        width = 6, height = 5, units = "in")
 
 # Top inflows, % of GDP
@@ -1902,7 +1901,7 @@ g <- ggplot() +
   labs(title = "Provenance of inflows for top recipients of net inflows",
        subtitle = "Top 10 origin countries for net inflows by % of GDP")
 ggsave(g,
-       file = "Figures/Flow map provenance top inflows Percent GDP World.png",
+       file = "Figures/Flow map_Provenance of top 10 inflows_Percent GDP_Yearly Average_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1925,7 +1924,7 @@ g <- ggplot(GER_Orig_Avg %>%
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
-       file = "Figures/Top origin countries World Percent GDP.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent GDP_World.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Orig_Avg %>%
@@ -1939,7 +1938,7 @@ g <- ggplot(GER_Orig_Avg %>%
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
-       file = "Figures/Top origin countries World Percent Trade.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent Trade_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1957,7 +1956,7 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
-       file = "Figures/Top origin countries Africa Percent GDP.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent GDP_Africa.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Orig_Avg_Africa %>%
@@ -1971,7 +1970,7 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
-       file = "Figures/Top origin countries Africa Percent Trade.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1989,7 +1988,7 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
-       file = "Figures/Top origin countries LMIC Percent GDP.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent GDP_LMIC.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Orig_Avg_LMIC %>%
@@ -2003,7 +2002,7 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
-       file = "Figures/Top origin countries LMIC Percent Trade.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent Trade_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2021,7 +2020,7 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
-       file = "Figures/Top origin countries Developing Percent GDP.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent GDP_Developing.png",
        width = 6, height = 5, units = "in")
 
 g <- ggplot(GER_Orig_Avg_Developing %>%
@@ -2035,7 +2034,7 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
-       file = "Figures/Top origin countries Developing Percent Trade.png",
+       file = "Figures/Top 10 origin countries_Yearly Average_Percent Trade_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2080,7 +2079,42 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey GNIpc sector LMIC.png",
+       file = "Figures/Sankey_Reporter GNI by Reporter Sector_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by reporter and partner GNI per capita in World ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- GER_Orig_Dest_Avg %>%
+  mutate(rGNPpc = rGNPpc / 10^3,
+         pGNPpc = pGNPpc / 10^3) %>%
+  mutate(rcut = cut(rGNPpc, breaks = c(0, 5, 30, 50, 105),
+                    labels = c("up to $5,000", "$5,001-$30,000",
+                               "$30,001-$50,000", "above $50,000")),
+         pcut = cut(pGNPpc, breaks = c(0, 5, 30, 50, 105),
+                    labels = c("up to $5,000", "$5,001-$30,000",
+                               "$30,001-$50,000", "above $50,000"))) %>%
+  filter(is.finite(rcut) & is.finite(pcut)) %>%
+  group_by(rcut, pcut) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = rcut, axis2 = pcut,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = rcut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to GNI per capita",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey_Reporter GNI by Partner GNI_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2111,7 +2145,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey GNIpc reporter partner LMIC.png",
+       file = "Figures/Sankey_Reporter GNI by Partner GNI_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2147,7 +2181,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey region sector World.png",
+       file = "Figures/Sankey_Reporter Region by Origin Sector_World.png",
        width = 6, height = 5, units = "in")
 
 # SITC sectors
@@ -2176,42 +2210,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey region SITC sector World.png",
-       width = 6, height = 5, units = "in")
-
-
-# .. Sankey diagram by reporter and partner GNI per capita in World ####
-load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
-
-viz <- GER_Orig_Dest_Avg %>%
-  mutate(rGNPpc = rGNPpc / 10^3,
-         pGNPpc = pGNPpc / 10^3) %>%
-  mutate(rcut = cut(rGNPpc, breaks = c(0, 5, 30, 50, 105),
-                    labels = c("up to $5,000", "$5,001-$30,000",
-                               "$30,001-$50,000", "above $50,000")),
-         pcut = cut(pGNPpc, breaks = c(0, 5, 30, 50, 105),
-                    labels = c("up to $5,000", "$5,001-$30,000",
-                               "$30,001-$50,000", "above $50,000"))) %>%
-  filter(is.finite(rcut) & is.finite(pcut)) %>%
-  group_by(rcut, pcut) %>%
-  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
-  ungroup()
-
-g <- ggplot(viz,
-            aes(y = Tot_IFF_bn, axis1 = rcut, axis2 = pcut,
-                label = after_stat(stratum))) +
-  geom_alluvium(aes(fill = rcut)) +
-  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
-  scale_y_continuous(labels = dollar_format()) +
-  scale_fill_manual(values = wes_palette("GrandBudapest1")) +
-  labs(title = "Trade mis-invoicing",
-       subtitle = "according to GNI per capita",
-       y = "Yearly average outflow in billion USD") +
-  theme(legend.position = "none")
-ggsave(g,
-       file = "Figures/Sankey GNIpc reporter partner World.png",
+       file = "Figures/Sankey_Reporter Region by Origin SITC Sector_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2249,7 +2248,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey natural resources SITC sector World.png",
+       file = "Figures/Sankey_Reporter Natural Resources by Origin SITC Sector_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2279,7 +2278,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey extreme natural resources SITC partner World.png",
+       file = "Figures/Sankey_Reporter Extreme Natural Resources by Partner Region_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2315,7 +2314,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey natural resources partner GNI World.png",
+       file = "Figures/Sankey_Reporter Natural Resources by Partner GNI_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2350,7 +2349,7 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey natural resources partner income group World.png",
+       file = "Figures/Sankey_Reporter Natural Resources by Partner Income Group_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2386,5 +2385,5 @@ g <- ggplot(viz,
        y = "Yearly average outflow in billion USD") +
   theme(legend.position = "none")
 ggsave(g,
-       file = "Figures/Sankey reporter partner income group World.png",
+       file = "Figures/Sankey_Reporter Income Group by Partner Income Group_World.png",
        width = 6, height = 5, units = "in")
