@@ -45,6 +45,11 @@
 # .. Sankey diagram by reporter and partner GNI per capita in LMIC
 # .. Sankey diagram by region and sector in World
 # .. Sankey diagram by reporter and partner GNI per capita in World
+# .. Sankey diagram by natural resource dependence and SITC sectors
+# .. Sankey diagram by extreme natural resource dependence and partner region
+# .. Sankey diagram by natural resource dependence and partner GNI per capita
+# .. Sankey diagram by natural resource dependence and partner income group
+# .. Sankey diagram by reporter and partner income group
 
 
 
@@ -53,6 +58,7 @@
 ## ## ## ## ## ## ## ## ## ## ##
 
 setwd("/home/alepissier/IFFe/") # Virtual server
+data.disk <- "/scratch/alepissier/IFFe/"
 # source("Scripts/Aggregate Results.R")
 library(broom)
 library(cartogram)
@@ -96,234 +102,6 @@ codes <- read_excel("/scratch/alepissier/IFFe/Data/Codes_Masterlist.xlsx", sheet
 # .. Africa ####
 load("Results/Summary data-sets/GER_Year_Africa.Rdata")
 load("Results/Summary data-sets/Net_Year_Africa.Rdata")
-
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>%
-#               melt(id.vars = "year") %>%
-#               filter(str_detect(variable, "Imp")), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in imports in Africa",
-#        subtitle = "Gross outflows",
-#        x = "Year", y = "Illicit flow in billion USD")
-# ggsave(g,
-#        file = "Figures/GER Africa Import.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>%
-#               melt(id.vars = "year") %>%
-#               filter(str_detect(variable, "Exp")), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in exports in Africa",
-#        subtitle = "Gross outflows",
-#        x = "Year", y = "Illicit flow in billion USD")
-# ggsave(g,
-#        file = "Figures/GER Africa Export.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>%
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Gross outflows",
-#        x = "Year", y = "Illicit flow in billion USD") +
-#   geom_text(aes(label = round(value/10^9)),
-#             size = 2.5, position = position_dodge(1), vjust = -0.4) +
-#   scale_x_discrete(expand = c(0.05, 0.05))
-# ggsave(g,
-#        file = "Figures/GER Africa Total.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Gross outflows",
-#        x = "Year", y = "Illicit flow as % of GDP") +
-#   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-#             size = 2.5, position = position_dodge(1), vjust = -0.4) +
-#   scale_x_discrete(expand = c(0.05, 0.05))
-# ggsave(g,
-#        file = "Figures/GER Africa Total Percent GDP.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_hi"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#         legend.position = "none") +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Gross outflows",
-#        x = "", y = "Illicit flow in billion USD") +
-#   geom_text(aes(label = round(value/10^9)),
-#             size = 3, position = position_dodge(1), vjust = -0.4)
-# ggsave(g,
-#        file = "Figures/GER Africa Total high.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(GER_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_hi_GDP"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#         legend.position = "none") +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Gross outflows",
-#        x = "", y = "Illicit flow as % of GDP") +
-#   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-#             size = 3, position = position_dodge(1), vjust = -0.4)
-# ggsave(g,
-#        file = "Figures/GER Africa Total Percent GDP high.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(str_detect(variable, "Imp")), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1))+
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in imports in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "Year", y = "Illicit flow in billion USD")
-# ggsave(g,
-#        file = "Figures/Net Africa Import.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>%
-#               melt(id.vars = "year") %>%
-#               filter(str_detect(variable, "Exp")), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in exports in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "Year", y = "Illicit flow in billion USD")
-# ggsave(g,
-#        file = "Figures/Net Africa Export.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_lo" | variable == "Tot_IFF_hi"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "Year", y = "Illicit flow in billion USD") +
-#   geom_text(aes(label = round(value/10^9)),
-#             size = 2.5, position = position_dodge(1), vjust = -0.4) +
-#   scale_x_discrete(expand = c(0.05, 0.05))
-# ggsave(g,
-#        file = "Figures/Net Africa Total.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_lo_GDP" | variable == "Tot_IFF_hi_GDP"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("Low", "High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "Year", y = "Illicit flow as % of GDP") +
-#   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-#             size = 2.5, position = position_dodge(1), vjust = -0.4) +
-#   scale_x_discrete(expand = c(0.05, 0.05))
-# ggsave(g,
-#        file = "Figures/Net Africa Total Percent GDP.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_hi"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#         legend.position = "none") +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "", y = "Illicit flow in billion USD") +
-#   geom_text(aes(label = round(value/10^9)),
-#             size = 3, position = position_dodge(1), vjust = -0.4)
-# ggsave(g,
-#        file = "Figures/Net Africa Total high.png",
-#        width = 6, height = 5, units = "in")
-# 
-# g <- ggplot(Net_Year_Africa %>% 
-#               mutate(year = as.character(year)) %>% 
-#               melt(id.vars = "year") %>%
-#               filter(variable == "Tot_IFF_hi_GDP"), 
-#             aes(x = year, y = value, fill = variable)) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-#   scale_fill_brewer(name = "Estimate", labels = c("High"),
-#                     type = "qual", palette = "Set2", direction = -1) +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-#         legend.position = "none") +
-#   labs(title = "Trade mis-invoicing in Africa",
-#        subtitle = "Net illicit flows",
-#        x = "", y = "Illicit flow as % of GDP") +
-#   geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-#             size = 3, position = position_dodge(1), vjust = -0.4)
-# ggsave(g,
-#        file = "Figures/Net Africa Total Percent GDP high.png",
-#        width = 6, height = 5, units = "in")
 
 viz <- full_join(GER_Year_Africa %>% 
                    select(year, 
@@ -2309,16 +2087,6 @@ ggsave(g,
 # .. Sankey diagram by reporter and partner GNI per capita in LMIC ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 
-# viz <- GER_Orig_Dest_Avg_LMIC %>%
-#   mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
-#                     labels = c("0$-1,000$", "1,001$-2,000$", "2,001$-3,000$", "3,001$-4,000$")),
-#          pcut = cut(pGNPpc, breaks = c(0, 995, 3895, 12055, 75000),
-#                     labels = c("0$-995$", "996$-3,895$", "3,896$-12,055$", "above 12,055$"))) %>%
-#   filter(is.finite(rcut) & is.finite(pcut)) %>%
-#   group_by(rcut, pcut) %>%
-#   summarize(Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-#   ungroup()
-
 viz <- GER_Orig_Dest_Avg_LMIC %>%
   mutate(rcut = cut(rGNPpc, breaks = c(0, 1000, 2000, 3000, 4000),
                     labels = c("0$-1,000$", "1,001$-2,000$", "2,001$-3,000$", "3,001$-4,000$")),
@@ -2348,6 +2116,7 @@ ggsave(g,
 
 
 # .. Sankey diagram by region and sector in World ####
+# HS sections
 load("Results/Summary data-sets/GER_Sect_Avg.Rdata")
 
 top_sectors <- GER_Sect_Avg %>%
@@ -2379,6 +2148,35 @@ g <- ggplot(viz,
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey region sector World.png",
+       width = 6, height = 5, units = "in")
+
+# SITC sectors
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_SITC.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_SITC.Rdata")
+
+viz <- GER_Orig_Sect_Avg_SITC %>%
+  group_by(rRegion, SITC.code, SITC.section) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  arrange(factor(SITC.section, levels = GER_Sect_Avg_SITC %>% 
+                   arrange(desc(Tot_IFF_bn)) %>%
+                   pull(SITC.section)))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = rRegion, axis2 = fct_inorder(SITC.section),
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = rRegion)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Region", "Sector"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("Rushmore1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to region and SITC sectors",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey region SITC sector World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2414,4 +2212,179 @@ g <- ggplot(viz,
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey GNIpc reporter partner World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by natural resource dependence and SITC sectors ####
+load(paste0(data.disk, "Data/natural_resources.Rdata"))
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_SITC.Rdata")
+load("Results/Summary data-sets/GER_Sect_Avg_SITC.Rdata")
+
+natural_resources <- natural_resources %>%
+  summarize(nat_ratio = mean(nat_ratio, na.rm = T))
+
+viz <- left_join(GER_Orig_Sect_Avg_SITC, natural_resources,
+                 by = c("reporter.ISO")) %>%
+  mutate(nat_cut = cut(nat_ratio, breaks = c(0, .20, .30, .40, 1),
+                       labels = c("up to 20%", "21-30%",
+                                  "31-40%", "more than 40%"))) %>%
+  group_by(nat_cut, SITC.code, SITC.section) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  arrange(factor(SITC.section, levels = GER_Sect_Avg_SITC %>% 
+                   arrange(desc(Tot_IFF_bn)) %>% 
+                   pull(SITC.section)))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = nat_cut, axis2 = fct_inorder(SITC.section),
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = nat_cut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Natural resource ratio", "Sector"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("Cavalcanti1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to natural resource dependence and SITC sectors",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey natural resources SITC sector World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by extreme natural resource dependence and partner region ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- left_join(GER_Orig_Dest_Avg, natural_resources,
+                 by = c("reporter.ISO")) %>%
+  filter(nat_ratio >= 0.5) %>%
+  mutate(nat_cut = cut(nat_ratio, breaks = c(0, .6, .7, .8),
+                       labels = c("50-60%", "61-70%", "more than 70%"))) %>%
+  group_by(nat_cut, pRegion) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = nat_cut, axis2 = pRegion,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = nat_cut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Natural resource ratio", "Destination"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("Royal1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to extreme natural resource dependence and destination region",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey extreme natural resources SITC partner World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by natural resource dependence and partner GNI per capita ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- left_join(GER_Orig_Dest_Avg, natural_resources,
+                 by = c("reporter.ISO")) %>%
+  mutate(nat_cut = cut(nat_ratio, breaks = c(0, .20, .30, .40, 1),
+                       labels = c("up to 20%", "21-30%",
+                                  "31-40%", "more than 40%")),
+         pcut = cut(pGNPpc, 
+                    breaks = c(0, 15000, 30000, 45000, 60000, 125000),
+                    labels = c("0$-15,000$", "15,001$-30,000$", 
+                               "30,001$-45,000$", "45,001$-60,000$", 
+                               "+60,001$"))) %>%
+  group_by(nat_cut, pcut) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  filter(is.finite(nat_cut) & is.finite(pcut))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = nat_cut, axis2 = pcut,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = nat_cut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Natural resource ratio", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("Darjeeling2")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to natural resource dependence and destination GNI per capita",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey natural resources partner GNI World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by natural resource dependence and partner income group ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- left_join(GER_Orig_Dest_Avg, natural_resources,
+                 by = c("reporter.ISO")) %>%
+  mutate(nat_cut = cut(nat_ratio, breaks = c(0, .20, .30, .40, 1),
+                       labels = c("up to 20%", "21-30%",
+                                  "31-40%", "more than 40%")),
+         pcut = cut(pGNPpc, 
+                    breaks = c(0, 1035, 4045, 12535, 125000),
+                    labels = c("Low income", "Lower-middle income", 
+                               "Upper-middle income", "High income"))) %>%
+  group_by(nat_cut, pcut) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  filter(is.finite(nat_cut) & is.finite(pcut))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = nat_cut, axis2 = pcut,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = pcut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Natural resource ratio", "Destination income group"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_manual(values = wes_palette("GrandBudapest2")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to natural resource dependence and destination income group",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey natural resources partner income group World.png",
+       width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by reporter and partner income group ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
+
+viz <- left_join(GER_Orig_Dest_Avg, natural_resources,
+                 by = c("reporter.ISO")) %>%
+  mutate(rcut = cut(rGNPpc, 
+                    breaks = c(0, 1035, 4045, 12535, 125000),
+                    labels = c("Low income", "Lower-middle income", 
+                               "Upper-middle income", "High income")),
+         pcut = cut(pGNPpc, 
+                    breaks = c(0, 1035, 4045, 12535, 125000),
+                    labels = c("Low income", "Lower-middle income", 
+                               "Upper-middle income", "High income"))) %>%
+  group_by(rcut, pcut) %>%
+  summarize(Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup() %>%
+  filter(is.finite(rcut) & is.finite(pcut))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = rcut, axis2 = pcut,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = rcut)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Origin income group", "Destination income group"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  # scale_fill_manual(values = wes_palette("IsleofDogs1")) +
+  labs(title = "Trade mis-invoicing",
+       subtitle = "according to origin and destination income group",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = "Figures/Sankey reporter partner income group World.png",
        width = 6, height = 5, units = "in")
