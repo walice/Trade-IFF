@@ -24,6 +24,7 @@
 # .. GER Import/Export IFF for Reporter-Partner-Year
 # .. GER IFF for Reporter-Year (sum over Partner)
 # .. GER IFF for Reporter (sum over Partner, average across Year)
+# .. GER IFF for Reporter-Partner (average across Year)
 # .. Total GER IFF inflows per year
 # Net by Destination
 # .. Net Import/Export IFF for Reporter-Partner-Year
@@ -652,6 +653,45 @@ Inflow_GER_Orig_Avg <- Inflow_GER_Orig_Year %>%
   ungroup()
 save(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 write.csv(Inflow_GER_Orig_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Avg.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter-Partner (average across Year) ####
+Inflow_GER_Orig_Dest_Avg <- Inflow_GER_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, 
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+weights <- Inflow_GER_Orig_Dest_Year %>%
+  distinct(reporter.ISO, year, .keep_all = T) %>%
+  group_by(reporter.ISO) %>%
+  mutate(weight = 1/n()) %>%
+  ungroup()
+WDI <- left_join(WDI, weights %>% 
+                   mutate(year = as.integer(year)) %>%
+                   select(reporter.ISO, year, weight),
+                 by = c("ISO3166.3" = "reporter.ISO",
+                        "year")) %>%
+  mutate(weight = ifelse(is.na(weight), 0, weight)) %>%
+  group_by(ISO3166.3) %>%
+  summarize(GDP = weighted.mean(GDP, weight),
+            GNPpc = weighted.mean(GNPpc, weight))
+Inflow_GER_Orig_Dest_Avg <- left_join(Inflow_GER_Orig_Dest_Avg,
+                                      WDI,
+                                      by = c("reporter.ISO" = "ISO3166.3")) %>%
+  rename(rGDP = GDP,
+         rGNPpc = GNPpc)
+Inflow_GER_Orig_Dest_Avg <- left_join(Inflow_GER_Orig_Dest_Avg,
+                                      WDI,
+                                      by = c("partner.ISO" = "ISO3166.3")) %>%
+  rename(pGDP = GDP,
+         pGNPpc = GNPpc)
+save(Inflow_GER_Orig_Dest_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Dest_Avg.Rdata")
+write.csv(Inflow_GER_Orig_Dest_Avg, file = "Results/Summary data-sets/Inflow_GER_Orig_Dest_Avg.csv",
           row.names = F)
 
 
