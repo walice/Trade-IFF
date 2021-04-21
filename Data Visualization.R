@@ -1666,11 +1666,18 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Top 5 destinations of % GDP conduits ####
+load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Africa.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
 load("Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
 
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+conduits_World <- GER_Orig_Avg %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
+
 conduits_Africa <- GER_Orig_Avg %>%
   filter(rRegion == "Africa") %>%
   arrange(desc(Tot_IFF_GDP)) %>%
@@ -1706,6 +1713,60 @@ centroids <- codes %>%
   mutate_at(vars(Centroid_Longitude, Centroid_Latitude),
             funs(as.numeric))
 
+# World, yearly average dollar value
+GER_Orig_Dest_Avg <- GER_Orig_Dest_Avg %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Centroid_Longitude,
+                rLatitude = Centroid_Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Centroid_Longitude,
+                pLatitude = Centroid_Latitude) %>%
+  filter(reporter.ISO %in% conduits_World) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(GER_Orig_Dest_Avg %>% filter(reporter.ISO %in% conduits_World),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_manual(values = carto_pal(10, "Bold")) +
+  scale_fill_manual(values = carto_pal(10, "Bold")) +
+  labs(title = "Destinations of top origins worldwide",
+       subtitle = "Top 10 origin countries by % of GDP")
+g
+ggsave(g,
+       file = "Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_World.png",
+       width = 6, height = 5, units = "in")
+
 # Africa, yearly average dollar value
 GER_Orig_Dest_Avg_Africa <- GER_Orig_Dest_Avg_Africa %>%
   left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
@@ -1738,7 +1799,8 @@ g <- ggplot() +
   geom_curve(data = viz, 
              aes(x = rLongitude, y = rLatitude, 
                  xend = pLongitude, yend = pLatitude, col = reporter),
-             curvature = -0.2, lineend = "round", ncp = 20) +
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
   geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
              aes(x = rLongitude, y = rLatitude, col = reporter),
              size = 4) +
@@ -1790,7 +1852,8 @@ g <- ggplot() +
   geom_curve(data = viz, 
              aes(x = rLongitude, y = rLatitude, 
                  xend = pLongitude, yend = pLatitude, col = reporter),
-             curvature = -0.2, lineend = "round", ncp = 20) +
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
   geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
              aes(x = rLongitude, y = rLatitude, col = reporter),
              size = 4) +
@@ -1842,7 +1905,8 @@ g <- ggplot() +
   geom_curve(data = viz, 
              aes(x = rLongitude, y = rLatitude, 
                  xend = pLongitude, yend = pLatitude, col = reporter),
-             curvature = -0.2, lineend = "round", ncp = 20) +
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
   geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
              aes(x = rLongitude, y = rLatitude, col = reporter),
              size = 4) +
@@ -1866,6 +1930,8 @@ ggsave(g,
 # .. Provenance flow maps of top inflows in World ####
 load("Results/Summary data-sets/Net_Orig_Dest_Avg.Rdata")
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Orig_Dest_Avg.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 
 top_inflows_dollar <- Net_Orig_Avg %>%
   filter(Tot_IFF < 0) %>%
@@ -1878,7 +1944,17 @@ top_inflows_GDP <- Net_Orig_Avg %>%
   top_n(10, abs(Tot_IFF_GDP)) %>%
   arrange(desc(abs(Tot_IFF_GDP))) %>%
   pull(reporter.ISO)
-  
+
+top_GERinflows_dollar <- Inflow_GER_Orig_Avg %>%
+  top_n(10, abs(Tot_IFF)) %>%
+  arrange(desc(abs(Tot_IFF))) %>%
+  pull(reporter.ISO)
+
+top_GERinflows_GDP <- Inflow_GER_Orig_Avg %>%
+  top_n(10, abs(Tot_IFF_GDP)) %>%
+  arrange(desc(abs(Tot_IFF_GDP))) %>%
+  pull(reporter.ISO)
+
 ditch_axes <- theme(axis.title.x = element_blank(),
                     axis.text.x = element_blank(),
                     axis.ticks.x = element_blank(),
@@ -1991,6 +2067,98 @@ g <- ggplot() +
        subtitle = "Top 10 origin countries for net inflows by % of GDP")
 ggsave(g,
        file = "Figures/Flow map_Provenance of top 10 inflows_Percent GDP_Yearly Average_World.png",
+       width = 6, height = 5, units = "in")
+
+# Top GER inflows, dollar value
+viz <- Inflow_GER_Orig_Dest_Avg %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Centroid_Longitude,
+                rLatitude = Centroid_Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Centroid_Longitude,
+                pLatitude = Centroid_Latitude) %>%
+  filter(reporter.ISO %in% top_GERinflows_dollar) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, abs(Tot_IFF)) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+viz <- left_join(viz %>% filter(reporter.ISO %in% top_GERinflows_dollar),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
+  labs(title = "Provenance of inflows for top recipients of GER inflows",
+       subtitle = "Top 10 origin countries for GER inflows in $")
+ggsave(g,
+       file = "Figures/Flow map_Provenance of top 10 GER inflows_Dollars_Yearly Average_World.png",
+       width = 6, height = 5, units = "in")
+
+# Top GER inflows, % of GDP
+viz <- Inflow_GER_Orig_Dest_Avg %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Centroid_Longitude,
+                rLatitude = Centroid_Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Centroid_Longitude,
+                pLatitude = Centroid_Latitude) %>%
+  filter(reporter.ISO %in% top_GERinflows_GDP) %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, abs(Tot_IFF)) %>%
+  ungroup() %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+viz <- left_join(viz %>% filter(reporter.ISO %in% top_GERinflows_GDP),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey80", col = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz,
+             aes(x = rLongitude, y = rLatitude,
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_brewer(type = "qual", palette = "Paired") +
+  scale_fill_brewer(type = "qual", palette = "Paired") +
+  labs(title = "Provenance of inflows for top recipients of GER inflows",
+       subtitle = "Top 10 origin countries for GER inflows by % of GDP")
+ggsave(g,
+       file = "Figures/Flow map_Provenance of top 10 GER inflows_Percent GDP_Yearly Average_World.png",
        width = 6, height = 5, units = "in")
 
 
