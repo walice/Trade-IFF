@@ -278,6 +278,7 @@ GER_Orig_Dest_Avg <- GER_Orig_Dest_Year %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
             Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
   ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 weights <- GER_Orig_Dest_Year %>%
@@ -669,6 +670,24 @@ Inflow_GER_Year <- Inflow_GER_Orig_Year %>%
          Tot_IFF_trade = Tot_IFF / Total_value)
 save(Inflow_GER_Year, file = "Results/Summary data-sets/Inflow_GER_Year.Rdata")
 write.csv(Inflow_GER_Year, file = "Results/Summary data-sets/Inflow_GER_Year.csv",
+          row.names = F)
+
+# Africa
+Inflow_GER_Year_Africa <- Inflow_GER_Orig_Year %>%
+  filter(rRegion == "Africa") %>%
+  select(-rRegion) %>%
+  group_by(year) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T),
+            GDP = sum(GDP, na.rm = T),
+            Total_value = sum(Total_value, na.rm = T)) %>%
+  ungroup() %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP,
+         Tot_IFF_trade = Tot_IFF / Total_value)
+save(Inflow_GER_Year_Africa, file = "Results/Summary data-sets/Inflow_GER_Year_Africa.Rdata")
+write.csv(Inflow_GER_Year_Africa, file = "Results/Summary data-sets/Inflow_GER_Year_Africa.csv",
           row.names = F)
 
 # LMIC
@@ -1122,6 +1141,9 @@ GER_Orig_Sect_Year_SITC <- full_join(GER_Imp_Sect_SITC, GER_Exp_Sect_SITC,
                                             "year" = "year",
                                             "SITC.code" = "SITC.code",
                                             "SITC.section" = "SITC.section"))
+save(GER_Orig_Sect_Year_SITC, file = "Results/Summary data-sets/GER_Orig_Sect_Year_SITC.Rdata")
+write.csv(GER_Orig_Sect_Year_SITC, file = "Results/Summary data-sets/GER_Orig_Sect_Year_SITC.csv",
+          row.names = F)
 rm(GER_Imp_Sect_SITC, GER_Exp_Sect_SITC)
 
 # HS sections
@@ -1135,6 +1157,9 @@ GER_Orig_Sect_Year <- full_join(GER_Imp_Sect, GER_Exp_Sect,
                                        "year" = "year",
                                        "section.code" = "section.code",
                                        "section" = "section"))
+save(GER_Orig_Sect_Year, file = "Results/Summary data-sets/GER_Orig_Sect_Year.Rdata")
+write.csv(GER_Orig_Sect_Year, file = "Results/Summary data-sets/GER_Orig_Sect_Year.csv",
+          row.names = F)
 rm(GER_Imp_Sect, GER_Exp_Sect)
 
 # Africa
@@ -1156,6 +1181,9 @@ GER_Orig_Sect_Year_disag <- full_join(GER_Imp_Sect_disag, GER_Exp_Sect_disag,
                                              "year" = "year",
                                              "commodity.code" = "commodity.code",
                                              "commodity" = "commodity"))
+save(GER_Orig_Sect_Year_disag, file = "Results/Summary data-sets/GER_Orig_Sect_Year_disag.Rdata")
+write.csv(GER_Orig_Sect_Year_disag, file = "Results/Summary data-sets/GER_Orig_Sect_Year_disag.csv",
+          row.names = F)
 rm(GER_Imp_Sect_disag, GER_Exp_Sect_disag)
 
 
@@ -1166,6 +1194,7 @@ GER_Orig_Sect_Avg_SITC <- GER_Orig_Sect_Year_SITC %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
             Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
   ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 save(GER_Orig_Sect_Avg_SITC, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_SITC.Rdata")
@@ -1178,6 +1207,7 @@ GER_Orig_Sect_Avg <- GER_Orig_Sect_Year %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
             Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
   ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 weights <- GER_Orig_Sect_Year %>%
@@ -1230,6 +1260,7 @@ GER_Orig_Sect_Avg_disag <- GER_Orig_Sect_Year_disag %>%
   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
             Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
   ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
 save(GER_Orig_Sect_Avg_disag, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_disag.Rdata")
@@ -1265,6 +1296,9 @@ GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   ungroup() %>%
   mutate(Tot_IFF = Imp_IFF + Exp_IFF,
          Tot_IFF_bn = Tot_IFF / 10^9)
+save(GER_Orig_Sect_Sum, file = "Results/Summary data-sets/GER_Orig_Sect_Sum.Rdata")
+write.csv(GER_Orig_Sect_Sum, file = "Results/Summary data-sets/GER_Orig_Sect_Sum.csv",
+          row.names = F)
 
 # Africa
 GER_Orig_Sect_Sum_Africa <- GER_Orig_Sect_Sum %>%
@@ -1496,6 +1530,9 @@ Net_Orig_Sect_Year <- panel %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
             Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
   ungroup()
+save(Net_Orig_Sect_Year, file = "Results/Summary data-sets/Net_Orig_Sect_Year.Rdata")
+write.csv(Net_Orig_Sect_Year, file = "Results/Summary data-sets/Net_Orig_Sect_Year.csv",
+          row.names = F)
 
 # Africa
 Net_Orig_Sect_Year_Africa <- Net_Orig_Sect_Year %>%
@@ -1562,147 +1599,91 @@ write.csv(Net_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Sect_Sum_Af
 
 # .. For Africa ####
 (Cumulative.gross <- sum(GER_Year_Africa$Tot_IFF_bn))
-# 1493.782
+# 1491.554
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 5.712601
+# 5.704082
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 12.3659
+# 12.34746
 
 (Cumulative.net <- sum(Net_Year_Africa$Tot_IFF_bn))
-# 629.2157
+# 632.8931
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 2.40628
+# 2.420343
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Africa$Tot_IFF_bn))
-# 94.79566
+# 94.41302
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Africa$Tot_IFF_bn))
-# 31.91687
+# 32.44906
 
 
 # .. For low and lower-middle income countries ####
 (Cumulative.gross <- sum(GER_Year_LMIC$Tot_IFF_bn))
-# 4002.906
+# 4001.602
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LMIC$GDP) / 10^9)) * 100
-# 6.353536
+# 6.351466
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LMIC$Total_value) / 10^9)) * 100
-# 14.18342
+# 14.1788
 
 (Cumulative.net <- sum(Net_Year_LMIC$Tot_IFF_bn))
-# 1974.386
+# 1977.823
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LMIC$GDP) / 10^9)) * 100
-# 3.133774
+# 3.13923
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LMIC$Tot_IFF_bn))
-# 238.6362
+# 238.3841
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LMIC$Tot_IFF_bn))
-# 109.3398
+# 109.8227
 
 
 # .. For developing countries ####
 (Cumulative.gross <- sum(GER_Year_Developing$Tot_IFF_bn))
-# 22162.91
+# 22163.76
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Developing$GDP) / 10^9)) * 100
-# 6.349581
+# 6.349824
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Developing$Total_value) / 10^9)) * 100
-# 11.23221
+# 11.23264
 
 (Cumulative.net <- sum(Net_Year_Developing$Tot_IFF_bn))
-# 11046.03
+# 11050.11
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Developing$GDP) / 10^9)) * 100
-# 3.163026
+# 3.164194
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Developing$Tot_IFF_bn))
-# 1211.909
+# 1211.699
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Developing$Tot_IFF_bn))
-# 596.3079
+# 596.8774
 
 
 # .. For low-HDI countries ####
 (Cumulative.gross <- sum(GER_Year_LowHDI$Tot_IFF_bn))
-# 2807.377
+# 2805.543
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LowHDI$GDP) / 10^9)) * 100
-# 5.70254
+# 5.698816
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LowHDI$Total_value) / 10^9)) * 100
-# 15.09529
+# 15.08543
 
 (Cumulative.net <- sum(Net_Year_LowHDI$Tot_IFF_bn))
-# 1336.962
+# 1340.244
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LowHDI$GDP) / 10^9)) * 100
-# 2.70594
+# 2.712582
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LowHDI$Tot_IFF_bn))
-# 171.9945
+# 171.7131
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LowHDI$Tot_IFF_bn))
-# 73.87299
-
-
-
-# ## ## ## ## ## ## ## ## ## ## ##
-# # LMIC RESULTS              ####
-# ## ## ## ## ## ## ## ## ## ## ##
-# 
-# # .. Proportion of LMIC outflows to LMICs ####
-# load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
-# load("Results/Summary data-sets/GER_Orig_Dest_Avg_LMIC.Rdata")
-# 
-# load("Results/Summary data-sets/GER_Orig_Dest_Year_LMIC.Rdata")
-# 
-# # GER_Orig_Dest_Year_LMIC_toLMICs <- GER_Orig_Dest_Year_LMIC %>%
-# #   filter(pIncome == "LIC" | pIncome == "LMC") %>%
-# #   group_by(reporter, reporter.ISO, rRegion, rDev) %>%
-# #     summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
-# #               Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
-# #               Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
-# #               Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-# #     ungroup()
-# 
-# GER_Orig_Dest_Avg_LMIC_toLMICs <- GER_Orig_Dest_Avg_LMIC %>%
-#   filter(pIncome == "LIC" | pIncome == "LMC")
-# 
-# GER_Orig_Avg_LMIC_toLMICs <- GER_Orig_Dest_Avg_LMIC_toLMICs %>%
-#   group_by(reporter, reporter.ISO, rRegion, rDev) %>%
-#   summarize(Imp_IFF_hi = sum(Imp_IFF_hi, na.rm = T),
-#             Exp_IFF_hi = sum(Exp_IFF_hi, na.rm = T),
-#             Tot_IFF_hi = sum(Tot_IFF_hi, na.rm = T),
-#             Tot_IFF_hi_bn = sum(Tot_IFF_hi_bn, na.rm = T)) %>%
-#   ungroup()
-# 
-# sum(GER_Orig_Avg_LMIC_toLMICs$Tot_IFF_hi_bn) / sum(GER_Orig_Avg_LMIC$Tot_IFF_hi_bn)
-# # 0.1454214
-# 
-# 
-# # .. Compare net and gross ####
-# load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
-# load("Results/Summary data-sets/Net_Orig_Avg_LMIC.Rdata")
-# 
-# viz <- full_join(GER_Orig_Avg_LMIC %>% 
-#                    select(reporter,
-#                           GER_Tot_IFF_hi = Tot_IFF_hi),
-#                  Net_Orig_Avg_LMIC %>%
-#                    select(reporter,
-#                           Net_Tot_IFF_hi = Tot_IFF_hi),
-#                  by = c("reporter"))
-# 
-# ggplot(viz %>%  
-#          melt(id.vars = "reporter"),
-#        aes(x = reporter, y = value, fill = fct_rev(variable))) +
-#   geom_bar(position = "dodge", stat = "identity") +
-#   coord_flip() + 
-#   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-#   scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross"))
+# 74.34756
