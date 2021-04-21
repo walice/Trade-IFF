@@ -1737,9 +1737,16 @@ viz <- left_join(GER_Orig_Dest_Avg %>% filter(reporter.ISO %in% conduits_World),
                  map,
                  by = c("reporter.ISO" = "ISO3166.3"))
 
+viz_highlight <- left_join(GER_Orig_Dest_Avg %>% filter(reporter.ISO %in% conduits_World),
+                           map,
+                           by = c("partner.ISO" = "ISO3166.3"))
+
 g <- ggplot() + 
   geom_polygon(data = map,
                aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
+  geom_polygon(data = viz_highlight,
+               aes(x = long, y = lat, group = group), fill = "grey40", col = "black", lwd = 0.2,
+               show.legend = FALSE) + 
   coord_fixed(1.3) +
   theme_bw() + 
   geom_curve(data = viz, 
@@ -1762,7 +1769,6 @@ g <- ggplot() +
   scale_fill_manual(values = carto_pal(10, "Bold")) +
   labs(title = "Destinations of top origins worldwide",
        subtitle = "Top 10 origin countries by % of GDP")
-g
 ggsave(g,
        file = "Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_World.png",
        width = 6, height = 5, units = "in")
