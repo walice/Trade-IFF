@@ -2107,10 +2107,12 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509,
+                   max.overlaps = 15) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509,
+                   max.overlaps = 15) +
   ditch_axes +
   guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
@@ -2415,8 +2417,7 @@ ggsave(g,
 # .. Sankey diagram by reporter and partner income group in World ####
 load("Results/Summary data-sets/GER_Orig_Dest_Avg.Rdata")
 
-viz <- left_join(GER_Orig_Dest_Avg, natural_resources,
-                 by = c("reporter.ISO")) %>%
+viz <- GER_Orig_Dest_Avg %>%
   mutate(rcut = cut(rGNPpc, 
                     breaks = c(0, 1035, 4045, 12535, 125000),
                     labels = c("Low income", "Lower-middle income", 
