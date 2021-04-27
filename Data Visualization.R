@@ -39,6 +39,7 @@
 # Flow Maps
 # .. Top 5 destinations flow of % GDP conduits
 # .. Provenance flow maps of top inflows in World
+# .. Top 5 destinations of GDP conduits in top sectors
 # Lollipop Charts
 # .. Top conduits in World
 # .. Top conduits in Africa
@@ -77,6 +78,7 @@ library(ggthemes)
 library(mapproj)
 library(maptools)
 library(NineteenEightyR)
+unlink("Rplots.pdf")
 library(paletteer)
 library(rcartocolor)
 library(RColorBrewer)
@@ -1738,7 +1740,7 @@ g <- ggplot(GER_Dest_Avg_LMIC %>%
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars__LMIC.png",
+       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing
@@ -1757,7 +1759,7 @@ g <- ggplot(GER_Dest_Avg_Developing %>%
         axis.text = element_blank(),
         axis.ticks = element_blank())
 ggsave(g,
-       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars__Developing.png",
+       file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
 
 
@@ -2271,6 +2273,90 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
+# .. Top 5 destinations of GDP conduits in top sectors ####
+load("Results/top_sectors.Rdata")
+load("Results/top_origins_sect.Rdata")
+ditch_axes <- theme(axis.title.x = element_blank(),
+                    axis.text.x = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    axis.title.y = element_blank(),
+                    axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    panel.border = element_blank(),
+                    panel.grid = element_blank()) 
+
+centroids <- codes %>%
+  dplyr::select(ISO3166.3, Centroid_Longitude, Centroid_Latitude) %>%
+  mutate_at(vars(Centroid_Longitude, Centroid_Latitude),
+            funs(as.numeric))
+
+for (i in 1:length(top_sectors$code)){
+  load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
+  conduits <- top_origins_sect$GDP.orig[[i]]
+
+  # Conduits by % of GDP in top sectors, yearly average dollar value
+  GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Avg %>%
+    left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+    dplyr::rename(rLongitude = Centroid_Longitude,
+                  rLatitude = Centroid_Latitude) %>%
+    left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+    dplyr::rename(pLongitude = Centroid_Longitude,
+                  pLatitude = Centroid_Latitude) %>%
+    filter(reporter.ISO %in% conduits) %>%
+    filter(commodity.code %in% top_sectors$code[i]) %>%
+    group_by(reporter.ISO) %>%
+    top_n(5, Tot_IFF) %>%
+    ungroup() %>%
+    mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+  map <- map_data("world")
+  map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                   by = c("region" = "Country")) %>%
+    dplyr::select(-subregion) %>%
+    filter(region != "Antarctica")
+
+  viz <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits),
+                   map,
+                   by = c("reporter.ISO" = "ISO3166.3"))
+  
+  viz_highlight <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits),
+                             map,
+                             by = c("partner.ISO" = "ISO3166.3"))
+
+  g <- ggplot() + 
+    geom_polygon(data = map,
+                 aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
+    geom_polygon(data = viz_highlight,
+                 aes(x = long, y = lat, group = group), fill = "grey60", col = "black", lwd = 0.1,
+                 show.legend = FALSE) +
+    coord_fixed(1.3) +
+    theme_bw() + 
+    geom_curve(data = viz, 
+               aes(x = rLongitude, y = rLatitude, 
+                   xend = pLongitude, yend = pLatitude, col = reporter),
+               curvature = -0.2, lineend = "round", ncp = 20,
+               arrow = arrow(length = unit(0.03, "npc"))) +
+    geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+               aes(x = rLongitude, y = rLatitude, col = reporter),
+               size = 4) +
+    geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                     aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                     size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+    geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                     aes(label = reporter, x = rLongitude, y = rLatitude),
+                     size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+    ditch_axes +
+    guides(col = FALSE, fill = FALSE) +
+    scale_color_manual(values = carto_pal(10, "Vivid")) +
+    scale_fill_manual(values = carto_pal(10, "Vivid")) +
+    labs(title = paste("Destinations of top origins in", top_sectors$chapter[i]),
+         subtitle = "Top 5 origin countries by % of GDP")
+  ggsave(g,
+         file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_", top_sectors$code[i], ".png"),
+         width = 6, height = 5, units = "in")
+}
+
+
 
 ## ## ## ## ## ## ## ## ## ## ##
 # LOLLIPOP CHARTS           ####
@@ -2552,6 +2638,7 @@ ggsave(g,
 
 # .. Sankey diagram by region and sector in World ####
 # HS sections
+load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg.Rdata")
 
 top_sectors <- GER_Sect_Avg %>%
@@ -2751,3 +2838,109 @@ g <- ggplot(viz,
 ggsave(g,
        file = "Figures/Sankey_Reporter Natural Resources by Partner Income Group_World.png",
        width = 6, height = 5, units = "in")
+
+
+# .. Sankey diagram by top origin and destinations in top sector ####
+load("Results/top_sectors.Rdata")
+load("Results/top_origins_sect.Rdata")
+load("Results/Summary data-sets/GER_Orig_TopSect_Avg.Rdata")
+load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
+
+# For conduits in dollar values
+for (i in 1:length(top_sectors$code)){
+  viz <- GER_Orig_Dest_TopSect_Avg %>%
+    filter(commodity.code %in% top_sectors$code[i]) %>%
+    filter(reporter.ISO %in% top_origins_sect$dollar.orig[[i]]) %>%
+    group_by(reporter.ISO, reporter) %>%
+    top_n(5, Tot_IFF) %>%
+    mutate(reporter = factor(reporter, levels = GER_Orig_Dest_TopSect_Avg %>%
+                               filter(commodity.code == top_sectors$code[i]) %>%
+                               filter(reporter.ISO %in% top_origins_sect$dollar.orig[[i]]) %>%
+                               group_by(reporter, reporter.ISO) %>%
+                               summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+                               arrange(desc(Tot_IFF)) %>%
+                               pull(reporter)))
+  
+  g <- ggplot(viz,
+              aes(y = Tot_IFF_bn, axis1 = reporter, axis2 = partner,
+                  label = after_stat(stratum))) +
+    geom_alluvium(aes(fill = reporter)) +
+    geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
+    scale_y_continuous(labels = dollar_format()) +
+    scale_fill_paletteer_d("awtools::spalette") + 
+    labs(title = top_sectors$chapter[i],
+         subtitle = "Top 5 origin countries in $ of mis-invoiced trade",
+         y = "Yearly average outflow in billion USD") +
+    theme(legend.position = "none")
+  ggsave(g,
+         file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Dollars_", top_sectors$code[i], ".png"),
+         width = 6, height = 5, units = "in")
+}
+
+# For conduits as % of GDP
+for (i in 1:length(top_sectors$code)){
+  viz <- GER_Orig_Dest_TopSect_Avg %>%
+    filter(commodity.code %in% top_sectors$code[i]) %>%
+    filter(reporter.ISO %in% top_origins_sect$GDP.orig[[i]]) %>%
+    group_by(reporter.ISO, reporter) %>%
+    top_n(5, Tot_IFF) %>%
+    mutate(reporter = factor(reporter, levels = GER_Orig_Dest_TopSect_Avg %>%
+                               filter(commodity.code == top_sectors$code[i]) %>%
+                               filter(reporter.ISO %in% top_origins_sect$GDP.orig[[i]]) %>%
+                               group_by(reporter, reporter.ISO) %>%
+                               summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+                               arrange(desc(Tot_IFF)) %>%
+                               pull(reporter)))
+
+  g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = reporter, axis2 = partner,
+                label = after_stat(stratum))) +
+    geom_alluvium(aes(fill = reporter)) +
+    geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
+    scale_y_continuous(labels = dollar_format()) +
+    scale_fill_paletteer_d("awtools::ppalette") + 
+    labs(title = top_sectors$chapter[i],
+         subtitle = "Top 5 origin countries by % of GDP",
+         y = "Yearly average outflow in billion USD") +
+    theme(legend.position = "none")
+  ggsave(g,
+         file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent GDP_", top_sectors$code[i], ".png"),
+         width = 6, height = 5, units = "in")
+}
+
+# For conduits as % of trade
+for (i in 1:length(top_sectors$code)){
+  viz <- GER_Orig_Dest_TopSect_Avg %>%
+    filter(commodity.code %in% top_sectors$code[i]) %>%
+    filter(reporter.ISO %in% top_origins_sect$trade.orig[[i]]) %>%
+    group_by(reporter.ISO, reporter) %>%
+    top_n(5, Tot_IFF) %>%
+    mutate(reporter = factor(reporter, levels = GER_Orig_Dest_TopSect_Avg %>%
+                               filter(commodity.code == top_sectors$code[i]) %>%
+                               filter(reporter.ISO %in% top_origins_sect$trade.orig[[i]]) %>%
+                               group_by(reporter, reporter.ISO) %>%
+                               summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+                               arrange(desc(Tot_IFF)) %>%
+                               pull(reporter)))
+  
+  g <- ggplot(viz,
+              aes(y = Tot_IFF_bn, axis1 = reporter, axis2 = partner,
+                  label = after_stat(stratum))) +
+    geom_alluvium(aes(fill = reporter)) +
+    geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
+    scale_y_continuous(labels = dollar_format()) +
+    scale_fill_paletteer_d("awtools::mpalette") + 
+    labs(title = top_sectors$chapter[i],
+         subtitle = "Top 5 origin countries by % of trade",
+         y = "Yearly average outflow in billion USD") +
+    theme(legend.position = "none")
+  ggsave(g,
+         file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent Trade_", top_sectors$code[i], ".png"),
+         width = 6, height = 5, units = "in")
+}
