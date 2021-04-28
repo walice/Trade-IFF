@@ -99,11 +99,11 @@ GER_Imp_Dest <- panel %>%
   ungroup()
 
 GER_Exp_Dest <- panel %>%
-  filter(pExp_IFF > 0) %>%
+  filter(Exp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 
@@ -596,11 +596,11 @@ GER_Imp_Dest <- panel %>%
   ungroup()
 
 GER_Exp_Dest <- panel %>%
-  filter(pExp_IFF < 0) %>%
+  filter(Exp_IFF < 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 
@@ -770,7 +770,7 @@ Net_Orig_Dest_Year <- panel %>%
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI,
            year) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 save(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.Rdata")
 write.csv(Net_Orig_Dest_Year, file = "Results/Summary data-sets/Net_Orig_Dest_Year.csv",
@@ -1151,27 +1151,27 @@ GER_Imp_Sect_disag <- panel %>%
   ungroup()
 
 GER_Exp_Sect_SITC <- panel %>%
-  filter(pExp_IFF > 0) %>%
+  filter(Exp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year, 
            SITC.code, SITC.section) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_Sect <- panel %>%
-  filter(pExp_IFF > 0) %>%
+  filter(Exp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year, 
            section.code, section) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 GER_Exp_Sect_disag <- panel %>%
-  filter(pExp_IFF > 0) %>%
+  filter(Exp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year, 
            commodity.code, commodity) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 
@@ -1606,11 +1606,11 @@ GER_Imp_Dest_TopSect <- panel %>%
 
 GER_Exp_Dest_TopSect <- panel %>%
   filter(commodity.code %in% top_sectors$code) %>%
-  filter(pExp_IFF > 0) %>%
+  filter(Exp_IFF > 0) %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
            year, commodity.code, commodity,
            partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
-  summarize(Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 
 
@@ -1722,7 +1722,7 @@ Net_Orig_Sect_Year <- panel %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rHDI,
            year, section.code, section) %>%
   summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
-            Exp_IFF = sum(pExp_IFF, na.rm = T)) %>%
+            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
   ungroup()
 save(Net_Orig_Sect_Year, file = "Results/Summary data-sets/Net_Orig_Sect_Year.Rdata")
 write.csv(Net_Orig_Sect_Year, file = "Results/Summary data-sets/Net_Orig_Sect_Year.csv",

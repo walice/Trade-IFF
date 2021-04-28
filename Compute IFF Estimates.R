@@ -21,7 +21,6 @@
 # .. Estimate fixed effects regression
 # .. Harmonization procedure
 # .. Compute IFF
-# .. Move export IFF to mirror
 
 
 
@@ -33,6 +32,7 @@ setwd("/home/alepissier/IFFe/") # Virtual server
 data.disk <- "/scratch/alepissier/IFFe/"
 # source("Scripts/Data Preparation.R")
 library(car)
+library(ggridges)
 library(kableExtra)
 library(lfe)
 library(reshape2)
@@ -380,65 +380,95 @@ stargazer(fit, type = "html", style = "aer",
 IFF.preds <- c("tariff", "rCorruption", "pCorruption",
                "rPoorRegulation", "pPoorRegulation")
 
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if (!(names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
+coef_illicit <- coef(fit)
+for (v in 1:length(coef_illicit)){
+  if (!(names(coef_illicit)[v] %in% IFF.preds)){
+    coef_illicit[v] <- 0
   }
 }
-coef
-panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+coef_illicit
+panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef_illicit))
 mean(panel$fitted_IFF)
 # 0.964646
 
-coef <- coef(fit)
-for (v in 1:length(coef)){
-  if ((names(coef)[v] %in% IFF.preds)){
-    coef[v] <- 0
+coef_licit <- coef(fit)
+for (v in 1:length(coef_licit)){
+  if ((names(coef_licit)[v] %in% IFF.preds)){
+    coef_licit[v] <- 0
   }
 }
-coef
-panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef))
+coef_licit
+panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef_licit))
 mean(panel$fitted_nonIFF)
 # 3.619048
 
-rm(coef, d, v, IFF.preds)
+mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) + 
+      log(exp(model.matrix(fit) %*% coef_illicit))))
+# 3.522114
+
+round(mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) + 
+           log(exp(model.matrix(fit) %*% coef_illicit)))), 10) ==
+  round(mean(exp(fitted(fit))), 10)
+# TRUE
+
+rm(coef_licit, coef_illicit, d, v, IFF.preds)
 
 
 # .. Compute FOB imports ####
 summary(panel$fitted_IFF)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 0.1105  0.9153  0.9651  0.9646  1.0108  1.1329 
 summary(panel$fitted_nonIFF)
+# Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+# 0.00      0.85      1.23      3.62      1.87 179466.60 
 
 panel <- panel %>%
   mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+         FOB_Import_IFF = Import_value / fitted_IFF,
+         pFOB_Import = pImport_value / fitted_nonIFF)
 
 
 # .. Estimate fixed effects regression ####
 panel <- panel %>%
-  mutate(rep_dist = abs(log(FOB_Import/pNetExport_value))) %>%
-  filter(is.finite(rep_dist))
+  mutate(M_dist = abs(log(FOB_Import/pNetExport_value))) %>%
+  filter(is.finite(M_dist)) %>%
+  mutate(X_dist = abs(log(pFOB_Import/NetExport_value))) %>%
+  filter(is.finite(X_dist))
 nrow(panel)
-# 5036248
+# 2952456
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
             funs(as.factor(.)))
 
-FE.out <- felm(rep_dist ~ 0| reporter.ISO + 
-                 partner.ISO + year,
-               data = panel)
-FE <- getfe(FE.out, se = T)
-save(FE, file = "Results/FE.Rdata")
-load("Results/FE.Rdata")
+FE_M.out <- felm(M_dist ~ 0| reporter.ISO + partner.ISO + year,
+                 data = panel)
+FE_M <- getfe(FE_M.out, se = T)
+save(FE_M, file = "Results/FE_M.Rdata")
 
-FE <- FE %>%
+FE_X.out <- felm(X_dist ~ 0| reporter.ISO + partner.ISO + year,
+                 data = panel)
+FE_X <- getfe(FE_X.out, se = T)
+save(FE_X, file = "Results/FE_X.Rdata")
+
+load("Results/FE_M.Rdata")
+load("Results/FE_X.Rdata")
+
+FE_M <- FE_M %>%
   group_by(fe) %>%
   mutate(min = min(effect)) %>%
   ungroup()
 
-FE$sigma <- pi/2*(FE$effect - (FE$min + 2*FE$se))
-attr(FE$sigma, "extra") <- NULL
+FE_M$sigma <- pi/2*(FE_M$effect - (FE_M$min + 2*FE_M$se))
+attr(FE_M$sigma, "extra") <- NULL
+
+FE_X <- FE_X %>%
+  group_by(fe) %>%
+  mutate(min = min(effect)) %>%
+  ungroup()
+
+FE_X$sigma <- pi/2*(FE_X$effect - (FE_X$min + 2*FE_X$se))
+attr(FE_X$sigma, "extra") <- NULL
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -446,83 +476,93 @@ panel <- panel %>%
 
 
 # .. Harmonization procedure ####
-panel <- left_join(panel, FE %>% 
+panel <- left_join(panel, FE_M %>% 
                      filter(fe == "reporter.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("reporter.ISO" = "idx")) %>%
-  rename(rSigma = sigma)
+  rename(rSigma_M = sigma)
 
-panel <- left_join(panel, FE %>% 
+panel <- left_join(panel, FE_M %>% 
                      filter(fe == "partner.ISO") %>%
                      select(idx, sigma) %>%
                      mutate(idx = as.character(idx)),
                    by = c("partner.ISO" = "idx")) %>%
-  rename(pSigma = sigma)
+  rename(pSigma_M = sigma)
+
+panel <- left_join(panel, FE_X %>% 
+                     filter(fe == "reporter.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("reporter.ISO" = "idx")) %>%
+  rename(rSigma_X = sigma)
+
+panel <- left_join(panel, FE_X %>% 
+                     filter(fe == "partner.ISO") %>%
+                     select(idx, sigma) %>%
+                     mutate(idx = as.character(idx)),
+                   by = c("partner.ISO" = "idx")) %>%
+  rename(pSigma_X = sigma)
 
 panel <- panel %>%
-  mutate(w_r = (exp(rSigma^2)*(exp(rSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)),
-         w_p = (exp(pSigma^2)*(exp(pSigma^2) - 1))/(exp(rSigma^2)*(exp(rSigma^2)- 1) + exp(pSigma^2)*(exp(pSigma^2) - 1)))
-summary(panel$w_r)
-summary(panel$w_p)
+  mutate(w_r_M = (exp(rSigma_M^2)*(exp(rSigma_M^2) - 1))/
+           (exp(rSigma_M^2)*(exp(rSigma_M^2)- 1) + 
+              exp(pSigma_M^2)*(exp(pSigma_M^2) - 1)),
+         w_p_M = (exp(pSigma_M^2)*(exp(pSigma_M^2) - 1))/
+           (exp(rSigma_M^2)*(exp(rSigma_M^2)- 1) + 
+              exp(pSigma_M^2)*(exp(pSigma_M^2) - 1)))
+summary(panel$w_r_M)
+summary(panel$w_p_M)
 
 panel <- panel %>%
-  mutate(w = w_r + w_p)
-summary(panel$w)
+  mutate(w_r_X = (exp(rSigma_X^2)*(exp(rSigma_X^2) - 1))/
+           (exp(rSigma_X^2)*(exp(rSigma_X^2)- 1) + 
+              exp(pSigma_X^2)*(exp(pSigma_X^2) - 1)),
+         w_p_X = (exp(pSigma_X^2)*(exp(pSigma_X^2) - 1))/
+           (exp(rSigma_X^2)*(exp(rSigma_X^2)- 1) + 
+              exp(pSigma_X^2)*(exp(pSigma_X^2) - 1)))
+summary(panel$w_r_X)
+summary(panel$w_p_X)
+
+ggplot(data = panel %>%
+         select(starts_with("w_r") | starts_with("w_p")) %>%
+         melt(),
+       aes(x = value, y = variable)) +
+  geom_density_ridges()
+
+panel %>%
+  select(starts_with("w_r") | starts_with("w_p")) %>%
+  melt() %>%
+  count(variable)
 
 panel <- panel %>%
-  mutate(RV = w_r*FOB_Import + w_p*pNetExport_value)
+  mutate(w_M = w_r_M + w_p_M,
+         w_X = w_r_X + w_p_X)
+summary(panel$w_M)
+summary(panel$w_X)
+
+panel <- panel %>%
+  mutate(RV_M = w_r_M*FOB_Import + w_p_M*pNetExport_value,
+         RV_X = w_p_X*pFOB_Import + w_r_X*NetExport_value)
 
 
 # .. Compute IFF ####
 panel <- panel %>%
-  mutate(Imp_IFF = FOB_Import_IFF - RV,
-         Exp_IFF = RV - pNetExport_value)
+  mutate(Imp_IFF = FOB_Import_IFF - RV_M,
+         Exp_IFF = RV_X - NetExport_value)
 summary(panel$Imp_IFF)
 summary(panel$Exp_IFF)
 
-
-# .. Move export IFF to mirror ####
-panel_mirror <- panel %>%
-  select(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
-         partner, partner.ISO, pRegion, pIncome, pDev, pHDI,
-         commodity.code, year,
-         section.code, section,
-         SITC.code, SITC.section,
-         Exp_IFF)
-
-panel_mirror$id <- paste(panel_mirror$partner.ISO,
-                         panel_mirror$reporter.ISO,
-                         panel_mirror$commodity.code,
-                         panel_mirror$year, sep = "_")
-
-panel_mirror <- panel_mirror %>%
-  rename(pExp_IFF = Exp_IFF)
-
-panel <- full_join(panel, panel_mirror,
-                   by = c("id" = "id",
-                          "reporter" = "partner",
-                          "reporter.ISO" = "partner.ISO",
-                          "rRegion" = "pRegion",
-                          "rIncome" = "pIncome",
-                          "rDev" = "pDev",
-                          "rHDI" = "pHDI",
-                          "partner.ISO" = "reporter.ISO",
-                          "partner" = "reporter",
-                          "pRegion" = "rRegion",
-                          "pIncome" = "rIncome",
-                          "pDev" = "rDev",
-                          "pHDI" = "rHDI",
-                          "year" = "year",
-                          "commodity.code" = "commodity.code",
-                          "section.code" = "section.code",
-                          "section" = "section",
-                          "SITC.code" = "SITC.code",
-                          "SITC.section" = "SITC.section"))
+ggplot(data = panel %>%
+         select(c(Imp_IFF, Exp_IFF)) %>%
+         melt(),
+       aes(x = value, y = variable)) +
+  geom_density_ridges()
 
 panel %>%
   filter(duplicated(panel$id)) %>% nrow
 # 0
-rm(panel_mirror, FE, FE.out, fit)
+# rm(panel_mirror, FE, FE.out, fit)
+rm(fit, FE_M, FE_X, FE_M.out, FE_X.out)
 
 save(panel, file = "Results/panel_results.Rdata")
