@@ -11,7 +11,7 @@
 # .. Create dependent variable and predictors
 # .. Variable transformation
 # Remove Outliers
-# .. Truncate panel and remove CIF ratios greater than 10,000 (not used)
+# .. Truncate panel and remove CIF ratios greater than 10,000
 # .. Estimate regression
 # .. Identify and remove outliers
 # Mis-Invoicing Estimates
@@ -176,7 +176,7 @@ save(panel, file = paste0(data.disk, "Data/Panel/panel_clean.Rdata"))
 # REMOVE OUTLIERS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-# .. Truncate panel and remove CIF ratios greater than 10,000 (not used) ####
+# .. Truncate panel and remove CIF ratios greater than 10,000 ####
 summary(panel$ratio_CIF)
 
 panel %>% filter(ratio_CIF > 10^4) %>% nrow
@@ -184,6 +184,10 @@ panel %>% filter(ratio_CIF > 10^4) %>% nrow
 panel %>% filter(ratio_CIF > 10^3) %>% nrow
 # 32947
 
+panel <- panel %>% 
+  filter(ratio_CIF < 10^4)
+nrow(panel)
+# 5036241
 
 # .. Estimate regression ####
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
@@ -199,11 +203,11 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
           data = panel)
 summary(fit)
 mean(exp(fitted(fit)))
-# 3.60618
+# 2.889623
 max(panel$ratio_CIF)
-# 2354224577
+# 9997.875
 mean(panel$ratio_CIF)
-# 2874.508
+# 23.83762
 
 
 # .. Identify and remove outliers ####
@@ -227,19 +231,19 @@ while(max(panel$CD) > 2){
   panel$CD <- cooks.distance(fit)
 }
 nrow(panel)
-# 5044407
+# 5036241
 summary(panel$CD)
 
 Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 2082723
+# 1898.957
 mean(panel$ratio_CIF)
-# 2874.508
+# 23.83762
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 154.6712
+# 22.31879
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
@@ -256,12 +260,12 @@ Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 39536.62
+# 1950.425
 mean(panel$ratio_CIF)
-# 154.6712
+# 22.31879
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 144.3341
+# 22.06319
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
@@ -278,60 +282,16 @@ Bonferonni.out <- outlierTest(fit, n.max = 10000)
 obs <- as.numeric(names(Bonferonni.out[[1]]))
 outliers <- panel[c(obs), ]
 mean(outliers$ratio_CIF)
-# 27220.22
+# 1692.328
 mean(panel$ratio_CIF)
-# 144.3341
+# 22.06319
 panel <- panel[-c(obs),]
 mean(panel$ratio_CIF)
-# 143.2105
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 332405.6
-mean(panel$ratio_CIF)
-# 143.2105
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 141.0333
-
-fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
-            contig + 
-            rLandlocked +
-            pLandlocked +
-            ln.FutImport_misrep +
-            ihs.ReExport_misrep +
-            ln.ratio_CIF_lag +
-            tariff + 
-            rCorruption + pCorruption +
-            rPoorRegulation + pPoorRegulation,
-          data = panel)
-Bonferonni.out <- outlierTest(fit, n.max = 10000)
-obs <- as.numeric(names(Bonferonni.out[[1]]))
-outliers <- panel[c(obs), ]
-mean(outliers$ratio_CIF)
-# 13789.47
-mean(panel$ratio_CIF)
-# 141.0333
-panel <- panel[-c(obs),]
-mean(panel$ratio_CIF)
-# 141.0144
+# 22.03199
 
 rm(Bonferonni.out, outliers, obs)
 nrow(panel)
-# 5036248
+# 5031404
 save(panel, file = paste0(data.disk, "Data/Panel/panel_nooutliers.Rdata"))
 
 
@@ -344,9 +304,11 @@ save(panel, file = paste0(data.disk, "Data/Panel/panel_nooutliers.Rdata"))
 load(paste0(data.disk, "Data/Panel/panel_nooutliers.Rdata"))
 
 nrow(panel)
-# 5036248
+# 5031404
 max(panel$ratio_CIF)
-# 52568627
+# 9997.875
+hist(panel$ratio_CIF)
+summary(panel$ratio_CIF)
 
 fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
             contig + 
@@ -361,7 +323,7 @@ fit <- lm(ln.ratio_CIF ~ dist + dist.sq +
           data = panel)
 summary(fit)
 mean(exp(fitted(fit)))
-# 3.522114
+# 2.911786
 
 d <- panel %>% distinct(dist) %>%
   mutate(y = coef(fit)["dist"]*dist + coef(fit)["dist.sq"]*dist^2)
@@ -389,7 +351,7 @@ for (v in 1:length(coef_illicit)){
 coef_illicit
 panel$fitted_IFF <- as.numeric(exp(model.matrix(fit) %*% coef_illicit))
 mean(panel$fitted_IFF)
-# 0.964646
+# 0.96287
 
 coef_licit <- coef(fit)
 for (v in 1:length(coef_licit)){
@@ -400,11 +362,11 @@ for (v in 1:length(coef_licit)){
 coef_licit
 panel$fitted_nonIFF <- as.numeric(exp(model.matrix(fit) %*% coef_licit))
 mean(panel$fitted_nonIFF)
-# 3.619048
+# 3.003253
 
 mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) + 
       log(exp(model.matrix(fit) %*% coef_illicit))))
-# 3.522114
+# 2.911786
 
 round(mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) + 
            log(exp(model.matrix(fit) %*% coef_illicit)))), 10) ==
@@ -417,15 +379,15 @@ rm(coef_licit, coef_illicit, d, v, IFF.preds)
 # .. Compute FOB imports ####
 summary(panel$fitted_IFF)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-# 0.1105  0.9153  0.9651  0.9646  1.0108  1.1329 
+# 0.1041  0.9135  0.9633  0.9629  1.0092  1.1295 
 summary(panel$fitted_nonIFF)
-# Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-# 0.00      0.85      1.23      3.62      1.87 179466.60 
+# Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+# 0.00     0.85     1.23     3.00     1.84 78169.02 
 
 panel <- panel %>%
   mutate(FOB_Import = Import_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF,
-         pFOB_Import = pImport_value / fitted_nonIFF)
+         pFOB_Import = pImport_value / fitted_nonIFF,
+         FOB_Import_IFF = Import_value / fitted_IFF)
 
 
 # .. Estimate fixed effects regression ####
@@ -435,7 +397,7 @@ panel <- panel %>%
   mutate(X_dist = abs(log(pFOB_Import/NetExport_value))) %>%
   filter(is.finite(X_dist))
 nrow(panel)
-# 2952456
+# 2949579
 
 panel <- panel %>%
   mutate_at(vars(reporter.ISO, partner.ISO, year),
@@ -562,7 +524,6 @@ ggplot(data = panel %>%
 panel %>%
   filter(duplicated(panel$id)) %>% nrow
 # 0
-# rm(panel_mirror, FE, FE.out, fit)
 rm(fit, FE_M, FE_X, FE_M.out, FE_X.out)
 
 save(panel, file = "Results/panel_results.Rdata")
