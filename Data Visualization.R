@@ -514,6 +514,46 @@ ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
+# Imports and Exports, GER and Net, dollar value in 2005
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
+                       variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF" |
+                       variable == "Net_Imp_IFF" | variable == "Net_Exp_IFF") %>%
+              mutate(flowtype = ifelse(str_detect(variable, "Imp"), 
+                                       "Imports", "Exports")) %>%
+              mutate(flowtype = fct_rev(flowtype)) %>%
+              filter(year == 2005), 
+            aes(x = year, y = value, fill = fct_relevel(variable,
+                                                        "GER_Imp_IFF",
+                                                        "In_GER_Imp_IFF",
+                                                        "Net_Imp_IFF",
+                                                        "GER_Exp_IFF",
+                                                        "In_GER_Exp_IFF",
+                                                        "Net_Exp_IFF"))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  scale_fill_brewer(name = "Flow type",
+                    labels = c("Outflows in Imports",
+                               "Inflows in Imports",
+                               "Net flows in Imports",
+                               "Outflows in Exports",
+                               "Inflows in Exports",
+                               "Net flows in Exports"),
+                    type = "qual", palette = "Set2") +
+  facet_wrap(~flowtype) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing globally in 2005",
+       subtitle = "Net and gross flows in imports and exports",
+       x = "", y = "Illicit flow in billion USD") +
+  geom_text(aes(label = round(value/10^9)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.05, 0.05))
+ggsave(g,
+       file = "Figures/GER and Net Imports, Exports_2005_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. GER In/Out and Net ($ value) in World ####
 # Yearly bar chart, GER Outflows/Inflows in Imports/Exports and Net, dollar value
