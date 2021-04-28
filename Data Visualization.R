@@ -14,8 +14,8 @@
 # .. GER In/Out and Net ($ value) in LMIC
 # .. Developing
 # .. Low HDI
-# .. GER and Net ($ value) in World
-# .. Imports and Exports ($ value) in World
+# .. World
+# .. GER In/Out and Net ($ value) in World
 # Line Charts
 # .. Line chart for conduits in Africa
 # .. Line chart for conduits in LMIC
@@ -191,29 +191,6 @@ ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
-# Stacked area, Imports and Exports, GER In and Out, dollar value
-g <- ggplot(viz %>%
-              melt(id.vars = "year") %>%
-              filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
-                       variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF"),
-            aes(x = year, y = value, fill = variable)) +
-  geom_area() +
-  scale_x_continuous(breaks = viz$year) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Make-up of trade mis-invoicing in Africa",
-       subtitle = "Negative values represent inflows",
-       x = "", y = "Illicit flow in billion USD") +
-  scale_fill_brewer(name = "Flow type",
-                    labels = c("Outflows in Imports",
-                               "Outflows in Exports",
-                               "Inflows in Imports",
-                               "Inflows in Exports"),
-                    type = "qual", palette = "Dark2")
-ggsave(g,
-       file = "Figures/GER Flow Composition_Yearly_Dollars_Africa.png",
-       width = 6, height = 5, units = "in")
-
 
 # .. LMIC ####
 load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
@@ -303,45 +280,22 @@ ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_LMIC.png",
        width = 6, height = 5, units = "in")
 
-# Stacked area, Imports and Exports, GER In and Out, dollar value
-g <- ggplot(viz %>%
-              melt(id.vars = "year") %>%
-              filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
-                       variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF"),
-            aes(x = year, y = value, fill = variable)) +
-  geom_area() +
-  scale_x_continuous(breaks = viz$year) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Make-up of trade mis-invoicing in low and lower-middle",
-       subtitle = "Negative values represent inflows",
-       x = "", y = "Illicit flow in billion USD") +
-  scale_fill_brewer(name = "Flow type",
-                    labels = c("Outflows in Imports",
-                               "Outflows in Exports",
-                               "Inflows in Imports",
-                               "Inflows in Exports"),
-                    type = "qual", palette = "Dark2")
-ggsave(g,
-       file = "Figures/GER Flow Composition_Yearly_Dollars_LMIC.png",
-       width = 6, height = 5, units = "in")
-
 
 # .. GER In/Out and Net ($ value) in LMIC ####
 # GER In, GER Out and Net dollar value
-g <- ggplot(viz %>% 
-              mutate(year = as.character(year)) %>% 
+g <- ggplot(viz %>%
+              mutate(year = as.character(year)) %>%
               melt(id.vars = "year") %>%
-              filter(variable == "Net_Tot_IFF" | 
+              filter(variable == "Net_Tot_IFF" |
                        variable == "GER_Tot_IFF" |
-                       variable == "In_GER_Tot_IFF"), 
+                       variable == "In_GER_Tot_IFF"),
             aes(x = year, y = value, fill = fct_relevel(variable,
                                                         "GER_Tot_IFF",
                                                         "In_GER_Tot_IFF",
                                                         "Net_Tot_IFF"))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_brewer(name = "Estimate", 
+  scale_fill_brewer(name = "Estimate",
                     labels = c("Gross outflows", "Gross inflows", "Net flows"),
                     type = "qual", palette = "Set2", direction = -1) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
@@ -510,7 +464,7 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. GER and Net ($ value) in World ####
+# .. World ####
 load("Results/Summary data-sets/GER_Year.Rdata")
 load("Results/Summary data-sets/Inflow_GER_Year.Rdata")
 load("Results/Summary data-sets/Net_Year.Rdata")
@@ -561,71 +515,77 @@ ggsave(g,
        width = 6, height = 5, units = "in")
 
 
-# .. Imports and Exports ($ value) in World ####
-# Imports and Exports, GER and Net, dollar value in 2005
-g <- ggplot(viz %>% 
-              mutate(year = as.character(year)) %>% 
-              melt(id.vars = "year") %>%
-              filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
-                       variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF" |
-                       variable == "Net_Imp_IFF" | variable == "Net_Exp_IFF") %>%
-              mutate(flowtype = ifelse(str_detect(variable, "Imp"), 
-                                       "Imports", "Exports")) %>%
-              mutate(flowtype = fct_rev(flowtype)) %>%
-              filter(year == 2005), 
-            aes(x = year, y = value, fill = fct_relevel(variable,
-                                                        "GER_Imp_IFF",
-                                                        "In_GER_Imp_IFF",
-                                                        "Net_Imp_IFF",
-                                                        "GER_Exp_IFF",
-                                                        "In_GER_Exp_IFF",
-                                                        "Net_Exp_IFF"))) +
-  geom_bar(position = "dodge", stat = "identity") +
+# .. GER In/Out and Net ($ value) in World ####
+# Yearly bar chart, GER Outflows/Inflows in Imports/Exports and Net, dollar value
+barwidth <- 0.4
+viz <- viz %>% 
+  mutate(year = as.character(year)) %>% 
+  melt(id.vars = "year") %>%
+  filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
+           variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF" |
+           variable == "Net_Tot_IFF") %>%
+  mutate(estimate = ifelse(str_detect(variable, "GER"),
+                           "Gross", "Net")) %>%
+  mutate(year = as.numeric(year)) %>%
+  mutate(variable = fct_drop(variable)) %>%
+  mutate(variable = fct_relevel(variable,
+                                "GER_Imp_IFF",
+                                "GER_Exp_IFF",
+                                "In_GER_Imp_IFF",
+                                "In_GER_Exp_IFF",
+                                "Net_Tot_IFF"))
+g <- ggplot() + 
+  geom_bar(data = viz %>%
+             filter(estimate == "Gross"), 
+           aes(x = year - barwidth/2, y = value,
+               fill = variable), 
+           stat = "identity", 
+           position = "stack", 
+           width = barwidth) + 
+  geom_text(data = viz %>%
+              filter(estimate == "Gross") %>%
+              filter(!str_detect(variable, "In")) %>%
+              group_by(year) %>%
+              summarize(value = sum(value, na.rm = T)),
+            aes(x = year - barwidth/2,
+                y = value,
+                label = round(value/10^9)),
+            size = 2.5, vjust = -0.4) +
+  geom_bar(data = viz %>%
+             filter(estimate == "Net"), 
+           aes(x = year + barwidth/2, y = value, 
+               fill = variable), 
+           stat = "identity", 
+           position = "stack", 
+           width = barwidth) +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_brewer(name = "Flow type",
-                    labels = c("Outflows in Imports",
-                               "Inflows in Imports",
-                               "Net flows in Imports",
-                               "Outflows in Exports",
-                               "Inflows in Exports",
-                               "Net flows in Exports"),
-                    type = "qual", palette = "Set2") +
-  facet_wrap(~flowtype) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Trade mis-invoicing globally in 2005",
-       subtitle = "Net and gross flows in imports and exports",
-       x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
-  scale_x_discrete(expand = c(0.05, 0.05))
-ggsave(g,
-       file = "Figures/GER and Net Imports, Exports_2005_Dollars_World.png",
-       width = 6, height = 5, units = "in")
-
-# Stacked area, Imports and Exports, GER In and Out, dollar value
-g <- ggplot(viz %>%
-              melt(id.vars = "year") %>%
-              filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
-                       variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF"),
-       aes(x = year, y = value, fill = variable)) +
-  geom_area() +
-  scale_x_continuous(breaks = viz$year) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Make-up of trade mis-invoicing globally",
+  geom_text(data = viz %>%
+              filter(estimate == "Net") %>%
+              group_by(year) %>%
+              summarize(value = sum(value, na.rm = T)),
+            aes(x = year + barwidth/2,
+                y = value,
+                label = round(value/10^9)),
+            size = 2.5, vjust = -0.4) +
+  scale_x_continuous(breaks = seq(2000, 2018)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.minor = element_blank()) +
+  scale_fill_paletteer_d("NineteenEightyR::malibu",
+                         name = "Flow type",
+                         labels = c("Outflows in Exports",
+                                    "Outflows in Imports",
+                                    "Inflows in Exports",
+                                    "Inflows in Imports",
+                                    "Net flows")) +
+  labs(title = "Gross and net mis-invoicing flows globally",
        subtitle = "Negative values represent inflows",
-       x = "", y = "Illicit flow in billion USD") +
-  scale_fill_brewer(name = "Flow type",
-                    labels = c("Outflows in Imports",
-                               "Outflows in Exports",
-                               "Inflows in Imports",
-                               "Inflows in Exports"),
-                    type = "qual", palette = "Dark2")
+       x = "", y = "Illicit flow in billion USD")
 ggsave(g,
-       file = "Figures/GER Flow Composition_Yearly_Dollars_World.png",
+       file = "Figures/GER and Net Imports, Exports_Yearly_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
-# Imports and Exports, GER and Net, dollar value, sum the country averages across the years
+# Facet graph average, GER Outflows/Inflows in Imports/Exports and Net, dollar value
+# Sum the country averages across the years
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
@@ -676,6 +636,7 @@ ggsave(g,
        file = "Figures/GER and Net Imports, Exports_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
+# Facet graph average, GER Outflows/Inflows in Imports/Exports and Net, dollar value
 # Instead of summing up the country averages, take the yearly average of the sums
 load("Results/Summary data-sets/GER_Year.Rdata")
 load("Results/Summary data-sets/Inflow_GER_Year.Rdata")
@@ -2349,8 +2310,8 @@ for (i in 1:length(top_sectors$code)){
     guides(col = FALSE, fill = FALSE) +
     scale_color_manual(values = carto_pal(10, "Vivid")) +
     scale_fill_manual(values = carto_pal(10, "Vivid")) +
-    labs(title = paste("Destinations of top origins in", top_sectors$chapter[i]),
-         subtitle = "Top 5 origin countries by % of GDP")
+    labs(title = top_sectors$chapter[i],
+         subtitle = "Top 5 destinations of top 5 origin countries by % of GDP")
   ggsave(g,
          file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_", top_sectors$code[i], ".png"),
          width = 6, height = 5, units = "in")
