@@ -399,16 +399,16 @@ panel <- panel %>%
 nrow(panel)
 # 2887762
 
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.factor(.)))
+# panel <- panel %>%
+#   mutate_at(vars(reporter.ISO, partner.ISO, year),
+#             ~ as.factor(.))
 
-FE_M.out <- felm(M_dist ~ 0| reporter.ISO + partner.ISO + year,
+FE_M.out <- felm(M_dist ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
                  data = panel)
 FE_M <- getfe(FE_M.out, se = T)
 save(FE_M, file = "Results/FE_M.Rdata")
 
-FE_X.out <- felm(X_dist ~ 0| reporter.ISO + partner.ISO + year,
+FE_X.out <- felm(X_dist ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
                  data = panel)
 FE_X <- getfe(FE_X.out, se = T)
 save(FE_X, file = "Results/FE_X.Rdata")
@@ -432,9 +432,9 @@ FE_X <- FE_X %>%
 FE_X$sigma <- pi/2*(FE_X$effect - (FE_X$min + 2*FE_X$se))
 attr(FE_X$sigma, "extra") <- NULL
 
-panel <- panel %>%
-  mutate_at(vars(reporter.ISO, partner.ISO, year),
-            funs(as.character(.)))
+# panel <- panel %>%
+#   mutate_at(vars(reporter.ISO, partner.ISO, year),
+#             ~ as.character(.))
 
 
 # .. Harmonization procedure ####
