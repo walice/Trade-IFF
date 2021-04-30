@@ -1060,6 +1060,40 @@ ggsave(g,
        file = "Figures/Choro_Net_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
+# Average net IFF as % of GDP
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_GDP*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_distiller(name = "IFF (% GDP)", 
+                       type = "div", palette = "Spectral") +
+  labs(title = "Average annual net outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_Net_Yearly Average_Percent GDP_World.png",
+       width = 6, height = 5, units = "in")
+
+# Average net IFF as % of trade
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_trade*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_distiller(name = "IFF (% trade)", 
+                       type = "div", palette = "Spectral") +
+  labs(title = "Average annual net outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_Net_Yearly Average_Percent Trade_World.png",
+       width = 6, height = 5, units = "in")
+
 # Average gross inflow IFF dollar value
 load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 
