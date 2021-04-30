@@ -1038,6 +1038,59 @@ ggsave(g,
        file = "Figures/Choro_GER Out_Yearly Average_Percent Trade_World.png",
        width = 6, height = 5, units = "in")
 
+load("Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
+
+viz <- left_join(map, GER_Orig_Avg_last3,
+                 by = c("ISO3166.3" = "reporter.ISO"))
+
+# Average gross IFF dollar value, last 3 years
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
+  labs(title = "Average annual gross outflows during 2016-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Last 3 Yearly Average_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
+# Average gross IFF as % of GDP, last 3 years
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_GDP*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
+  labs(title = "Average annual gross outflows during 2016-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Last 3 Yearly Average_Percent GDP_World.png",
+       width = 6, height = 5, units = "in")
+
+# Average gross IFF as % of trade, last 3 years
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_trade*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (% trade)", direction = -1) +
+  labs(title = "Average annual gross outflows during 2016-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Last 3 Yearly Average_Percent Trade_World.png",
+       width = 6, height = 5, units = "in")
+
 # Average net IFF dollar value
 load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
 
@@ -1461,6 +1514,27 @@ ggsave(g,
        file = "Figures/Treemap sectors_Yearly Average_World.png",
        width = 6, height = 5, units = "in")
 
+# HS sections, last 3 years
+load("Results/Summary data-sets/GER_Sect_Avg_last3.Rdata")
+
+g <- ggplot(GER_Sect_Avg_last3 %>%
+              arrange(desc(Tot_IFF_bn)),
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_last3,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", size = 12) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = tol21rainbow) +
+  labs(title = "Top sectors globally",
+       subtitle = "Average gross yearly outflow during 2016-2018")
+ggsave(g,
+       file = "Figures/Treemap sectors_Last 3 Yearly Average_World.png",
+       width = 6, height = 5, units = "in")
+
 # SITC sectors
 load("Results/Summary data-sets/GER_Sect_Avg_SITC.Rdata")
 
@@ -1583,7 +1657,10 @@ ggsave(g,
 # .. Horizontal stacked bar charts of top sectors in conduits ####
 load("Results/Summary data-sets/GER_Orig_Sect_Avg.Rdata")
 load("Results/Summary data-sets/GER_Orig_Sect_Avg_SITC.Rdata")
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_last3.Rdata")
+load("Results/Summary data-sets/GER_Orig_Sect_Avg_last3_SITC.Rdata")
 
+# Conduits, average 2000-2018
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 conduits_Africa <- GER_Orig_Avg %>%
   filter(rRegion == "Africa") %>%
@@ -1612,6 +1689,13 @@ conduits_World <- GER_Orig_Avg %>%
   select(reporter.ISO) %>%
   pull
 
+# Conduits, last 3 years
+load("Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
+conduits_World_last3 <- GER_Orig_Avg_last3 %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(10) %>%
+  select(reporter.ISO) %>%
+  pull
 
 # Africa
 top <- GER_Orig_Sect_Avg %>%
@@ -1738,6 +1822,35 @@ ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
+# World, last 3 years
+top <- GER_Orig_Sect_Avg_last3_SITC %>%
+  filter(reporter.ISO %in% conduits_World_last3) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  arrange(Tot_IFF) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg_last3_SITC %>%
+  filter(reporter.ISO %in% conduits_World_last3) %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+            aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top SITC sectors in conduit countries globally",
+       subtitle = "Yearly average outflows during 2016-2018",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_disco(palette = "rainbow") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Stacked_Top SITC sectors in GDP conduits_Last 3 Yearly Average_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. Stacked bar charts of top yearly average destinations in groups ####
 # Africa
@@ -1776,6 +1889,25 @@ g <- ggplot(GER_Dest_Avg_LMIC %>%
         axis.ticks = element_blank())
 ggsave(g,
        file = "Figures/Stacked_Top 10 destinations_Yearly Average_Dollars_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+# LMIC, last 3 years
+load("Results/Summary data-sets/GER_Dest_Avg_last3_LMIC.Rdata")
+
+g <- ggplot(GER_Dest_Avg_last3_LMIC %>%
+              top_n(10, Tot_IFF),
+            aes(x = "", y = Tot_IFF/10^9, fill = fct_reorder(partner, Tot_IFF, .desc = T))) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  labs(x = NULL, y = NULL, fill = NULL, 
+       title = "Top 10 destinations from low & lower-middle income countries",
+       subtitle = "Yearly average outflows during 2016-2018") +
+  theme_classic() +
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank())
+ggsave(g,
+       file = "Figures/Stacked_Top 10 destinations_Last 3 Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # Developing

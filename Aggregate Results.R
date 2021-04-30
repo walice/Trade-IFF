@@ -12,10 +12,13 @@
 # .. GER Import/Export IFF for Reporter-Partner-Year
 # .. GER IFF for Reporter-Year (sum over Partner)
 # .. GER IFF for Reporter (sum over Partner, average across Year)
+# .. GER IFF for Reporter (sum over Partner, average across recent Years)
 # .. GER IFF for Reporter (sum over Partner, sum over Year)
 # .. GER IFF for Reporter-Partner (average across Year)
+# .. GER IFF for Reporter-Partner (average across recent Years)
 # .. GER IFF for Reporter-Partner (sum over Year)
 # .. GER IFF for Partner (sum over Reporter, average across Year)
+# .. GER IFF for Partner (sum over Reporter, average across recent Years)
 # .. GER IFF for Partner (sum over Reporter, sum over Year)
 # .. Total GER IFF outflows per year
 # .. Headline: cumulative GER IFF during 2000-2018
@@ -40,9 +43,11 @@
 # .. Aggregate outflows using Gross Excluding Reversals
 # .. GER Import/Export IFF for Reporter-Sector-Year
 # .. GER IFF for Reporter-Sector (average across Year)
+# .. GER IFF for Reporter-Sector (average across recent Years)
 # .. GER IFF for Reporter-Sector (sum over Year)
 # .. GER IFF for Sector-Year (sum over Reporter)
 # .. GER IFF for Sector (sum over Reporter, average across Year)
+# .. GER IFF for Sector (sum over Reporter, average across recent Years)
 # .. GER IFF for Sector (sum over Reporter, sum over Year)
 # GER Out for Top Sectors
 # .. Aggregate outflows using Gross Excluding Reversals
@@ -257,6 +262,31 @@ write.csv(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_Lo
           row.names = F)
 
 
+# .. GER IFF for Reporter (sum over Partner, average across recent Years) ####
+missing <- right_join(GER_Orig_Year, GER_Orig_Year %>% 
+                        expand(reporter.ISO, year),
+                      by = c("reporter.ISO", "year")) %>%
+  filter(year >= 2016) %>%
+  group_by(reporter.ISO) %>% 
+  summarize(missing = sum(is.na(reporter))) %>%
+  filter(missing == 3) %>%
+  pull(reporter.ISO)
+
+GER_Orig_Avg_last3 <- GER_Orig_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
+  top_n(3, year) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T),
+            Tot_IFF = mean(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = mean(Tot_IFF_bn, na.rm = T),
+            Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
+            Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
+  ungroup()
+save(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
+write.csv(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.csv",
+          row.names = F)
+
+
 # .. GER IFF for Reporter (sum over Partner, sum over Year) ####
 GER_Orig_Sum <- GER_Orig_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
@@ -349,6 +379,30 @@ write.csv(GER_Orig_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_D
           row.names = F)
 
 
+# .. GER IFF for Reporter-Partner (average across recent Years) ####
+GER_Orig_Dest_Avg_last3 <- GER_Orig_Dest_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, 
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  top_n(3, year) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+save(GER_Orig_Dest_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_last3.Rdata")
+write.csv(GER_Orig_Dest_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_last3.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Orig_Dest_Avg_last3_LMIC <- GER_Orig_Dest_Avg_last3 %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rIncome)
+save(GER_Orig_Dest_Avg_last3_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_last3_LMIC.Rdata")
+write.csv(GER_Orig_Dest_Avg_last3_LMIC, file = "Results/Summary data-sets/GER_Orig_Dest_Avg_last3_LMIC.csv",
+          row.names = F)
+
+
 # .. GER IFF for Reporter-Partner (sum over Year) ####
 GER_Orig_Dest_Sum <- GER_Orig_Dest_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
@@ -426,6 +480,31 @@ GER_Dest_Avg_LowHDI <- GER_Orig_Dest_Avg_LowHDI %>%
   ungroup()
 save(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.Rdata")
 write.csv(GER_Dest_Avg_LowHDI, file = "Results/Summary data-sets/GER_Dest_Avg_LowHDI.csv",
+          row.names = F)
+
+
+# .. GER IFF for Partner (sum over Reporter, average across recent Years) ####
+GER_Dest_Avg_last3 <- GER_Orig_Dest_Avg_last3 %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Dest_Avg_last3, file = "Results/Summary data-sets/GER_Dest_Avg_last3.Rdata")
+write.csv(GER_Dest_Avg_last3, file = "Results/Summary data-sets/GER_Dest_Avg_last3.csv",
+          row.names = F)
+
+# Low and lower-middle income countries
+GER_Dest_Avg_last3_LMIC <- GER_Orig_Dest_Avg_last3_LMIC %>%
+  group_by(partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Dest_Avg_last3_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_last3_LMIC.Rdata")
+write.csv(GER_Dest_Avg_last3_LMIC, file = "Results/Summary data-sets/GER_Dest_Avg_last3_LMIC.csv",
           row.names = F)
 
 
@@ -1334,6 +1413,36 @@ GER_Orig_Sect_Avg_LowHDI_disag <- GER_Orig_Sect_Avg_disag %>%
   select(-rHDI)
 
 
+# .. GER IFF for Reporter-Sector (average across recent Years) ####
+# SITC sectors
+GER_Orig_Sect_Avg_last3_SITC <- GER_Orig_Sect_Year_SITC %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, SITC.code, SITC.section) %>%
+  top_n(3, year) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+save(GER_Orig_Sect_Avg_last3_SITC, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_last3_SITC.Rdata")
+write.csv(GER_Orig_Sect_Avg_last3_SITC, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_last3_SITC.csv",
+          row.names = F)
+
+# HS sections
+GER_Orig_Sect_Avg_last3 <- GER_Orig_Sect_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, section.code, section) %>%
+  top_n(3, year) %>%
+  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+            Exp_IFF = mean(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+save(GER_Orig_Sect_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_last3.Rdata")
+write.csv(GER_Orig_Sect_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Sect_Avg_last3.csv",
+          row.names = F)
+
+
 # .. GER IFF for Reporter-Sector (sum over Year) ####
 GER_Orig_Sect_Sum <- GER_Orig_Sect_Year %>%
   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, section.code, section) %>%
@@ -1514,6 +1623,20 @@ write.csv(GER_Sect_Avg_LowHDI_disag, file = "Results/Summary data-sets/GER_Sect_
           row.names = F)
 
 
+# .. GER IFF for Sector (sum over Reporter, average across recent Years) ####
+# HS sections, last 3 years
+GER_Sect_Avg_last3 <- GER_Orig_Sect_Avg_last3 %>%
+  group_by(section.code, section) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T),
+            Tot_IFF = sum(Tot_IFF, na.rm = T),
+            Tot_IFF_bn = sum(Tot_IFF_bn, na.rm = T)) %>%
+  ungroup()
+save(GER_Sect_Avg_last3, file = "Results/Summary data-sets/GER_Sect_Avg_last3.Rdata")
+write.csv(GER_Sect_Avg_last3, file = "Results/Summary data-sets/GER_Sect_Avg_last3.csv",
+          row.names = F)
+
+
 # .. GER IFF for Sector (sum over Reporter, sum over Year) ####
 # Africa
 GER_Sect_Sum_Africa <- GER_Orig_Sect_Sum_Africa %>%
@@ -1591,7 +1714,6 @@ top_sectors <- list(code = GER_Sect_Avg_disag %>%
                       slice_max(Tot_IFF_bn, n = 10) %>%
                       pull(nice.label))
 save(top_sectors, file = "Results/top_sectors.Rdata")
-
 
 
 # .. Aggregate outflows using Gross Excluding Reversals ####
