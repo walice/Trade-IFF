@@ -385,23 +385,20 @@ summary(panel$fitted_nonIFF)
 # 0.000    0.828    1.140    1.837    1.597 5533.559 
 
 panel <- panel %>%
-  mutate(FOB_Import = Import_value / fitted_nonIFF,
-         pFOB_Import = pImport_value / fitted_nonIFF,
-         FOB_Import_IFF = Import_value / fitted_IFF)
+  mutate(FOB_Import_stripnonIFF = Import_value / fitted_nonIFF,
+         pFOB_Import_stripnonIFF = pImport_value / fitted_nonIFF,
+         FOB_Import_stripIFF = Import_value / fitted_IFF,
+         pFOB_Import_stripIFF = pImport_value / fitted_IFF)
 
 
 # .. Estimate fixed effects regression ####
 panel <- panel %>%
-  mutate(M_dist = abs(log(FOB_Import/pNetExport_value))) %>%
+  mutate(M_dist = abs(log(FOB_Import_stripIFF/pNetExport_value))) %>%
   filter(is.finite(M_dist)) %>%
-  mutate(X_dist = abs(log(pFOB_Import/NetExport_value))) %>%
+  mutate(X_dist = abs(log(pFOB_Import_stripIFF/NetExport_value))) %>%
   filter(is.finite(X_dist))
 nrow(panel)
 # 2887762
-
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             ~ as.factor(.))
 
 FE_M.out <- felm(M_dist ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
                  data = panel)
@@ -431,10 +428,6 @@ FE_X <- FE_X %>%
 
 FE_X$sigma <- pi/2*(FE_X$effect - (FE_X$min + 2*FE_X$se))
 attr(FE_X$sigma, "extra") <- NULL
-
-# panel <- panel %>%
-#   mutate_at(vars(reporter.ISO, partner.ISO, year),
-#             ~ as.character(.))
 
 
 # .. Harmonization procedure ####
@@ -504,13 +497,13 @@ summary(panel$w_M)
 summary(panel$w_X)
 
 panel <- panel %>%
-  mutate(RV_M = w_r_M*FOB_Import + w_p_M*pNetExport_value,
-         RV_X = w_p_X*pFOB_Import + w_r_X*NetExport_value)
+  mutate(RV_M = w_r_M*FOB_Import_stripIFF + w_p_M*pNetExport_value,
+         RV_X = w_p_X*pFOB_Import_stripIFF + w_r_X*NetExport_value)
 
 
 # .. Compute IFF ####
 panel <- panel %>%
-  mutate(Imp_IFF = FOB_Import_IFF - RV_M,
+  mutate(Imp_IFF = FOB_Import_stripnonIFF - RV_M,
          Exp_IFF = RV_X - NetExport_value)
 summary(panel$Imp_IFF)
 summary(panel$Exp_IFF)
