@@ -384,11 +384,18 @@ summary(panel$fitted_nonIFF)
 # Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 # 0.000    0.828    1.140    1.837    1.597 5533.559 
 
+noCIF <- c("BRA", "KHM", "CAN", "GIN", "PRY", 
+           "ZAF", "UKR", "USA", "MLI", "TJK")
+
 panel <- panel %>%
-  mutate(FOB_Import_stripnonIFF = Import_value / fitted_nonIFF,
-         pFOB_Import_stripnonIFF = pImport_value / fitted_nonIFF,
-         FOB_Import_stripIFF = Import_value / fitted_IFF,
-         pFOB_Import_stripIFF = pImport_value / fitted_IFF)
+  mutate(FOB_Import_stripnonIFF = ifelse(reporter.ISO %in% noCIF, 
+                                         Import_value, Import_value / fitted_nonIFF),
+         pFOB_Import_stripnonIFF = ifelse(reporter.ISO %in% noCIF,
+                                          pImport_value, pImport_value / fitted_nonIFF),
+         FOB_Import_stripIFF = ifelse(reporter.ISO %in% noCIF,
+                                      Import_value, Import_value / fitted_IFF),
+         pFOB_Import_stripIFF = ifelse(reporter.ISO %in% noCIF,
+                                       pImport_value, pImport_value / fitted_IFF))
 
 
 # .. Estimate fixed effects regression ####
