@@ -393,9 +393,9 @@ panel <- panel %>%
 
 # .. Estimate fixed effects regression ####
 panel <- panel %>%
-  mutate(M_dist = abs(log(FOB_Import_stripIFF/pNetExport_value))) %>%
+  mutate(M_dist = abs(log(FOB_Import_stripnonIFF/pNetExport_value))) %>%
   filter(is.finite(M_dist)) %>%
-  mutate(X_dist = abs(log(pFOB_Import_stripIFF/NetExport_value))) %>%
+  mutate(X_dist = abs(log(pFOB_Import_stripnonIFF/NetExport_value))) %>%
   filter(is.finite(X_dist))
 nrow(panel)
 # 2887762
@@ -497,8 +497,8 @@ summary(panel$w_M)
 summary(panel$w_X)
 
 panel <- panel %>%
-  mutate(RV_M = w_r_M*FOB_Import_stripIFF + w_p_M*pNetExport_value,
-         RV_X = w_p_X*pFOB_Import_stripIFF + w_r_X*NetExport_value)
+  mutate(RV_M = w_r_M*FOB_Import_stripnonIFF + w_p_M*pNetExport_value,
+         RV_X = w_r_X*NetExport_value + w_p_X*pFOB_Import_stripnonIFF)
 
 
 # .. Compute IFF ####
