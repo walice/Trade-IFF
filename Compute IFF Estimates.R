@@ -368,6 +368,9 @@ mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) +
       log(exp(model.matrix(fit) %*% coef_illicit))))
 # 1.734554
 
+panel$fitted <- exp(fitted(fit))
+mean(panel$fitted)
+
 round(mean(exp(log(exp(model.matrix(fit) %*% coef_licit)) + 
            log(exp(model.matrix(fit) %*% coef_illicit)))), 10) ==
   round(mean(exp(fitted(fit))), 10)
@@ -377,6 +380,9 @@ rm(coef_licit, coef_illicit, d, v, IFF.preds)
 
 
 # .. Compute FOB imports ####
+summary(panel$fitted)
+# Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+# 0.000    0.770    1.079    1.735    1.514 5753.082 
 summary(panel$fitted_IFF)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 # 0.09014 0.89222 0.94132 0.94123 0.99291 1.07731 
@@ -388,7 +394,11 @@ noCIF <- c("BRA", "KHM", "CAN", "GIN", "PRY",
            "ZAF", "UKR", "USA", "MLI", "TJK")
 
 panel <- panel %>%
-  mutate(FOB_Import_stripnonIFF = ifelse(reporter.ISO %in% noCIF, 
+  mutate(FOB_Import = ifelse(reporter.ISO %in% noCIF,
+                             Import_value, Import_value / fitted),
+         pFOB_Import = ifelse(reporter.ISO %in% noCIF,
+                              pImport_value, pImport_value / fitted),
+         FOB_Import_stripnonIFF = ifelse(reporter.ISO %in% noCIF, 
                                          Import_value, Import_value / fitted_nonIFF),
          pFOB_Import_stripnonIFF = ifelse(reporter.ISO %in% noCIF,
                                           pImport_value, pImport_value / fitted_nonIFF),
@@ -400,9 +410,9 @@ panel <- panel %>%
 
 # .. Estimate fixed effects regression ####
 panel <- panel %>%
-  mutate(M_dist = abs(log(FOB_Import_stripIFF/pNetExport_value))) %>%
+  mutate(M_dist = abs(log(FOB_Import/pNetExport_value))) %>%
   filter(is.finite(M_dist)) %>%
-  mutate(X_dist = abs(log(pFOB_Import_stripIFF/NetExport_value))) %>%
+  mutate(X_dist = abs(log(pFOB_Import/NetExport_value))) %>%
   filter(is.finite(X_dist))
 nrow(panel)
 # 2887762
@@ -504,8 +514,8 @@ summary(panel$w_M)
 summary(panel$w_X)
 
 panel <- panel %>%
-  mutate(RV_M = w_r_M*FOB_Import_stripIFF + w_p_M*pNetExport_value,
-         RV_X = w_r_X*NetExport_value + w_p_X*pFOB_Import_stripIFF)
+  mutate(RV_M = w_r_M*FOB_Import + w_p_M*pNetExport_value,
+         RV_X = w_r_X*NetExport_value + w_p_X*pFOB_Import)
 
 
 # .. Compute IFF ####
