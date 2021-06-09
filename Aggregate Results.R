@@ -1915,94 +1915,94 @@ write.csv(Net_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Sect_Sum_Af
 
 # .. For Africa ####
 (Cumulative.gross <- sum(GER_Year_Africa$Tot_IFF_bn))
-# 1894.977
+# 220.823
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 8.729176
+# 1.018336
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 18.99539
+# 2.216521
 
 (Cumulative.net <- sum(Net_Year_Africa$Tot_IFF_bn))
-# 1328.8
+# -63.73985
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# 6.120024
+# -0.2935652
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Africa$Tot_IFF_bn))
-# 221.9834
+# 15.62286
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Africa$Tot_IFF_bn))
-# 178.5247
+# -4.81792
 
 
 # .. For low and lower-middle income countries ####
 (Cumulative.gross <- sum(GER_Year_LMIC$Tot_IFF_bn))
-# 4263.6
+# 785.7972
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LMIC$GDP) / 10^9)) * 100
-# 7.810787
+# 1.440952
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LMIC$Total_value) / 10^9)) * 100
-# 17.66182
+# 3.257313
 
 (Cumulative.net <- sum(Net_Year_LMIC$Tot_IFF_bn))
-# 2406.162
+# -280.7992
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LMIC$GDP) / 10^9)) * 100
-# 4.404439
+# -0.5144647
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LMIC$Tot_IFF_bn))
-# 362.5121
+# 50.02923
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LMIC$Tot_IFF_bn))
-# 239.4225
+# -18.27376
 
 
 # .. For developing countries ####
 (Cumulative.gross <- sum(GER_Year_Developing$Tot_IFF_bn))
-# 28314.1
+# 6659.458
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Developing$GDP) / 10^9)) * 100
-# 9.191707
+# 2.162262
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Developing$Total_value) / 10^9)) * 100
-# 16.11852
+# 3.791425
 
 (Cumulative.net <- sum(Net_Year_Developing$Tot_IFF_bn))
-# 16588.78
+# -375.017
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Developing$GDP) / 10^9)) * 100
-# 5.384498
+# -0.1217456
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Developing$Tot_IFF_bn))
-# 1767.325
+# 387.812
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Developing$Tot_IFF_bn))
-# 1066.364
+# -30.28294
 
 
 # .. For low-HDI countries ####
 (Cumulative.gross <- sum(GER_Year_LowHDI$Tot_IFF_bn))
-# 3519.709
+# 578.1485
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LowHDI$GDP) / 10^9)) * 100
-# 8.415575
+# 1.384093
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LowHDI$Total_value) / 10^9)) * 100
-# 22.78356
+# 3.746342
 
 (Cumulative.net <- sum(Net_Year_LowHDI$Tot_IFF_bn))
-# 2277.49
+# -125.8819
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LowHDI$GDP) / 10^9)) * 100
-# 5.439679
+# -0.3010193
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LowHDI$Tot_IFF_bn))
-# 315.2101
+# 36.82828
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LowHDI$Tot_IFF_bn))
-# 230.5352
+# -8.846453
 
 
 
