@@ -262,30 +262,30 @@ write.csv(GER_Orig_Avg_LowHDI, file = "Results/Summary data-sets/GER_Orig_Avg_Lo
           row.names = F)
 
 
-# .. GER IFF for Reporter (sum over Partner, average across recent Years) ####
-missing <- right_join(GER_Orig_Year, GER_Orig_Year %>% 
-                        expand(reporter.ISO, year),
-                      by = c("reporter.ISO", "year")) %>%
-  filter(year >= 2016) %>%
-  group_by(reporter.ISO) %>% 
-  summarize(missing = sum(is.na(reporter))) %>%
-  filter(missing == 3) %>%
-  pull(reporter.ISO)
-
-GER_Orig_Avg_last3 <- GER_Orig_Year %>%
-  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
-  top_n(3, year) %>%
-  summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
-            Exp_IFF = mean(Exp_IFF, na.rm = T),
-            Tot_IFF = mean(Tot_IFF, na.rm = T),
-            Tot_IFF_bn = mean(Tot_IFF_bn, na.rm = T),
-            Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
-            Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
-  ungroup()
-save(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
-write.csv(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.csv",
-          row.names = F)
-
+# # .. GER IFF for Reporter (sum over Partner, average across recent Years) ####
+# missing <- right_join(GER_Orig_Year, GER_Orig_Year %>% 
+#                         expand(reporter.ISO, year),
+#                       by = c("reporter.ISO", "year")) %>%
+#   filter(year >= 2016) %>%
+#   group_by(reporter.ISO) %>% 
+#   summarize(missing = sum(is.na(reporter))) %>%
+#   filter(missing == 3) %>%
+#   pull(reporter.ISO)
+# 
+# GER_Orig_Avg_last3 <- GER_Orig_Year %>%
+#   group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI) %>%
+#   top_n(3, year) %>%
+#   summarize(Imp_IFF = mean(Imp_IFF, na.rm = T),
+#             Exp_IFF = mean(Exp_IFF, na.rm = T),
+#             Tot_IFF = mean(Tot_IFF, na.rm = T),
+#             Tot_IFF_bn = mean(Tot_IFF_bn, na.rm = T),
+#             Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
+#             Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
+#   ungroup()
+# save(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
+# write.csv(GER_Orig_Avg_last3, file = "Results/Summary data-sets/GER_Orig_Avg_last3.csv",
+#           row.names = F)
+# 
 
 # .. GER IFF for Reporter (sum over Partner, sum over Year) ####
 GER_Orig_Sum <- GER_Orig_Year %>%
@@ -1915,94 +1915,94 @@ write.csv(Net_Sect_Sum_Africa, file = "Results/Summary data-sets/Net_Sect_Sum_Af
 
 # .. For Africa ####
 (Cumulative.gross <- sum(GER_Year_Africa$Tot_IFF_bn))
-# 220.823
+# 1178.345
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Africa$GDP) / 10^9)) * 100
-# 1.018336
+# 5.433484
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Africa$Total_value) / 10^9)) * 100
-# 2.216521
+# 11.82551
 
 (Cumulative.net <- sum(Net_Year_Africa$Tot_IFF_bn))
-# -63.73985
+# 219.5779
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Africa$GDP) / 10^9)) * 100
-# -0.2935652
+# 1.011305
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Africa$Tot_IFF_bn))
-# 15.62286
+# 85.91977
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Africa$Tot_IFF_bn))
-# -4.81792
+# 18.52062
 
 
 # .. For low and lower-middle income countries ####
 (Cumulative.gross <- sum(GER_Year_LMIC$Tot_IFF_bn))
-# 785.7972
+# 1681.084
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LMIC$GDP) / 10^9)) * 100
-# 1.440952
+# 3.082565
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LMIC$Total_value) / 10^9)) * 100
-# 3.257313
+# 6.967957
 
 (Cumulative.net <- sum(Net_Year_LMIC$Tot_IFF_bn))
-# -280.7992
+# -72.74521
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LMIC$GDP) / 10^9)) * 100
-# -0.5144647
+# -0.1332797
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LMIC$Tot_IFF_bn))
-# 50.02923
+# 130.7371
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LMIC$Tot_IFF_bn))
-# -18.27376
+# 2.68161
 
 
 # .. For developing countries ####
 (Cumulative.gross <- sum(GER_Year_Developing$Tot_IFF_bn))
-# 6659.458
+# 7990.23
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_Developing$GDP) / 10^9)) * 100
-# 2.162262
+# 2.594333
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_Developing$Total_value) / 10^9)) * 100
-# 3.791425
+# 4.549025
 
 (Cumulative.net <- sum(Net_Year_Developing$Tot_IFF_bn))
-# -375.017
+# -131.2375
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_Developing$GDP) / 10^9)) * 100
-# -0.1217456
+# -0.04260494
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_Developing$Tot_IFF_bn))
-# 387.812
+# 499.9967
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_Developing$Tot_IFF_bn))
-# -30.28294
+# -6.881054
 
 
 # .. For low-HDI countries ####
 (Cumulative.gross <- sum(GER_Year_LowHDI$Tot_IFF_bn))
-# 578.1485
+# 1006.253
 
 (Cumulative.gross.GDP <- Cumulative.gross / (sum(GER_Year_LowHDI$GDP) / 10^9)) * 100
-# 1.384093
+# 2.408862
 
 (Cumulative.gross.trade <- Cumulative.gross / (sum(GER_Year_LowHDI$Total_value) / 10^9)) * 100
-# 3.746342
+# 6.519639
 
 (Cumulative.net <- sum(Net_Year_LowHDI$Tot_IFF_bn))
-# -125.8819
+# 88.75171
 
 (Cumulative.net.GDP <- Cumulative.net / (sum(Net_Year_LowHDI$GDP) / 10^9)) * 100
-# -0.3010193
+# 0.2122305
 
 (Gross.IFF.per.year <- sum(GER_Orig_Avg_LowHDI$Tot_IFF_bn))
-# 36.82828
+# 87.28005
 
 (Net.IFF.per.year <- sum(Net_Orig_Avg_LowHDI$Tot_IFF_bn))
-# -8.846453
+# 13.46676
 
 
 

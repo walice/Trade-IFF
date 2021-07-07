@@ -19,7 +19,9 @@
 # .. Compute fitted values when predictors are 0
 # .. Compute FOB imports
 # .. Estimate fixed effects regression
+# .. Estimate fixed effects regression (robustness check)
 # .. Harmonization procedure
+# .. Harmonization procedure (robustness check)
 # .. Compute IFF
 
 
@@ -619,20 +621,6 @@ save(FE_X, file = "Results/FE_X.Rdata")
 load("Results/FE_M.Rdata")
 load("Results/FE_X.Rdata")
 
-# Robustness check
-FE_M_rob.out <- felm(M_dist_rob ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
-                     data = panel)
-FE_M_rob <- getfe(FE_M_rob.out, se = T)
-save(FE_M_rob, file = "Results/FE_M_rob.Rdata")
-
-FE_X_rob.out <- felm(X_dist_rob ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
-                 data = panel)
-FE_X_rob <- getfe(FE_X_rob.out, se = T)
-save(FE_X_rob, file = "Results/FE_X_rob.Rdata")
-
-load("Results/FE_M_rob.Rdata")
-load("Results/FE_X_rob.Rdata")
-
 FE_M <- FE_M %>%
   group_by(fe) %>%
   mutate(min = min(effect)) %>%
@@ -649,7 +637,21 @@ FE_X <- FE_X %>%
 FE_X$sigma <- pi/2*(FE_X$effect - (FE_X$min + 2*FE_X$se))
 attr(FE_X$sigma, "extra") <- NULL
 
-# Robustness check
+
+# .. Estimate fixed effects regression (robustness check) ####
+FE_M_rob.out <- felm(M_dist_rob ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
+                     data = panel)
+FE_M_rob <- getfe(FE_M_rob.out, se = T)
+save(FE_M_rob, file = "Results/FE_M_rob.Rdata")
+
+FE_X_rob.out <- felm(X_dist_rob ~ 0| reporter.ISO + partner.ISO + year + commodity.code,
+                 data = panel)
+FE_X_rob <- getfe(FE_X_rob.out, se = T)
+save(FE_X_rob, file = "Results/FE_X_rob.Rdata")
+
+load("Results/FE_M_rob.Rdata")
+load("Results/FE_X_rob.Rdata")
+
 FE_M_rob <- FE_M_rob %>%
   group_by(fe) %>%
   mutate(min = min(effect)) %>%
@@ -697,20 +699,20 @@ panel <- left_join(panel, FE_X %>%
   rename(pSigma_X = sigma)
 
 panel <- panel %>%
-  mutate(w_r_M = (exp(rSigma_M^2)*(exp(rSigma_M^2) - 1))/
+  mutate(w_r_M = (exp(pSigma_M^2)*(exp(pSigma_M^2) - 1))/
            (exp(rSigma_M^2)*(exp(rSigma_M^2)- 1) + 
               exp(pSigma_M^2)*(exp(pSigma_M^2) - 1)),
-         w_p_M = (exp(pSigma_M^2)*(exp(pSigma_M^2) - 1))/
+         w_p_M = (exp(rSigma_M^2)*(exp(rSigma_M^2) - 1))/
            (exp(rSigma_M^2)*(exp(rSigma_M^2)- 1) + 
               exp(pSigma_M^2)*(exp(pSigma_M^2) - 1)))
 summary(panel$w_r_M)
 summary(panel$w_p_M)
 
 panel <- panel %>%
-  mutate(w_r_X = (exp(rSigma_X^2)*(exp(rSigma_X^2) - 1))/
+  mutate(w_r_X = (exp(pSigma_X^2)*(exp(pSigma_X^2) - 1))/
            (exp(rSigma_X^2)*(exp(rSigma_X^2)- 1) +
               exp(pSigma_X^2)*(exp(pSigma_X^2) - 1)),
-         w_p_X = (exp(pSigma_X^2)*(exp(pSigma_X^2) - 1))/
+         w_p_X = (exp(rSigma_X^2)*(exp(rSigma_X^2) - 1))/
            (exp(rSigma_X^2)*(exp(rSigma_X^2)- 1) +
               exp(pSigma_X^2)*(exp(pSigma_X^2) - 1)))
 summary(panel$w_r_X)
@@ -768,20 +770,20 @@ panel <- left_join(panel, FE_X_rob %>%
   rename(pSigma_X_rob = sigma)
 
 panel <- panel %>%
-  mutate(w_r_M_rob = (exp(rSigma_M_rob^2)*(exp(rSigma_M_rob^2) - 1))/
+  mutate(w_r_M_rob = (exp(pSigma_M_rob^2)*(exp(pSigma_M_rob^2) - 1))/
            (exp(rSigma_M_rob^2)*(exp(rSigma_M_rob^2)- 1) + 
               exp(pSigma_M_rob^2)*(exp(pSigma_M_rob^2) - 1)),
-         w_p_M_rob = (exp(pSigma_M_rob^2)*(exp(pSigma_M_rob^2) - 1))/
+         w_p_M_rob = (exp(rSigma_M_rob^2)*(exp(rSigma_M_rob^2) - 1))/
            (exp(rSigma_M_rob^2)*(exp(rSigma_M_rob^2)- 1) + 
               exp(pSigma_M_rob^2)*(exp(pSigma_M_rob^2) - 1)))
 summary(panel$w_r_M_rob)
 summary(panel$w_p_M_rob)
 
 panel <- panel %>%
-  mutate(w_r_X_rob = (exp(rSigma_X_rob^2)*(exp(rSigma_X_rob^2) - 1))/
+  mutate(w_r_X_rob = (exp(pSigma_X_rob^2)*(exp(pSigma_X_rob^2) - 1))/
            (exp(rSigma_X_rob^2)*(exp(rSigma_X_rob^2)- 1) + 
               exp(pSigma_X_rob^2)*(exp(pSigma_X_rob^2) - 1)),
-         w_p_X_rob = (exp(pSigma_X_rob^2)*(exp(pSigma_X_rob^2) - 1))/
+         w_p_X_rob = (exp(rSigma_X_rob^2)*(exp(rSigma_X_rob^2) - 1))/
            (exp(rSigma_X_rob^2)*(exp(rSigma_X_rob^2)- 1) + 
               exp(pSigma_X_rob^2)*(exp(pSigma_X_rob^2) - 1)))
 summary(panel$w_r_X_rob)
@@ -833,25 +835,26 @@ panel %>%
   distinct(reporter.ISO)
 # 1 GBR         
 # 2 CHN         
-# 3 NLD         
-# 4 USA         
-# 5 SGP         
-# 6 CHE         
-# 7 DNK 
+# 3 USA         
+# 4 CZE         
+# 5 AGO         
+# 6 IRL         
+# 7 CHE         
+# 8 DNK         
+# 9 HKG         
+# 10 THA  
 
 panel %>%
   filter(Exp_IFF > 2*10^10) %>%
   distinct(reporter.ISO)
-# 1 KOR         
-# 2 PER         
-# 3 NOR         
-# 4 IND         
-# 5 ARG         
-# 6 GBR         
-# 7 CHN         
-# 8 FRA         
-# 9 AUS         
-# 10 CHE  
+# 1 PER         
+# 2 TTO         
+# 3 YEM         
+# 4 ARG         
+# 5 BOL         
+# 6 CIV         
+# 7 TZA         
+# 8 COG 
 
 ggplot(data = panel %>%
          select(c(RV_M, RV_X)) %>%
