@@ -40,6 +40,7 @@
 # .. Top 5 destinations flow of % GDP conduits
 # .. Provenance flow maps of top inflows in World
 # .. Top 5 destinations of GDP conduits in top sectors
+# .. Top 5 destinations of GDP conduits in Africa top sectors
 # Lollipop Charts
 # .. Top conduits in World
 # .. Top conduits in Africa
@@ -1123,7 +1124,7 @@ g <- ggplot() +
   ditch_axes +
   scale_fill_distiller(name = "IFF (% GDP)", 
                        type = "div", palette = "Spectral") +
-  labs(title = "Average annual net outflows during 2000-2018") +
+  labs(title = "Average annual net flows during 2000-2018") +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
@@ -1140,7 +1141,7 @@ g <- ggplot() +
   ditch_axes +
   scale_fill_distiller(name = "IFF (% trade)", 
                        type = "div", palette = "Spectral") +
-  labs(title = "Average annual net outflows during 2000-2018") +
+  labs(title = "Average annual net flows during 2000-2018") +
   theme(legend.position = "bottom") + 
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
@@ -1190,6 +1191,29 @@ g <- ggplot() +
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
        file = "Figures/Choro_Net In_Yearly Average_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
+# Average net outflow IFF dollar value
+load("Results/Summary data-sets/Net_Orig_Avg.Rdata")
+
+viz <- left_join(map, Net_Orig_Avg %>%
+                   filter(Tot_IFF_bn > 0) %>%
+                   mutate(Tot_IFF_bn = abs(Tot_IFF_bn)),
+                 by = c("ISO3166.3" = "reporter.ISO"))
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", option = "C", direction = -1) +
+  labs(title = "Average annual net outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_Net Out_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
 
@@ -1944,7 +1968,7 @@ load("Results/Summary data-sets/GER_Orig_Dest_Avg_Developing.Rdata")
 load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
 conduits_World <- GER_Orig_Avg %>%
   arrange(desc(Tot_IFF_GDP)) %>%
-  head(5) %>%
+  head(10) %>%
   select(reporter.ISO) %>%
   pull
 
@@ -2522,6 +2546,159 @@ for (i in 1:length(top_sectors$code)){
          file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_", top_sectors$code[i], ".png"),
          width = 6, height = 5, units = "in")
 }
+
+
+# .. Top 5 destinations of GDP conduits in Africa top sectors ####
+load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
+
+conduits_Africa <- GER_Orig_Avg %>%
+  filter(rRegion == "Africa") %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
+
+load(paste0(data.disk, "Data/UN Stats/HS.Rdata"))
+
+# Mineral Products
+plot.sector <- HS %>%
+  filter(section == "Mineral Products") %>%
+  select(chapter) %>%
+  pull
+
+load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
+GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Avg %>%
+  filter(reporter.ISO %in% conduits_Africa) %>%
+  filter(commodity.code %in% plot.sector) %>%
+  group_by(reporter, reporter.ISO, partner.ISO) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  ungroup %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF) %>%
+  ungroup() %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Centroid_Longitude,
+                rLatitude = Centroid_Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Centroid_Longitude,
+                pLatitude = Centroid_Latitude) %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+viz_highlight <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+                           map,
+                           by = c("partner.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
+  geom_polygon(data = viz_highlight,
+               aes(x = long, y = lat, group = group), fill = "grey60", col = "black", lwd = 0.1,
+               show.legend = FALSE) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_manual(values = carto_pal(10, "Vivid")) +
+  scale_fill_manual(values = carto_pal(10, "Vivid")) +
+  labs(title = "Destination of illicit outflows in Mineral Products",
+       subtitle = "Top 5 destinations of top 5 origin countries in Africa (by % of GDP)")
+ggsave(g,
+       file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Top Sector1_Africa.png"),
+       width = 6, height = 5, units = "in")
+
+# Mineral Products
+plot.sector <- HS %>%
+  filter(section == "Pearls, Precious Stones and Metals") %>%
+  select(chapter) %>%
+  pull
+
+load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
+GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Avg %>%
+  filter(reporter.ISO %in% conduits_Africa) %>%
+  filter(commodity.code %in% plot.sector) %>%
+  group_by(reporter, reporter.ISO, partner.ISO) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  ungroup %>%
+  group_by(reporter.ISO) %>%
+  top_n(5, Tot_IFF) %>%
+  ungroup() %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("reporter.ISO" = "ISO3166.3")) %>%
+  dplyr::rename(rLongitude = Centroid_Longitude,
+                rLatitude = Centroid_Latitude) %>%
+  left_join(centroids %>% distinct(ISO3166.3, .keep_all = T), by = c("partner.ISO" = "ISO3166.3"))%>%
+  dplyr::rename(pLongitude = Centroid_Longitude,
+                pLatitude = Centroid_Latitude) %>%
+  mutate(scale = round((10 - 1) * (Tot_IFF - min(Tot_IFF))/(max(Tot_IFF) - min(Tot_IFF)) + 1))
+
+map <- map_data("world")
+map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
+                 by = c("region" = "Country")) %>%
+  dplyr::select(-subregion) %>%
+  filter(region != "Antarctica")
+
+viz <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+                 map,
+                 by = c("reporter.ISO" = "ISO3166.3"))
+
+viz_highlight <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+                           map,
+                           by = c("partner.ISO" = "ISO3166.3"))
+
+g <- ggplot() + 
+  geom_polygon(data = map,
+               aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
+  geom_polygon(data = viz_highlight,
+               aes(x = long, y = lat, group = group), fill = "grey60", col = "black", lwd = 0.1,
+               show.legend = FALSE) +
+  coord_fixed(1.3) +
+  theme_bw() + 
+  geom_curve(data = viz, 
+             aes(x = rLongitude, y = rLatitude, 
+                 xend = pLongitude, yend = pLatitude, col = reporter),
+             curvature = -0.2, lineend = "round", ncp = 20,
+             arrow = arrow(length = unit(0.03, "npc"))) +
+  geom_point(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+             aes(x = rLongitude, y = rLatitude, col = reporter),
+             size = 4) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
+                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+  geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
+                   aes(label = reporter, x = rLongitude, y = rLatitude),
+                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+  ditch_axes +
+  guides(col = FALSE, fill = FALSE) +
+  scale_color_manual(values = carto_pal(10, "Vivid")) +
+  scale_fill_manual(values = carto_pal(10, "Vivid")) +
+  labs(title = "Destination of illicit outflows in Pearls, Precious Stones & Metals",
+       subtitle = "Top 5 destinations of top 5 origin countries in Africa (by % of GDP)")
+ggsave(g,
+       file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Top Sector2_Africa.png"),
+       width = 6, height = 5, units = "in")
 
 
 
