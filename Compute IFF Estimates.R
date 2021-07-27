@@ -23,6 +23,7 @@
 # .. Harmonization procedure
 # .. Harmonization procedure (robustness check)
 # .. Compute IFF
+# .. Tariff Evasion Analysis
 
 
 
@@ -884,3 +885,89 @@ rm(fit, fit_mirror, noCIF,
    FE_M_rob, FE_X_rob, FE_M_rob.out, FE_X_rob.out)
 
 save(panel, file = "Results/panel_results.Rdata")
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# TARIFF EVASION ANALYSIS   ####
+## ## ## ## ## ## ## ## ## ## ##
+
+load("Results/panel_results.Rdata")
+load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
+
+# Import under-invoicing
+Imp.under <- panel %>%
+  select(reporter, reporter.ISO, rIncome, rRegion, rDev, rHDI,
+         partner, partner.ISO, pIncome, pRegion, pDev, pHDI,
+         tariff, Imp_IFF,
+         year, commodity.code,
+         Import_value, GDP) %>%
+  mutate(Imp_IFF_GDP = Imp_IFF / GDP) %>%
+  filter(Imp_IFF < 0) %>%
+  filter(tariff < 100) %>%
+  left_join(WDI %>% select(ISO3166.3, GNPpc, year),
+            by = c("reporter.ISO" = "ISO3166.3",
+                   "year" = "year"))
+
+fit1 <- felm(abs(Imp_IFF_GDP) ~ tariff + Import_value + GDP |
+               commodity.code + reporter.ISO + partner.ISO,
+             data = Imp.under)
+summary(fit1)
+
+stargazer(fit1, type = "html", style = "aer",
+          out = "Results/Import under-invoicing regression.html")
+
+# Interact development status
+# Imp.under <- Imp.under %>%
+#   mutate(rIncome = factor(rIncome,
+#                           levels = c("LIC", "LMC", "UMC", "HIC")))
+Imp.under <- Imp.under %>%
+  mutate(rIncome = as.factor(rIncome))
+levels(Imp.under$rIncome)
+fit2 <- lm(abs(Imp_IFF) ~ tariff*rIncome + Import_value + GDP,
+           data = Imp.under)
+summary(fit2)
+
+stargazer(fit2, type = "html", style = "aer",
+          out = "Results/Tariff evasion regression.html")
+
+fit3 <- lm(abs(Imp_IFF_GDP) ~ tariff*rIncome + Import_value + GDP,
+           data = Imp.under)
+summary(fit3)
+
+# Import over-invoicing
+Imp.over <- panel %>%
+  select(reporter, reporter.ISO, rIncome, rRegion, rDev, rHDI,
+         partner, partner.ISO, pIncome, pRegion, pDev, pHDI,
+         tariff, Imp_IFF,
+         year, commodity.code,
+         Import_value, GDP) %>%
+  mutate(Imp_IFF_GDP = Imp_IFF / GDP) %>%
+  filter(Imp_IFF > 0) %>%
+  filter(tariff < 100) %>%
+  left_join(WDI %>% select(ISO3166.3, GNPpc, year),
+            by = c("reporter.ISO" = "ISO3166.3",
+                   "year" = "year"))
+
+fit4 <- felm(Imp_IFF_GDP ~ tariff + Import_value + GDP |
+               commodity.code + reporter.ISO + partner.ISO,
+             data = Imp.over)
+summary(fit4)
+
+fit5 <- lm(Imp_IFF_GDP ~ tariff*rIncome + Import_value + GDP,
+           data = Imp.over)
+summary(fit5)
+
+fit6 <- felm(Imp_IFF ~ tariff + Import_value + GDP |
+               commodity.code + reporter.ISO + partner.ISO,
+             data = Imp.over)
+summary(fit6)
+
+fit7 <- felm(Imp_IFF_GDP ~ tariff*rIncome + Import_value + GDP |
+               commodity.code,
+             data = Imp.over)
+summary(fit7)
+
+fit8 <- lm(Imp_IFF ~ tariff*rIncome + Import_value + GDP,
+           data = Imp.over)
+summary(fit8)
