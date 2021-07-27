@@ -2856,6 +2856,11 @@ ggsave(g,
 
 # .. Top conduits in LMIC ####
 load("Results/Summary data-sets/GER_Orig_Avg_LMIC.Rdata")
+load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
+
+Inflow_GER_Orig_Avg_LMIC <- Inflow_GER_Orig_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  select(-rRegion)
 
 g <- ggplot(GER_Orig_Avg_LMIC %>%
               select(reporter, Tot_IFF_GDP) %>%
@@ -2871,6 +2876,21 @@ ggsave(g,
        file = "Figures/Top 10 origin countries_Yearly Average_Percent GDP_LMIC.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
+              select(reporter, Tot_IFF_GDP) %>%
+              mutate(Tot_IFF_GDP = abs(Tot_IFF_GDP)) %>%
+              top_n(10, Tot_IFF_GDP),
+            aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origins in low and lower-middle income",
+       subtitle = "Average yearly gross inflow as % of GDP",
+       x = "", y = "Illicit flow as % of GDP")
+ggsave(g,
+       file = "Figures/Top 10 origin countries inflow_Yearly Average_Percent GDP_LMIC.png",
+       width = 6, height = 5, units = "in")
+
 g <- ggplot(GER_Orig_Avg_LMIC %>%
               select(reporter, Tot_IFF_trade) %>%
               top_n(10, Tot_IFF_trade),
@@ -2883,6 +2903,21 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
        file = "Figures/Top 10 origin countries_Yearly Average_Percent Trade_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
+              select(reporter, Tot_IFF_trade) %>%
+              mutate(Tot_IFF_trade = abs(Tot_IFF_trade)) %>%
+              top_n(10, Tot_IFF_trade),
+            aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
+  geom_point(size = 4, color = "cornflowerblue") +
+  coord_flip() +
+  labs(title = "Top origins in low and lower-middle income",
+       subtitle = "Average yearly gross inflow as % of trade",
+       x = "", y = "Illicit flow as % of trade")
+ggsave(g,
+       file = "Figures/Top 10 origin countries inflow_Yearly Average_Percent Trade_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
