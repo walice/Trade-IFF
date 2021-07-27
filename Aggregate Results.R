@@ -55,6 +55,7 @@
 # .. GER IFF for Reporter-TopSector-Year (sum over Partner)
 # .. Top origins in top sectors
 # .. GER IFF for Reporter-TopSector (sum over Partner, average across Year)
+# .. GER IFF for Reporter-Partner in all 99 HS Sectors (average across Year)
 # Net by Sector
 # .. Net Import/Export IFF for Reporter-Sector-Year
 # .. Net IFF for Reporter-Sector (average across Year)
@@ -1700,7 +1701,6 @@ panel <- left_join(panel, HS %>% select(chapter, chapter.description),
 
 load(paste0(data.disk, "Data/WDI/WDI.Rdata"))
 load(paste0(data.disk, "Data/Comtrade/comtrade_total_clean.Rdata"))
-load(paste0(data.disk, "Data/UN Stats/HS.Rdata"))
 load("Results/Summary data-sets/GER_Sect_Avg_disag.Rdata")
 
 GER_Sect_Avg_disag <- left_join(GER_Sect_Avg_disag,
@@ -1831,6 +1831,84 @@ GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Year %>%
          Tot_IFF_bn = Tot_IFF / 10^9)
 save(GER_Orig_Dest_TopSect_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
 write.csv(GER_Orig_Dest_TopSect_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.csv",
+          row.names = F)
+
+
+# .. GER IFF for Reporter-Partner in all 99 HS Sectors (average across Year) ####
+GER_Imp_Dest_AllSect <- panel %>%
+  filter(Imp_IFF > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
+           year, commodity.code, commodity,
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T)) %>%
+  ungroup()
+
+GER_Exp_Dest_AllSect <- panel %>%
+  filter(Exp_IFF > 0) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI,
+           year, commodity.code, commodity,
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI) %>%
+  summarize(Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
+  ungroup()
+
+GER_Orig_Dest_AllSect_Year <- full_join(GER_Imp_Dest_AllSect, GER_Exp_Dest_AllSect,
+                                        by = c("reporter" = "reporter",
+                                               "reporter.ISO" = "reporter.ISO",
+                                               "rRegion" = "rRegion",
+                                               "rIncome" = "rIncome",
+                                               "rDev" = "rDev",
+                                               "rHDI" = "rHDI",
+                                               "year" = "year",
+                                               "partner" = "partner",
+                                               "partner.ISO" = "partner.ISO",
+                                               "pRegion" = "pRegion",
+                                               "pIncome" = "pIncome",
+                                               "pDev" = "pDev",
+                                               "pHDI" = "pHDI",
+                                               "commodity.code" = "commodity.code",
+                                               "commodity" = "commodity"))
+
+GER_Orig_AllSect_Year <- GER_Orig_Dest_AllSect_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, year,
+           commodity.code, commodity) %>%
+  summarize(Imp_IFF = sum(Imp_IFF, na.rm = T),
+            Exp_IFF = sum(Exp_IFF, na.rm = T)) %>%
+  ungroup() %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF,
+         Tot_IFF_bn = Tot_IFF / 10^9)
+GER_Orig_AllSect_Year <- left_join(GER_Orig_AllSect_Year %>% 
+                                     mutate(year = as.integer(year)),
+                                   WDI,
+                                   by = c("reporter.ISO" = "ISO3166.3",
+                                          "year")) %>%
+  mutate(Tot_IFF_GDP = Tot_IFF / GDP)
+GER_Orig_AllSect_Year <- left_join(GER_Orig_AllSect_Year,
+                                   comtrade_total,
+                                   by = c("reporter.ISO", "year")) %>%
+  mutate(Tot_IFF_trade = Tot_IFF / Total_value)
+
+GER_Orig_AllSect_Avg <- GER_Orig_AllSect_Year %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, 
+           commodity.code, commodity) %>%
+  summarize(Tot_IFF = mean(Tot_IFF, na.rm = T),
+            Tot_IFF_GDP = mean(Tot_IFF_GDP, na.rm = T),
+            Tot_IFF_trade = mean(Tot_IFF_trade, na.rm = T)) %>%
+  ungroup()
+save(GER_Orig_AllSect_Avg, file = "Results/Summary data-sets/GER_Orig_AllSect_Avg.Rdata")
+write.csv(GER_Orig_AllSect_Avg, file = "Results/Summary data-sets/GER_Orig_AllSect_Avg.csv",
+          row.names = F)
+
+GER_Orig_Dest_AllSect_Avg <- GER_Orig_Dest_AllSect_Year %>%
+  mutate_at(c("Imp_IFF", "Exp_IFF"), ~replace(., is.nan(.), 0)) %>%
+  mutate(Tot_IFF = Imp_IFF + Exp_IFF) %>%
+  group_by(reporter, reporter.ISO, rRegion, rIncome, rDev, rHDI, 
+           partner, partner.ISO, pRegion, pIncome, pDev, pHDI,
+           commodity.code, commodity) %>%
+  summarize(Tot_IFF = mean(Tot_IFF, na.rm = T)) %>%
+  ungroup()
+save(GER_Orig_Dest_AllSect_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_AllSect_Avg.Rdata")
+write.csv(GER_Orig_Dest_AllSect_Avg, file = "Results/Summary data-sets/GER_Orig_Dest_AllSect_Avg.csv",
           row.names = F)
 
 

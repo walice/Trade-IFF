@@ -2617,15 +2617,7 @@ for (i in 1:length(top_sectors$code)){
 
 
 # .. Top 5 destinations of GDP conduits in Africa top sectors ####
-load("Results/Summary data-sets/GER_Orig_Avg.Rdata")
-
-conduits_Africa <- GER_Orig_Avg %>%
-  filter(rRegion == "Africa") %>%
-  arrange(desc(Tot_IFF_GDP)) %>%
-  head(5) %>%
-  select(reporter.ISO) %>%
-  pull
-
+load("Results/Summary data-sets/GER_Orig_AllSect_Avg.Rdata")
 load(paste0(data.disk, "Data/UN Stats/HS.Rdata"))
 
 # Mineral Products
@@ -2634,9 +2626,19 @@ plot.sector <- HS %>%
   select(chapter) %>%
   pull
 
-load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
-GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Avg %>%
-  filter(reporter.ISO %in% conduits_Africa) %>%
+conduits <- GER_Orig_AllSect_Avg %>%
+  filter(rRegion == "Africa") %>%
+  filter(commodity.code %in% plot.sector) %>%
+  group_by(reporter.ISO) %>%
+  summarize(Tot_IFF_GDP = sum(Tot_IFF_GDP, na.rm = T)) %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
+
+load("Results/Summary data-sets/GER_Orig_Dest_AllSect_Avg.Rdata")
+GER_Orig_Dest_AllSect_Avg <- GER_Orig_Dest_AllSect_Avg %>%
+  filter(reporter.ISO %in% conduits) %>%
   filter(commodity.code %in% plot.sector) %>%
   group_by(reporter, reporter.ISO, partner.ISO) %>%
   summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
@@ -2658,24 +2660,26 @@ map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
   dplyr::select(-subregion) %>%
   filter(region != "Antarctica")
 
-viz <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+viz <- left_join(GER_Orig_Dest_AllSect_Avg %>% 
+                   filter(reporter.ISO %in% conduits),
                  map,
                  by = c("reporter.ISO" = "ISO3166.3"))
 
-viz_highlight <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+viz_highlight <- left_join(GER_Orig_Dest_AllSect_Avg %>% 
+                             filter(reporter.ISO %in% conduits),
                            map,
                            by = c("partner.ISO" = "ISO3166.3"))
 
-g <- ggplot() + 
+g <- ggplot() +
   geom_polygon(data = map,
                aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
   geom_polygon(data = viz_highlight,
                aes(x = long, y = lat, group = group), fill = "grey60", col = "black", lwd = 0.1,
                show.legend = FALSE) +
   coord_fixed(1.3) +
-  theme_bw() + 
-  geom_curve(data = viz, 
-             aes(x = rLongitude, y = rLatitude, 
+  theme_bw() +
+  geom_curve(data = viz,
+             aes(x = rLongitude, y = rLatitude,
                  xend = pLongitude, yend = pLatitude, col = reporter),
              curvature = -0.2, lineend = "round", ncp = 20,
              arrow = arrow(length = unit(0.03, "npc"))) +
@@ -2698,15 +2702,25 @@ ggsave(g,
        file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Top Sector1_Africa.png"),
        width = 6, height = 5, units = "in")
 
-# Mineral Products
+# Pearls
 plot.sector <- HS %>%
   filter(section == "Pearls, Precious Stones and Metals") %>%
   select(chapter) %>%
   pull
 
-load("Results/Summary data-sets/GER_Orig_Dest_TopSect_Avg.Rdata")
-GER_Orig_Dest_TopSect_Avg <- GER_Orig_Dest_TopSect_Avg %>%
-  filter(reporter.ISO %in% conduits_Africa) %>%
+conduits <- GER_Orig_AllSect_Avg %>%
+  filter(rRegion == "Africa") %>%
+  filter(commodity.code %in% plot.sector) %>%
+  group_by(reporter.ISO) %>%
+  summarize(Tot_IFF_GDP = sum(Tot_IFF_GDP, na.rm = T)) %>%
+  arrange(desc(Tot_IFF_GDP)) %>%
+  head(5) %>%
+  select(reporter.ISO) %>%
+  pull
+
+load("Results/Summary data-sets/GER_Orig_Dest_AllSect_Avg.Rdata")
+GER_Orig_Dest_AllSect_Avg <- GER_Orig_Dest_AllSect_Avg %>%
+  filter(reporter.ISO %in% conduits) %>%
   filter(commodity.code %in% plot.sector) %>%
   group_by(reporter, reporter.ISO, partner.ISO) %>%
   summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
@@ -2728,24 +2742,26 @@ map <- left_join(map, codes %>% dplyr::select(Country, ISO3166.3),
   dplyr::select(-subregion) %>%
   filter(region != "Antarctica")
 
-viz <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+viz <- left_join(GER_Orig_Dest_AllSect_Avg %>% 
+                   filter(reporter.ISO %in% conduits),
                  map,
                  by = c("reporter.ISO" = "ISO3166.3"))
 
-viz_highlight <- left_join(GER_Orig_Dest_TopSect_Avg %>% filter(reporter.ISO %in% conduits_Africa),
+viz_highlight <- left_join(GER_Orig_Dest_AllSect_Avg %>% 
+                             filter(reporter.ISO %in% conduits),
                            map,
                            by = c("partner.ISO" = "ISO3166.3"))
 
-g <- ggplot() + 
+g <- ggplot() +
   geom_polygon(data = map,
                aes(x = long, y = lat, group = group), fill = "grey90", col = "white", lwd = 0.2) +
   geom_polygon(data = viz_highlight,
                aes(x = long, y = lat, group = group), fill = "grey60", col = "black", lwd = 0.1,
                show.legend = FALSE) +
   coord_fixed(1.3) +
-  theme_bw() + 
-  geom_curve(data = viz, 
-             aes(x = rLongitude, y = rLatitude, 
+  theme_bw() +
+  geom_curve(data = viz,
+             aes(x = rLongitude, y = rLatitude,
                  xend = pLongitude, yend = pLatitude, col = reporter),
              curvature = -0.2, lineend = "round", ncp = 20,
              arrow = arrow(length = unit(0.03, "npc"))) +
