@@ -310,6 +310,74 @@ ggsave(g,
        file = "Figures/GER Out, In and Net_Yearly_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
+# Yearly bar chart, GER Outflows/Inflows in Imports/Exports and Net, dollar value
+barwidth <- 0.4
+viz <- viz %>% 
+  mutate(year = as.character(year)) %>% 
+  melt(id.vars = "year") %>%
+  filter(variable == "GER_Imp_IFF" | variable == "GER_Exp_IFF" |
+           variable == "In_GER_Imp_IFF" | variable == "In_GER_Exp_IFF" |
+           variable == "Net_Tot_IFF") %>%
+  mutate(estimate = ifelse(str_detect(variable, "GER"),
+                           "Gross", "Net")) %>%
+  mutate(year = as.numeric(year)) %>%
+  mutate(variable = fct_drop(variable)) %>%
+  mutate(variable = fct_relevel(variable,
+                                "GER_Imp_IFF",
+                                "GER_Exp_IFF",
+                                "In_GER_Imp_IFF",
+                                "In_GER_Exp_IFF",
+                                "Net_Tot_IFF"))
+g <- ggplot() + 
+  geom_bar(data = viz %>%
+             filter(estimate == "Gross"), 
+           aes(x = year - barwidth/2, y = value,
+               fill = variable), 
+           stat = "identity", 
+           position = "stack", 
+           width = barwidth) + 
+  geom_text(data = viz %>%
+              filter(estimate == "Gross") %>%
+              filter(!str_detect(variable, "In")) %>%
+              group_by(year) %>%
+              summarize(value = sum(value, na.rm = T)),
+            aes(x = year - barwidth/2,
+                y = value,
+                label = round(value/10^9)),
+            size = 2.5, vjust = -0.4) +
+  geom_bar(data = viz %>%
+             filter(estimate == "Net"), 
+           aes(x = year + barwidth/2, y = value, 
+               fill = variable), 
+           stat = "identity", 
+           position = "stack", 
+           width = barwidth) +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  geom_text(data = viz %>%
+              filter(estimate == "Net") %>%
+              group_by(year) %>%
+              summarize(value = sum(value, na.rm = T)),
+            aes(x = year + barwidth/2,
+                y = value,
+                label = round(value/10^9)),
+            size = 2.5, vjust = -0.4) +
+  scale_x_continuous(breaks = seq(2000, 2018)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.minor = element_blank()) +
+  scale_fill_paletteer_d("NineteenEightyR::malibu",
+                         name = "Flow type",
+                         labels = c("Outflows in Exports",
+                                    "Outflows in Imports",
+                                    "Inflows in Exports",
+                                    "Inflows in Imports",
+                                    "Net flows")) +
+  labs(title = "Gross and net mis-invoicing flows in LMIC",
+       subtitle = "Negative values represent inflows",
+       x = "", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/GER and Net Imports, Exports_Yearly_Dollars_LMIC.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. Developing ####
 load("Results/Summary data-sets/GER_Year_Developing.Rdata")
