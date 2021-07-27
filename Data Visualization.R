@@ -1885,7 +1885,7 @@ ggsave(g,
        file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
 
-# World
+# World, SITC
 top <- GER_Orig_Sect_Avg_SITC %>%
   filter(reporter.ISO %in% conduits_World) %>%
   group_by(reporter) %>%
@@ -1914,7 +1914,36 @@ ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
-# World, last 3 years
+# LMIC, SITC
+top <- GER_Orig_Sect_Avg_SITC %>%
+  filter(reporter.ISO %in% conduits_LMIC) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  arrange(Tot_IFF) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg_SITC %>%
+  filter(reporter.ISO %in% conduits_LMIC) %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+            aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top SITC sectors in conduit countries in LMIC",
+       subtitle = "Yearly average outflows during 2000-2018",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_disco(palette = "rainbow") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+# World, SITC, last 3 years
 top <- GER_Orig_Sect_Avg_last3_SITC %>%
   filter(reporter.ISO %in% conduits_World_last3) %>%
   group_by(reporter) %>%
