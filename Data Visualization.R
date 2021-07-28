@@ -196,6 +196,28 @@ ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
+show_col(hue_pal()(4))
+g <- ggplot(viz %>% 
+         mutate(year = as.character(year)) %>% 
+         melt(id.vars = "year") %>%
+         filter(variable == "Net_Tot_IFF_Trade" | variable == "GER_Tot_IFF_Trade"), 
+       aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_manual(values = c("#7CAE00", "#C77CFF"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing in Africa",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of trade") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
+            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.1, 0.1))
+ggsave(g,
+       file = "Figures/GER and Net_Yearly_Percent Trade_Africa_v2.png",
+       width = 6, height = 5, units = "in")
+
 
 # .. LMIC ####
 load("Results/Summary data-sets/GER_Year_LMIC.Rdata")
@@ -1079,6 +1101,38 @@ ggsave(g,
        file = "Figures/Choro_GER Out_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c(option = "mako", direction = -1,
+                       "IFF (billion USD)") +
+  labs(title = "Average annual gross outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Yearly Average_Dollars_World_v2.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c(option = "magma", direction = -1,
+                       "IFF (billion USD)") +
+  labs(title = "Average annual gross outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Yearly Average_Dollars_World_v3.png",
+       width = 6, height = 5, units = "in")
+
 # Average gross IFF as % of GDP
 g <- ggplot() + 
   geom_polygon(data = viz,
@@ -1240,6 +1294,38 @@ g <- ggplot() +
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
        file = "Figures/Choro_GER In_Yearly Average_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", 
+                       option = "rocket", direction = -1) +
+  labs(title = "Average annual gross inflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER In_Yearly Average_Dollars_World_v2.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_bn), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  scale_fill_viridis_c("IFF (billion USD)", 
+                       option = "inferno", direction = -1) +
+  labs(title = "Average annual gross inflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER In_Yearly Average_Dollars_World_v3.png",
        width = 6, height = 5, units = "in")
 
 # Average net inflow IFF dollar value
@@ -1983,6 +2069,23 @@ g <- ggplot(viz,
   theme(legend.text = element_text(size = 8))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(viz,
+       aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top SITC sectors in conduit countries in LMIC",
+       subtitle = "Yearly average outflows during 2000-2018",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_manual(values = gdocs20) +
+  # scale_fill_paletteer_d("palettetown::charizard") +
+  theme(legend.text = element_text(size = 8))
+ggsave(g,
+       file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC_v2.png",
        width = 6, height = 5, units = "in")
 
 # World, SITC, last 3 years
@@ -3446,6 +3549,38 @@ for (i in 1:length(top_sectors$code)){
          width = 6, height = 5, units = "in")
 }
 
+# Mineral Products (different color scheme for paper)
+i = 1
+viz <- GER_Orig_Dest_TopSect_Avg %>%
+  filter(commodity.code %in% top_sectors$code[i]) %>%
+  filter(reporter.ISO %in% top_origins_sect$GDP.orig[[i]]) %>%
+  group_by(reporter.ISO, reporter) %>%
+  top_n(5, Tot_IFF) %>%
+  mutate(reporter = factor(reporter, levels = GER_Orig_Dest_TopSect_Avg %>%
+                             filter(commodity.code == top_sectors$code[i]) %>%
+                             filter(reporter.ISO %in% top_origins_sect$GDP.orig[[i]]) %>%
+                             group_by(reporter, reporter.ISO) %>%
+                             summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+                             arrange(desc(Tot_IFF)) %>%
+                             pull(reporter)))
+
+g <- ggplot(viz,
+            aes(y = Tot_IFF_bn, axis1 = reporter, axis2 = partner,
+                label = after_stat(stratum))) +
+  geom_alluvium(aes(fill = reporter)) +
+  geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
+  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
+  scale_y_continuous(labels = dollar_format()) +
+  scale_fill_paletteer_d("awtools::spalette") + 
+  labs(title = top_sectors$chapter[i],
+       subtitle = "Top 5 origin countries by % of GDP",
+       y = "Yearly average outflow in billion USD") +
+  theme(legend.position = "none")
+ggsave(g,
+       file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent GDP_", top_sectors$code[i], "_v2.png"),
+       width = 6, height = 5, units = "in")
+
 # For conduits as % of trade
 for (i in 1:length(top_sectors$code)){
   viz <- GER_Orig_Dest_TopSect_Avg %>%
@@ -3541,7 +3676,7 @@ g <- ggplot(aes(x = Rank,
   labs(title = "Illicit inflows and financial secrecy",
        subtitle = "Top recipients of gross inflows",
        x = "Rank on 2018 Financial Secrecy Index", 
-       y = "Illicit inflow in billion USD")
+       y = "Yeary average illicit inflow (billion USD)")
 ggsave(g,
        file = "Figures/FSI rank and GER In.png",
        width = 6, height = 5, units = "in")  
