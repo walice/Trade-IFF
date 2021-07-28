@@ -56,6 +56,9 @@
 # .. Sankey diagram by extreme natural resource dependence and partner region
 # .. Sankey diagram by natural resource dependence and partner GNI per capita
 # .. Sankey diagram by natural resource dependence and partner income group
+# Financial Secrecy
+# .. Import FSI
+# .. Merge with top GER inflows recipients
 
 
 
@@ -98,7 +101,8 @@ library(xlsx)
 # CODES MASTERLIST          ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-codes <- read_excel("/scratch/alepissier/IFFe/Data/Codes_Masterlist.xlsx", sheet = "Codes") %>%
+codes <- read_excel(paste0(data.disk, "Data/Codes_Masterlist.xlsx"), 
+                    sheet = "Codes") %>%
   mutate_all(as.character)
 
 
@@ -3436,3 +3440,71 @@ for (i in 1:length(top_sectors$code)){
          file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent Trade_", top_sectors$code[i], ".png"),
          width = 6, height = 5, units = "in")
 }
+
+
+
+## ## ## ## ## ## ## ## ## ## ##
+# FINANCIAL SECRECY         ####
+## ## ## ## ## ## ## ## ## ## ##
+
+# .. Import FSI ####
+FSI <- read_excel(paste0(data.disk, "Data/TJN/Financial Secrecy Index/FSI-Rankings-2018.xlsx"), 
+                    sheet = "FSI Results")
+
+FSI$Jurisdiction<- gsub("2$", "", FSI$Jurisdiction)
+FSI <- FSI %>%
+  select(Jurisdiction, secrecy.score = `Secrecy Score4`, Rank)
+
+FSI <- FSI %>%
+  left_join(codes %>% select(Country, ISO3166.3),
+            by = c("Jurisdiction" = "Country"))
+
+FSI %>% filter(is.na(ISO3166.3))
+# Only footnotes remain, we can drop the NAs.
+
+FSI <- FSI %>%
+  filter(!is.na(ISO3166.3)) %>%
+  mutate(Rank = as.numeric(Rank))
+
+
+# .. Merge with top GER inflows recipients ##
+load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
+
+top_GERinflows_dollar <- Inflow_GER_Orig_Avg %>%
+  top_n(5, abs(Tot_IFF)) %>%
+  arrange(desc(abs(Tot_IFF))) %>%
+  pull(reporter.ISO)
+
+viz <- left_join(Inflow_GER_Orig_Avg, 
+                 FSI %>%
+                   select(ISO3166.3, Rank),
+                 by = c("reporter.ISO" = "ISO3166.3")) %>%
+  mutate(reporter.ISO = ifelse(reporter.ISO %in% top_GERinflows_dollar,
+                               reporter.ISO, NA),
+         reporter = ifelse(reporter.ISO %in% top_GERinflows_dollar,
+                           reporter, NA))
+
+g <- ggplot(aes(x = Rank,
+           y = abs(Tot_IFF),
+           size = abs(Tot_IFF),
+           color = reporter.ISO),
+       data = viz) +
+  geom_point() +
+  scale_color_paletteer_d("NineteenEightyR::sunset3",
+                          direction = -1,
+                          na.value = "#808080") +
+  geom_text_repel(aes(label = reporter),
+                  size = 4,
+                  point.padding = 5,
+                  nudge_x = 4,
+                  seed = 1509) +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  theme(legend.position = "none") +
+  labs(title = "Illicit inflows and financial secrecy",
+       subtitle = "Top recipients of gross inflows",
+       x = "Rank on 2018 Financial Secrecy Index", 
+       y = "Illicit inflow in billion USD")
+ggsave(g,
+       file = "Figures/FSI rank and GER In.png",
+       width = 6, height = 5, units = "in")  
+        
