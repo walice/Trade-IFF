@@ -1519,7 +1519,7 @@ ggsave(g,
 ## ## ## ## ## ## ## ## ## ## ##
 
 tol21rainbow <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")
-gdocs20 <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", "#5574A6", "#3B3EAC")
+gdocs20 <- c("#3366CC", "#DC3912", "#FF9900", "#109618", "#990099", "#0099C6", "#DD4477", "#66AA00", "#B82E2E", "#316395", "#994499", "#22AA99", "#AAAA11", "#6633CC", "#E67300", "#8B0707", "#651067", "#329262", "#5574A6", "#3B3EAC", "#F5F5F5")
 
 
 # .. Africa, yearly average ####
@@ -1541,6 +1541,44 @@ g <- ggplot(GER_Sect_Avg_Africa %>%
        subtitle = "Average gross yearly outflow during 2000-2018")
 ggsave(g,
        file = "Figures/Treemap sectors_Yearly Average_Africa.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Sect_Avg_Africa %>%
+              arrange(desc(Tot_IFF_bn)),
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", size = 12) +
+  theme(legend.position = "none") +
+  scale_fill_manual(values = gdocs20) +
+  # scale_fill_paletteer_d("Polychrome::kelly", direction = -1) +
+  labs(title = "Top sectors in Africa",
+       subtitle = "Average gross yearly outflow during 2000-2018")
+ggsave(g,
+       file = "Figures/Treemap sectors_Yearly Average_Africa_v2.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot(GER_Sect_Avg_Africa %>%
+              arrange(desc(Tot_IFF_bn)),
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+  geom_treemap() +
+  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", size = 12) +
+  theme(legend.position = "none") +
+  # scale_fill_manual(values = gdocs20) +
+  scale_fill_paletteer_d("Polychrome::kelly", direction = -1) +
+  labs(title = "Top sectors in Africa",
+       subtitle = "Average gross yearly outflow during 2000-2018")
+ggsave(g,
+       file = "Figures/Treemap sectors_Yearly Average_Africa_v3.png",
        width = 6, height = 5, units = "in")
 
 
