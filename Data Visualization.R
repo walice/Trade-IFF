@@ -7,6 +7,7 @@
 # INDEX                     ####
 ## ## ## ## ## ## ## ## ## ## ##
 # Preamble
+# .. Add custom font to theme
 # Codes Masterlist
 # Yearly IFF Bar Charts
 # .. Africa
@@ -46,7 +47,7 @@
 # .. Top conduits in Africa
 # .. Top conduits in LMIC
 # .. Top conduits in Developing
-# Sankey Diagram
+# Sankey Diagrams
 # .. Sankey diagram by GNI per capita and sector in LMIC
 # .. Sankey diagram by reporter and partner GNI per capita in World
 # .. Sankey diagram by reporter and partner GNI per capita in LMIC
@@ -56,7 +57,8 @@
 # .. Sankey diagram by extreme natural resource dependence and partner region
 # .. Sankey diagram by natural resource dependence and partner GNI per capita
 # .. Sankey diagram by natural resource dependence and partner income group
-# Financial Secrecy
+# .. Sankey diagram by top origin and destinations in top sector
+# Bubble Chart
 # .. Import FSI
 # .. Merge with top GER inflows recipients
 
@@ -78,22 +80,39 @@ library(ggmap)
 library(ggpubr)
 library(ggrepel)
 library(ggsunburst)
+library(ggtext)
 library(ggthemes)
 library(mapproj)
 library(maptools)
 library(NineteenEightyR)
 unlink("Rplots.pdf")
 library(paletteer)
+library(patchwork)
 library(rcartocolor)
 library(RColorBrewer)
 library(readxl)
 library(reshape2)
 library(scales)
+library(showtext)
 library(stringr)
 library(tidyverse)
 library(treemapify)
 library(wesanderson)
 library(xlsx)
+
+# .. Add custom font to theme ####
+font_add_google("Montserrat", "montserrat")
+font_add_google("Lato", "lato")
+showtext_auto()
+showtext_opts(dpi = 96)
+
+theme_update(text = element_text(size = 36,
+                                 family = "montserrat"),
+             legend.spacing.x = unit("0.2", "cm"))
+my_theme <- theme(text = element_text(size = 36,
+                                      family = "montserrat"),
+                  legend.spacing.x = unit("0.2", "cm"),
+                  legend.spacing.y = unit("0.2", "cm"))
 
 
 
@@ -110,6 +129,9 @@ codes <- read_excel(paste0(data.disk, "Data/Codes_Masterlist.xlsx"),
 ## ## ## ## ## ## ## ## ## ## ##
 # YEARLY IFF BAR CHARTS     ####
 ## ## ## ## ## ## ## ## ## ## ##
+
+show_col(hue_pal()(16))
+
 
 # .. Africa ####
 load("Results/Summary data-sets/GER_Year_Africa.Rdata")
@@ -144,13 +166,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#FFD84D", "#00B0F6"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_Africa.png",
@@ -164,13 +188,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent GDP_Africa.png",
@@ -178,44 +204,24 @@ ggsave(g,
 
 # GER and Net as % of trade
 g <- ggplot(viz %>% 
-              mutate(year = as.character(year)) %>% 
-              melt(id.vars = "year") %>%
-              filter(variable == "Net_Tot_IFF_Trade" | variable == "GER_Tot_IFF_Trade"), 
-            aes(x = year, y = value, fill = fct_rev(variable))) +
-  geom_bar(position = "dodge", stat = "identity") +
-  scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Trade mis-invoicing in Africa",
-       subtitle = "Net and gross outflows",
-       x = "", y = "Illicit flow as % of trade") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
-  scale_x_discrete(expand = c(0.1, 0.1))
-ggsave(g,
-       file = "Figures/GER and Net_Yearly_Percent Trade_Africa.png",
-       width = 6, height = 5, units = "in")
-
-show_col(hue_pal()(4))
-g <- ggplot(viz %>% 
          mutate(year = as.character(year)) %>% 
          melt(id.vars = "year") %>%
          filter(variable == "Net_Tot_IFF_Trade" | variable == "GER_Tot_IFF_Trade"), 
        aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_manual(values = c("#7CAE00", "#C77CFF"),
+  scale_fill_manual(values = c("#00BE67", "#FF61CC"),
                     name = "Estimate",
                     labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in Africa",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of trade") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
-       file = "Figures/GER and Net_Yearly_Percent Trade_Africa_v2.png",
+       file = "Figures/GER and Net_Yearly_Percent Trade_Africa.png",
        width = 6, height = 5, units = "in")
 
 
@@ -255,13 +261,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#FFD84D", "#00B0F6"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_LMIC.png",
@@ -275,13 +283,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent GDP_LMIC.png",
@@ -295,13 +305,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#00BE67", "#FF61CC"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of trade") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_LMIC.png",
@@ -329,8 +341,8 @@ g <- ggplot(viz %>%
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/GER Out, In and Net_Yearly_Dollars_LMIC.png",
@@ -362,15 +374,15 @@ g <- ggplot() +
            stat = "identity", 
            position = "stack", 
            width = barwidth) + 
-  geom_text(data = viz %>%
-              filter(estimate == "Gross") %>%
-              filter(!str_detect(variable, "In")) %>%
-              group_by(year) %>%
-              summarize(value = sum(value, na.rm = T)),
-            aes(x = year - barwidth/2,
-                y = value,
-                label = round(value/10^9)),
-            size = 2.5, vjust = -0.4) +
+  # geom_text(data = viz %>%
+  #             filter(estimate == "Gross") %>%
+  #             filter(!str_detect(variable, "In")) %>%
+  #             group_by(year) %>%
+  #             summarize(value = sum(value, na.rm = T)),
+  #           aes(x = year - barwidth/2,
+  #               y = value,
+  #               label = round(value/10^9)),
+  #           size = 9, vjust = -0.5, family = "montserrat") +
   geom_bar(data = viz %>%
              filter(estimate == "Net"), 
            aes(x = year + barwidth/2, y = value, 
@@ -379,14 +391,14 @@ g <- ggplot() +
            position = "stack", 
            width = barwidth) +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  geom_text(data = viz %>%
-              filter(estimate == "Net") %>%
-              group_by(year) %>%
-              summarize(value = sum(value, na.rm = T)),
-            aes(x = year + barwidth/2,
-                y = value,
-                label = round(value/10^9)),
-            size = 2.5, vjust = -0.4) +
+  # geom_text(data = viz %>%
+  #             filter(estimate == "Net") %>%
+  #             group_by(year) %>%
+  #             summarize(value = sum(value, na.rm = T)),
+  #           aes(x = year + barwidth/2,
+  #               y = value,
+  #               label = round(value/10^9)),
+  #           size = 9, vjust = -0.5, family = "montserrat") +
   scale_x_continuous(breaks = seq(2000, 2018)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.minor = element_blank()) +
@@ -429,13 +441,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#FFD84D", "#00B0F6"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in developing countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_Developing.png",
@@ -449,13 +463,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in developing countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent GDP_Developing.png",
@@ -469,13 +485,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#00BE67", "#FF61CC"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in developing countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of trade") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_Developing.png",
@@ -506,13 +524,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#FFD84D", "#00B0F6"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low HDI countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_Low HDI.png",
@@ -526,13 +546,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low HDI countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of GDP") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent GDP_Low HDI.png",
@@ -546,13 +568,15 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = percent_format(accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#00BE67", "#FF61CC"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing in low HDI countries",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow as % of trade") +
-  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Percent Trade_Low HDI.png",
@@ -597,16 +621,62 @@ g <- ggplot(viz %>%
             aes(x = year, y = value, fill = fct_rev(variable))) +
   geom_bar(position = "dodge", stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  scale_fill_discrete(name = "Estimate", labels = c("Net", "Gross")) +
+  scale_fill_manual(values = c("#FFD84D", "#00B0F6"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "Net and gross outflows",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.1, 0.1))
 ggsave(g,
        file = "Figures/GER and Net_Yearly_Dollars_World.png",
+       width = 6, height = 5, units = "in")
+
+# GER and Net as % of GDP
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_GDP" | variable == "GER_Tot_IFF_GDP"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing globally",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of GDP") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.1, 0.1))
+ggsave(g,
+       file = "Figures/GER and Net_Yearly_Percent GDP_World.png",
+       width = 6, height = 5, units = "in")
+
+# GER and Net as % of trade
+g <- ggplot(viz %>% 
+              mutate(year = as.character(year)) %>% 
+              melt(id.vars = "year") %>%
+              filter(variable == "Net_Tot_IFF_Trade" | variable == "GER_Tot_IFF_Trade"), 
+            aes(x = year, y = value, fill = fct_rev(variable))) +
+  geom_bar(position = "dodge", stat = "identity") +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_fill_manual(values = c("#00BE67", "#FF61CC"),
+                    name = "Estimate",
+                    labels = c("Net", "Gross")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Trade mis-invoicing globally",
+       subtitle = "Net and gross outflows",
+       x = "", y = "Illicit flow as % of trade") +
+  geom_text(aes(label = format(round(value*100, 1), nsmall = 1)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
+  scale_x_discrete(expand = c(0.1, 0.1))
+ggsave(g,
+       file = "Figures/GER and Net_Yearly_Percent Trade_World.png",
        width = 6, height = 5, units = "in")
 
 # Imports and Exports, GER and Net, dollar value in 2005
@@ -642,8 +712,8 @@ g <- ggplot(viz %>%
   labs(title = "Trade mis-invoicing globally in 2005",
        subtitle = "Net and gross flows in imports and exports",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/GER and Net Imports, Exports_2005_Dollars_World.png",
@@ -685,7 +755,7 @@ g <- ggplot() +
             aes(x = year - barwidth/2,
                 y = value,
                 label = round(value/10^9)),
-            size = 2.5, vjust = -0.4) +
+            size = 9, vjust = -0.4, family = "montserrat") +
   geom_bar(data = viz %>%
              filter(estimate == "Net"), 
            aes(x = year + barwidth/2, y = value, 
@@ -701,7 +771,7 @@ g <- ggplot() +
             aes(x = year + barwidth/2,
                 y = value,
                 label = round(value/10^9)),
-            size = 2.5, vjust = -0.4) +
+            size = 9, vjust = -0.4, family = "montserrat") +
   scale_x_continuous(breaks = seq(2000, 2018)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.minor = element_blank()) +
@@ -760,12 +830,13 @@ g <- ggplot(viz %>%
                                "Net flows in Exports"),
                     type = "qual", palette = "Set2") +
   facet_wrap(~flowtype) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.ticks.x = element_blank()) +
   labs(title = "Trade mis-invoicing globally (yearly average)",
        subtitle = "Net and gross flows in imports and exports",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/GER and Net Imports, Exports_Yearly Average_Dollars_World.png",
@@ -812,12 +883,13 @@ g <- ggplot(viz %>%
                                "Net flows in Exports"),
                     type = "qual", palette = "Set2") +
   facet_wrap(~flowtype) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.ticks.x = element_blank()) +
   labs(title = "Trade mis-invoicing globally (yearly average)",
        subtitle = "Net and gross flows in imports and exports",
        x = "", y = "Illicit flow in billion USD") +
-  geom_text(aes(label = round(value/10^9)),
-            size = 2.5, position = position_dodge(1), vjust = -0.4) +
+  geom_text(aes(label = round(value/10^9)), family = "montserrat",
+            size = 9, position = position_dodge(1), vjust = -0.4) +
   scale_x_discrete(expand = c(0.05, 0.05))
 ggsave(g,
        file = "Figures/GER and Net Imports, Exports_Yearly Average2_Dollars_World.png",
@@ -986,6 +1058,10 @@ ditch_axes <- theme(axis.title.x = element_blank(),
                     panel.border = element_blank(),
                     panel.grid = element_blank())
 
+# my_theme <- theme(text = element_text(size = 36,
+#                                       family = "montserrat"),
+#                   legend.spacing.y = unit("0.2", "cm"))
+
 load("Results/Summary data-sets/GER_Orig_Avg_Africa.Rdata")
 
 viz <- left_join(map, GER_Orig_Avg_Africa,
@@ -999,6 +1075,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() +
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Average annual gross outflows during 2000-2018") +
   theme(legend.position = "bottom",
@@ -1016,6 +1093,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% GDP)", direction = -1,
                        breaks= pretty_breaks()) +
   labs(title = "Average annual gross outflows during 2000-2018") +
@@ -1034,6 +1112,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% trade)", direction = -1) +
   labs(title = "Average annual gross outflows during 2000-2018") +
   theme(legend.position = "bottom",
@@ -1056,6 +1135,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_distiller(name = "IFF (billion USD)", 
                        type = "div", palette = "Spectral") +
   labs(title = "Average annual net flows during 2000-2018")
@@ -1093,6 +1173,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Average annual gross outflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1108,6 +1189,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c(option = "mako", direction = -1,
                        "IFF (billion USD)") +
   labs(title = "Average annual gross outflows during 2000-2018") +
@@ -1124,6 +1206,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c(option = "magma", direction = -1,
                        "IFF (billion USD)") +
   labs(title = "Average annual gross outflows during 2000-2018") +
@@ -1141,6 +1224,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
   labs(title = "Average annual gross outflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1157,6 +1241,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% trade)", direction = -1) +
   labs(title = "Average annual gross outflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1178,6 +1263,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", direction = -1) +
   labs(title = "Average annual gross outflows during 2016-2018") +
   theme(legend.position = "bottom") + 
@@ -1194,6 +1280,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% GDP)", direction = -1) +
   labs(title = "Average annual gross outflows during 2016-2018") +
   theme(legend.position = "bottom") + 
@@ -1210,6 +1297,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (% trade)", direction = -1) +
   labs(title = "Average annual gross outflows during 2016-2018") +
   theme(legend.position = "bottom") + 
@@ -1231,6 +1319,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_distiller(name = "IFF (billion USD)", 
                        type = "div", palette = "Spectral") +
   labs(title = "Average annual net flows during 2000-2018") +
@@ -1248,6 +1337,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_distiller(name = "IFF (% GDP)", 
                        type = "div", palette = "Spectral") +
   labs(title = "Average annual net flows during 2000-2018") +
@@ -1265,6 +1355,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_distiller(name = "IFF (% trade)", 
                        type = "div", palette = "Spectral") +
   labs(title = "Average annual net flows during 2000-2018") +
@@ -1288,6 +1379,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", option = "C", direction = -1) +
   labs(title = "Average annual gross inflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1303,6 +1395,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", 
                        option = "rocket", direction = -1) +
   labs(title = "Average annual gross inflows during 2000-2018") +
@@ -1319,6 +1412,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", 
                        option = "inferno", direction = -1) +
   labs(title = "Average annual gross inflows during 2000-2018") +
@@ -1343,6 +1437,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", option = "C", direction = -1) +
   labs(title = "Average annual net inflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1366,6 +1461,7 @@ g <- ggplot() +
   coord_fixed(1.3) +
   theme_bw() + 
   ditch_axes +
+  my_theme +
   scale_fill_viridis_c("IFF (billion USD)", option = "C", direction = -1) +
   labs(title = "Average annual net outflows during 2000-2018") +
   theme(legend.position = "bottom") + 
@@ -1401,13 +1497,15 @@ g1 <- ggplot(Origins,
   coord_polar("y") +
   geom_text(aes(label = paste0(round(Pct_IFF), "%")), 
             position = position_stack(vjust = 0.5),
-            size = 2) +
+            size = 10) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of African outflows, 2000-2018") +
   theme_classic() +
+  my_theme +
   scale_fill_paletteer_d("NineteenEightyR::miami2") + 
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank(),
+        plot.margin = unit(c(5.5, -95, 5.5, 5.5), "points"))
 
 # Destinations pie chart, cumulative IFF
 load("Results/Summary data-sets/GER_Dest_Sum_Africa.Rdata")
@@ -1423,11 +1521,15 @@ g2 <- ggplot(Destinations,
             aes(x = "", y = Pct_IFF, fill = pRegion)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y") +
-  geom_text(aes(label = ifelse(Pct_IFF < 3, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
+  # geom_text(aes(label = ifelse(Pct_IFF < 3, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
+  #           position = position_stack(vjust = 0.5),
+  #           size = 10) +
+  geom_text(aes(label = ifelse(Pct_IFF < 3, "", paste0(round(Pct_IFF), "%"))), 
             position = position_stack(vjust = 0.5),
-            size = 2) +
+            size = 10) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of African outflows, 2000-2018") +
   theme_classic() +
+  my_theme +
   scale_fill_paletteer_d("NineteenEightyR::sonny") + 
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
@@ -1455,11 +1557,12 @@ g1 <- ggplot(Origins,
             aes(x = "", y = Pct_IFF, fill = rRegion)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y") +
-  geom_text(aes(label = ifelse(Pct_IFF < 4, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
+  geom_text(aes(label = ifelse(Pct_IFF < 7, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
             position = position_stack(vjust = 0.5),
-            size = 2) +
+            size = 10) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Origins of global outflows, 2000-2018") +
   theme_classic() +
+  my_theme +
   scale_fill_paletteer_d("NineteenEightyR::sonny") + 
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
@@ -1479,11 +1582,12 @@ g2 <- ggplot(Destinations,
             aes(x = "", y = Pct_IFF, fill = pRegion)) +
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y") +
-  geom_text(aes(label = ifelse(Pct_IFF < 4, round(Pct_IFF), paste0(round(Pct_IFF), "%"))), 
+  geom_text(aes(label = ifelse(Pct_IFF < 4, "", paste0(round(Pct_IFF), "%"))), 
             position = position_stack(vjust = 0.5),
-            size = 2) +
+            size = 10) +
   labs(x = NULL, y = NULL, fill = NULL, title = "Destinations of global outflows, 2000-2018") +
   theme_classic() +
+  my_theme +
   scale_fill_paletteer_d("NineteenEightyR::sonny") + 
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
@@ -1529,14 +1633,21 @@ g1 <- sunburst(sb, rects.fill.aes = "rRegion", leaf_labels = F, node_labels.min 
               filter(!(label == "UMC" & rRegion == "Oceania")),
             aes(x = x, y = 0.1, 
                 label = paste0(label, " ", round(size), "%"),
-                angle = angle, hjust = hjust), size = 2) +
+                angle = angle, hjust = hjust), 
+            family = "montserrat", size = 8) +
   geom_text(data = sb$node_labels,
             aes(x = x, y = y,
-                label = ifelse(label == "Oceania" | label == "Africa", round(size), paste0(round(size), "%"))),
-            size = 2) +
+                label = ifelse(label == "Oceania", "", 
+                               ifelse(label == "Africa", round(size), 
+                                      paste0(round(size), "%")))),
+            family = "montserrat", size = 9) +
   scale_fill_brewer(type = "qual", palette = "Set3") +
-  labs(fill = "") +
-  theme(plot.margin = unit(c(0, 0.25, -1, 0.5), "cm")) +
+  labs(fill = "",
+       title = "Origins") +
+  theme(plot.margin = unit(c(10, 5.5, 5.5, 5.5), "pt"),
+        legend.position = "none",
+        plot.title = element_text(family = "montserrat", size = 30,
+                                  margin = margin(t = 10, b = 20))) +
   coord_polar(clip = "off")
 
 # Destinations, cumulative IFF
@@ -1568,31 +1679,35 @@ sb$node_labels$size <- Destinations %>% group_by(pRegion) %>% summarize(size = s
 
 g2 <- sunburst(sb, rects.fill.aes = "pRegion", leaf_labels = F, node_labels.min = 15) +
   geom_text(data = sb$leaf_labels %>%
+              filter(!(label == "LMC" & pRegion == "Oceania")) %>%
+              filter(!(label == "UMC" & pRegion == "Oceania")) %>%
               filter(!(label == "HIC" & pRegion == "Africa")) %>%
-              filter(!(label == "UMC" & pRegion == "Oceania")),
+              filter(!(label == "LIC" & pRegion == "Africa")) %>%
+              filter(!(label == "LMC" & pRegion == "Americas")),
             aes(x = x, y = 0.1, 
                 label = paste0(label, " ", round(size), "%"),
-                angle = angle, hjust = hjust), size = 2) +
+                angle = angle, hjust = hjust), 
+            family = "montserrat", size = 8) +
   geom_text(data = sb$node_labels,
             aes(x = x, y = y,
-                label = ifelse(label != "Oceania", paste0(round(size), "%"), floor(size))), # Floor is just for rounding display
-            size = 2) +
+                label = ifelse(label == "Oceania" | label == "Africa", 
+                               "", paste0(round(size), "%"))), # Floor is just for rounding display
+            family = "montserrat", size = 9) +
   scale_fill_brewer(type = "qual", palette = "Set3") +
-  labs(fill = "") +
-  theme(plot.margin = unit(c(0, 0.5, -1, 0.25), "cm"),
-        legend.position = "bottom") +
+  labs(fill = "",
+       title = "Destinations") +
+  theme(plot.margin = unit(c(5.5, 5.5, 5.5, 5.5), "pt"),
+        legend.position = "none",
+        plot.title = element_text(family = "montserrat", size = 30,
+                                  margin = margin(t = 10, b = 20))) +
   coord_polar(clip = "off")
 
-g <- ggarrange(g1, g2, ncol = 2,
-               common.legend = TRUE,
-               legend = "bottom",
-               legend.grob = get_legend(g2),
-               labels = c("Origins", "Destinations"),
-               font.label = list(size = 12, face = "plain"),
-               vjust = 4)
-g <- annotate_figure(g,
-                     top = text_grob("Global outflows, 2000-2018", 
-                                     face = "bold", size = 14))
+g <- g1 + g2 + 
+  plot_layout(guides = "collect") +
+  plot_annotation(title = "Global outflows, 2000-2018") & 
+  theme(legend.position = "bottom",
+        legend.text = element_text(family = "montserrat", size = 20),
+        legend.margin = margin(t = 10))
 
 ggsave(g,
        file = "Figures/Sunburst_GER Origins and Destinations_Cumulative_World.png",
@@ -1613,14 +1728,37 @@ load("Results/Summary data-sets/GER_Sect_Avg_Africa.Rdata")
 
 g <- ggplot(GER_Sect_Avg_Africa %>%
               arrange(desc(Tot_IFF_bn)),
-            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section))) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg_Africa,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[9],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[9] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[11],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors in Africa",
@@ -1631,14 +1769,37 @@ ggsave(g,
 
 g <- ggplot(GER_Sect_Avg_Africa %>%
               arrange(desc(Tot_IFF_bn)),
-            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section))) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg_Africa,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[9],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[9] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[11],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = gdocs20) +
   # scale_fill_paletteer_d("Polychrome::kelly", direction = -1) +
@@ -1650,14 +1811,37 @@ ggsave(g,
 
 g <- ggplot(GER_Sect_Avg_Africa %>%
               arrange(desc(Tot_IFF_bn)),
-            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
+            aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section))) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg_Africa,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[8],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[9],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_Africa,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[9] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[11],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright",  family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   # scale_fill_manual(values = gdocs20) +
   scale_fill_paletteer_d("Polychrome::kelly", direction = -1) +
@@ -1675,12 +1859,35 @@ g <- ggplot(GER_Sect_Avg_LMIC %>%
               arrange(desc(Tot_IFF_bn)),
             aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(data = GER_Sect_Avg_LMIC,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[6],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_LMIC,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[6],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
   geom_treemap_text(data = GER_Sect_Avg_LMIC,
                     aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_LMIC,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[8] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[10],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors in low and lower-middle income countries",
@@ -1697,12 +1904,24 @@ g <- ggplot(GER_Sect_Avg_Developing %>%
               arrange(desc(Tot_IFF_bn)),
             aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
+  geom_treemap_text(colour = "white", place = "topleft", 
+                    reflow = T, grow = T, family = "montserrat", 
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
   geom_treemap_text(data = GER_Sect_Avg_Developing,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[7],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright", family = "montserrat",
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_Developing,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[7] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[12],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors in developing countries",
@@ -1720,12 +1939,35 @@ g <- ggplot(GER_Sect_Avg %>%
               arrange(desc(Tot_IFF_bn)),
             aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[10],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[10],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[9],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright", family = "montserrat",
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[9] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[13],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors globally",
@@ -1741,12 +1983,35 @@ g <- ggplot(GER_Sect_Avg_last3 %>%
               arrange(desc(Tot_IFF_bn)),
             aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(section), label = section)) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg_last3,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[7],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(4, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_last3,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[7],
+                                       section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_last3,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[10],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_last3,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[10] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[13],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top sectors globally",
@@ -1762,12 +2027,35 @@ g <- ggplot(GER_Sect_Avg_SITC %>%
               arrange(desc(Tot_IFF_bn)),
             aes(area = Tot_IFF_bn, fill = forcats::fct_inorder(SITC.section), label = SITC.section)) +
   geom_treemap() +
-  geom_treemap_text(colour = "white", place = "topleft", reflow = T) +
   geom_treemap_text(data = GER_Sect_Avg_SITC,
-                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[7],
+                                       SITC.section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(5, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_SITC,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[7],
+                                       SITC.section, "")),
+                    colour = "white", place = "topleft", family = "montserrat", 
+                    reflow = T, grow = T,
+                    padding.x = grid::unit(2, "mm"),
+                    padding.y = grid::unit(2, "mm"),
+                    lineheight = 0.3) +
+  geom_treemap_text(data = GER_Sect_Avg_SITC,
+                    aes(label = ifelse(Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[7],
                                        paste0("$", round(Tot_IFF_bn), " bn"),
                                        "")),
-                    colour = "white", place = "bottomright", size = 12) +
+                    colour = "white", place = "bottomright", family = "montserrat",
+                    size = 32) +
+  geom_treemap_text(data = GER_Sect_Avg_SITC,
+                    aes(label = ifelse(Tot_IFF_bn < sort(Tot_IFF_bn, decreasing = T)[7] &
+                                         Tot_IFF_bn >= sort(Tot_IFF_bn, decreasing = T)[8],
+                                       paste0("$", round(Tot_IFF_bn), " bn"),
+                                       "")),
+                    colour = "white", place = "bottomright", family = "montserrat", 
+                    size = 20) +
   theme(legend.position = "none") +
   scale_fill_manual(values = tol21rainbow) +
   labs(title = "Top SITC sectors globally",
@@ -1782,7 +2070,6 @@ ggsave(g,
 # STACKED BAR CHARTS        ####
 ## ## ## ## ## ## ## ## ## ## ##
 
-
 # .. Stacked bar charts of commodities in top sectors ####
 load("Results/Summary data-sets/GER_Sect_Avg_Africa_disag.Rdata")
 load("Results/Summary data-sets/GER_Sect_Avg_LMIC_disag.Rdata")
@@ -1795,22 +2082,25 @@ viz <- left_join(GER_Sect_Avg_Africa_disag, HS %>% select(-chapter.description),
   filter(section == "Mineral Products" | section == "Machinery and Electrical") %>%
   arrange(desc(Tot_IFF)) %>%
   mutate(commodity = factor(commodity,
-                            levels = commodity[order(Tot_IFF, decreasing = T)]))
+                            levels = commodity[order(Tot_IFF, decreasing = T)]),
+         section = factor(section))
 
 g <- ggplot(viz,
-            aes(x = section, y = Tot_IFF/10^9, 
+            aes(x = fct_rev(section), y = Tot_IFF/10^9, 
                 fill = fct_inorder(str_wrap(commodity, 20)))) +
   geom_bar(stat = "identity") +
   geom_text(aes(label = ifelse(order(Tot_IFF) == min(order(Tot_IFF)),
                                "", paste0("$", round(Tot_IFF/10^9), " billion"))), 
             position = position_stack(vjust = 0.5),
-            size = 3) +
+            size = 10,
+            family = "montserrat") +
   labs(x = NULL, 
        y = "Illicit flow in billion USD", 
        fill = NULL, 
        title = "Breakdown of top sectors in Africa",
        subtitle = "Yearly average outflows during 2000-2018") +
-  theme(legend.text = element_text(size = 8)) +
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3)) +
   scale_y_continuous(labels = dollar_format(scale = 1)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
@@ -1832,13 +2122,15 @@ g <- ggplot(viz,
   geom_text(aes(label = ifelse(order(Tot_IFF) == min(order(Tot_IFF)),
                                "", paste0("$", round(Tot_IFF/10^9), " billion"))), 
             position = position_stack(vjust = 0.5),
-            size = 3) +
+            size = 10,
+            family = "montserrat") +
   labs(x = NULL, 
        y = "Illicit flow in billion USD", 
        fill = NULL, 
-       title = "Breakdown of top sectors in low and lower-middle income",
+       title = "Breakdown of top sectors in LMIC",
        subtitle = "Yearly average outflows during 2000-2018") +
-  theme(legend.text = element_text(size = 8)) +
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3)) +
   scale_y_continuous(labels = dollar_format(scale = 1)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
@@ -1860,13 +2152,15 @@ g <- ggplot(viz,
   geom_text(aes(label = ifelse(order(Tot_IFF) == min(order(Tot_IFF)),
                                "", paste0("$", round(Tot_IFF/10^9), " billion"))),
             position = position_stack(vjust = 0.5),
-            size = 3) +
+            size = 10,
+            family = "montserrat") +
   labs(x = NULL, 
        y = "Illicit flow in billion USD", 
        fill = NULL, 
        title = "Breakdown of top sectors in developing countries",
        subtitle = "Yearly average outflows during 2000-2018") +
-  theme(legend.text = element_text(size = 8)) +
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3)) +
   scale_y_continuous(labels = dollar_format(scale = 1)) +
   scale_fill_brewer(type = "qual", palette = "Accent")
 ggsave(g,
@@ -1944,7 +2238,8 @@ g <- ggplot(viz,
        fill = NULL) +
   coord_flip() +
   scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_Africa.png",
        width = 6, height = 5, units = "in")
@@ -1976,7 +2271,8 @@ g <- ggplot(viz,
        fill = NULL) +
   coord_flip() +
   scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
@@ -2008,7 +2304,8 @@ g <- ggplot(viz,
        fill = NULL) +
   coord_flip() +
   scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top 5 sectors in GDP conduits_Yearly Average_Dollars_Developing.png",
        width = 6, height = 5, units = "in")
@@ -2037,7 +2334,8 @@ g <- ggplot(viz,
        fill = NULL) +
   coord_flip() +
   scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
@@ -2066,7 +2364,8 @@ g <- ggplot(viz,
        fill = NULL) +
   coord_flip() +
   scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
@@ -2083,7 +2382,8 @@ g <- ggplot(viz,
   coord_flip() +
   scale_fill_manual(values = gdocs20) +
   # scale_fill_paletteer_d("palettetown::charizard") +
-  theme(legend.text = element_text(size = 8))
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC_v2.png",
        width = 6, height = 5, units = "in")
@@ -2111,8 +2411,10 @@ g <- ggplot(viz,
        y = "Illicit flow in billion USD",
        fill = NULL) +
   coord_flip() +
-  scale_fill_disco(palette = "rainbow") +
-  theme(legend.text = element_text(size = 8))
+  # scale_fill_disco(palette = "rainbow") +
+  scale_fill_paletteer_d("rcartocolor::Prism") +
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Last 3 Yearly Average_Dollars_World.png",
        width = 6, height = 5, units = "in")
@@ -2126,11 +2428,14 @@ g <- ggplot(GER_Dest_Avg_Africa %>%
               top_n(10, Tot_IFF),
             aes(x = "", y = Tot_IFF/10^9, fill = fct_reorder(partner, Tot_IFF, .desc = T))) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), 
+            position = position_stack(vjust = 0.5),
+            family = "montserrat", size = 12) +
   labs(x = NULL, y = NULL, fill = NULL, 
        title = "Top 10 destinations from Africa",
        subtitle = "Yearly average outflows during 2000-2018") +
   theme_classic() +
+  my_theme +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -2145,11 +2450,14 @@ g <- ggplot(GER_Dest_Avg_LMIC %>%
               top_n(10, Tot_IFF),
             aes(x = "", y = Tot_IFF/10^9, fill = fct_reorder(partner, Tot_IFF, .desc = T))) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), 
+            position = position_stack(vjust = 0.5),
+            family = "montserrat", size = 12) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 10 destinations from low & lower-middle income countries",
+       title = "Top 10 destinations from LMIC",
        subtitle = "Yearly average outflows during 2000-2018") +
   theme_classic() +
+  my_theme + 
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -2164,11 +2472,14 @@ g <- ggplot(GER_Dest_Avg_last3_LMIC %>%
               top_n(10, Tot_IFF),
             aes(x = "", y = Tot_IFF/10^9, fill = fct_reorder(partner, Tot_IFF, .desc = T))) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), 
+            position = position_stack(vjust = 0.5),
+            family = "montserrat", size = 12) +
   labs(x = NULL, y = NULL, fill = NULL, 
-       title = "Top 10 destinations from low & lower-middle income countries",
+       title = "Top 10 destinations from LMIC",
        subtitle = "Yearly average outflows during 2016-2018") +
   theme_classic() +
+  my_theme +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -2183,11 +2494,14 @@ g <- ggplot(GER_Dest_Avg_Developing %>%
               top_n(10, Tot_IFF),
             aes(x = "", y = Tot_IFF/10^9, fill = fct_reorder(partner, Tot_IFF, .desc = T))) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = paste0("$", round(Tot_IFF/10^9), " billion")), 
+            position = position_stack(vjust = 0.5),
+            family = "montserrat", size = 12) +
   labs(x = NULL, y = NULL, fill = NULL, 
        title = "Top 10 destinations from developing countries",
        subtitle = "Yearly average outflows during 2000-2018") +
   theme_classic() +
+  my_theme +
   theme(axis.line = element_blank(),
         axis.text = element_blank(),
         axis.ticks = element_blank())
@@ -2295,11 +2609,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_manual(values = carto_pal(10, "Bold")) +
   scale_fill_manual(values = carto_pal(10, "Bold")) +
@@ -2348,11 +2665,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_manual(values = carto_pal(10, "Bold")) +
   scale_fill_manual(values = carto_pal(10, "Bold")) +
@@ -2401,11 +2721,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_manual(values = carto_pal(10, "Bold")) +
   scale_fill_manual(values = carto_pal(10, "Bold")) +
@@ -2454,11 +2777,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_manual(values = carto_pal(10, "Bold")) +
   scale_fill_manual(values = carto_pal(10, "Bold")) +
@@ -2550,11 +2876,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
   scale_fill_brewer(type = "qual", palette = "Paired") +
@@ -2597,11 +2926,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
   scale_fill_brewer(type = "qual", palette = "Paired") +
@@ -2643,13 +2975,16 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509,
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509,
                    max.overlaps = 15) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509,
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509,
                    max.overlaps = 15) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
   scale_fill_brewer(type = "qual", palette = "Paired") +
@@ -2691,11 +3026,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_brewer(type = "qual", palette = "Paired") +
   scale_fill_brewer(type = "qual", palette = "Paired") +
@@ -2774,11 +3112,14 @@ for (i in 1:length(top_sectors$code)){
                size = 4) +
     geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                      aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                     size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                     size = 8, fontface = "bold", family = "montserrat",
+                     alpha = 0.5, seed = 1509) +
     geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                      aes(label = reporter, x = rLongitude, y = rLatitude),
-                     size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                     size = 8, fontface = "bold", family = "montserrat",
+                     alpha = 1, fill = NA, seed = 1509) +
     ditch_axes +
+    my_theme +
     guides(col = FALSE, fill = FALSE) +
     scale_color_manual(values = carto_pal(10, "Vivid")) +
     scale_fill_manual(values = carto_pal(10, "Vivid")) +
@@ -2862,11 +3203,14 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
   scale_color_manual(values = carto_pal(10, "Vivid")) +
   scale_fill_manual(values = carto_pal(10, "Vivid")) +
@@ -2944,15 +3288,18 @@ g <- ggplot() +
              size = 4) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude, fill = reporter),
-                   size = 2, fontface = "bold", alpha = 0.5, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 0.5, seed = 1509) +
   geom_label_repel(data = viz %>% distinct(reporter.ISO, .keep_all = T),
                    aes(label = reporter, x = rLongitude, y = rLatitude),
-                   size = 2, fontface = "bold", alpha = 1, fill = NA, seed = 1509) +
+                   size = 8, fontface = "bold", family = "montserrat",
+                   alpha = 1, fill = NA, seed = 1509) +
   ditch_axes +
+  my_theme +
   guides(col = FALSE, fill = FALSE) +
-  scale_color_manual(values = carto_pal(10, "Vivid")) +
-  scale_fill_manual(values = carto_pal(10, "Vivid")) +
-  labs(title = "Destination of illicit outflows in Pearls, Precious Stones & Metals",
+  scale_color_manual(values = carto_pal(10, "Bold")) +
+  scale_fill_manual(values = carto_pal(10, "Bold")) +
+  labs(title = "Destination of illicit outflows in Pearls, Stones & Metals",
        subtitle = "Top 5 destinations of top 5 origin countries in Africa (by % of GDP)")
 ggsave(g,
        file = paste0("Figures/Flow map_Top 5 destinations in GDP conduits_Yearly Average_Top Sector2_Africa.png"),
@@ -2971,8 +3318,10 @@ g <- ggplot(GER_Orig_Avg %>%
               select(reporter, Tot_IFF_GDP) %>%
               top_n(10, Tot_IFF_GDP),
             aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
+  geom_point(size = 4, color = "#00BFC4") +
+  # geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
+  # geom_point(size = 4, color = "cornflowerblue") +
   coord_flip() +
   labs(title = "Top origin countries worldwide",
        subtitle = "Average yearly gross outflow as % of GDP",
@@ -2985,8 +3334,8 @@ g <- ggplot(GER_Orig_Avg %>%
               select(reporter, Tot_IFF_trade) %>%
               top_n(10, Tot_IFF_trade),
             aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
+  geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
   labs(title = "Top origin countries worldwide",
        subtitle = "Average yearly gross outflow as % of trade",
@@ -3003,8 +3352,8 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
               select(reporter, Tot_IFF_GDP) %>%
               top_n(10, Tot_IFF_GDP),
             aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
+  geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
   labs(title = "Top origin countries in Africa",
        subtitle = "Average yearly gross outflow as % of GDP",
@@ -3017,8 +3366,8 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
               select(reporter, Tot_IFF_trade) %>%
               top_n(10, Tot_IFF_trade),
             aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
+  geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
   labs(title = "Top origin countries in Africa",
        subtitle = "Average yearly gross outflow as % of trade",
@@ -3040,8 +3389,8 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
               select(reporter, Tot_IFF_GDP) %>%
               top_n(10, Tot_IFF_GDP),
             aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
+  geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
   labs(title = "Top origins in low and lower-middle income",
        subtitle = "Average yearly gross outflow as % of GDP",
@@ -3055,8 +3404,8 @@ g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
               mutate(Tot_IFF_GDP = abs(Tot_IFF_GDP)) %>%
               top_n(10, Tot_IFF_GDP),
             aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#C77CFF") +
+  geom_point(size = 4, color = "#C77CFF") +
   coord_flip() +
   labs(title = "Top origins in low and lower-middle income",
        subtitle = "Average yearly gross inflow as % of GDP",
@@ -3069,8 +3418,8 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
               select(reporter, Tot_IFF_trade) %>%
               top_n(10, Tot_IFF_trade),
             aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
+  geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
   labs(title = "Top origins in low and lower-middle income",
        subtitle = "Average yearly gross outflow as % of trade",
@@ -3084,8 +3433,8 @@ g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
               mutate(Tot_IFF_trade = abs(Tot_IFF_trade)) %>%
               top_n(10, Tot_IFF_trade),
             aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#7CAE00") +
+  geom_point(size = 4, color = "#7CAE00") +
   coord_flip() +
   labs(title = "Top origins in low and lower-middle income",
        subtitle = "Average yearly gross inflow as % of trade",
@@ -3102,8 +3451,8 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
               select(reporter, Tot_IFF_GDP) %>%
               top_n(10, Tot_IFF_GDP),
             aes(x = fct_reorder(reporter, Tot_IFF_GDP), y = Tot_IFF_GDP*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
+  geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
   labs(title = "Top origins in developing countries",
        subtitle = "Average yearly gross outflow as % of GDP",
@@ -3116,8 +3465,8 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
               select(reporter, Tot_IFF_trade) %>%
               top_n(10, Tot_IFF_trade),
             aes(x = fct_reorder(reporter, Tot_IFF_trade), y = Tot_IFF_trade*100)) +
-  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "skyblue") +
-  geom_point(size = 4, color = "cornflowerblue") +
+  geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
+  geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
   labs(title = "Top origins in developing countries",
        subtitle = "Average yearly gross outflow as % of trade",
@@ -3129,7 +3478,7 @@ ggsave(g,
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# SANKEY DIAGRAM            ####
+# SANKEY DIAGRAMS           ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Sankey diagram by GNI per capita and sector in LMIC ####
@@ -3159,13 +3508,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = cut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
   scale_x_discrete(limits = c("Origin GNI/capita", "Sector"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("BottleRocket2")) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "according to GNI per capita and top 10 sectors",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter GNI by Reporter Sector_LMIC.png",
@@ -3194,13 +3547,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = rcut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Darjeeling1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to GNI per capita",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter GNI by Partner GNI_World.png",
@@ -3225,13 +3582,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = rcut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Origin GNI/capita", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Darjeeling1")) +
   labs(title = "Trade mis-invoicing in low and lower-middle income",
        subtitle = "according to GNI per capita",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter GNI by Partner GNI_LMIC.png",
@@ -3260,13 +3621,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = rcut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
   scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("GrandBudapest1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to origin and destination income group",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Income Group by Partner Income Group_World.png",
@@ -3297,13 +3662,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = rRegion)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
   scale_x_discrete(limits = c("Region", "Sector"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Rushmore1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to region and top 10 sectors",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Region by Origin Sector_World.png",
@@ -3326,13 +3695,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = rRegion)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
   scale_x_discrete(limits = c("Region", "Sector"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Rushmore1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to region and SITC sectors",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Region by Origin SITC Sector_World.png",
@@ -3364,13 +3737,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = nat_cut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Natural resources in trade", "Sector"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Natural resources share of trade", "Sector"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Cavalcanti1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to natural resource intensity and SITC sectors",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Natural Resources by Origin SITC Sector_World.png",
@@ -3394,13 +3771,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = nat_cut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Natural resources in trade", "Destination"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Natural resources share of trade", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Royal1")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to extreme natural resource intensity and destination",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Extreme Natural Resources by Partner Region_World.png",
@@ -3429,13 +3810,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = nat_cut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Natural resources in trade", "Destination GNI/capita"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Natural resources share of trade", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("Darjeeling2")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to natural resource intensity and destination",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Natural Resources by Partner GNI_World.png",
@@ -3464,13 +3849,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = pcut)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
-  scale_x_discrete(limits = c("Natural resources in trade", "Destination"), expand = c(0.075, 0.075)) +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
+  scale_x_discrete(limits = c("Natural resources share of trade", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_manual(values = wes_palette("GrandBudapest2")) +
   labs(title = "Trade mis-invoicing globally",
        subtitle = "according to natural resource dependence and destination",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = "Figures/Sankey_Reporter Natural Resources by Partner Income Group_World.png",
@@ -3503,13 +3892,17 @@ for (i in 1:length(top_sectors$code)){
                   label = after_stat(stratum))) +
     geom_alluvium(aes(fill = reporter)) +
     geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    geom_richtext(stat = "stratum",
+                  aes(label = after_stat(stratum)),
+                  size = 9, family = "montserrat",
+                  hjust = "inward",
+                  label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
     scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
     scale_y_continuous(labels = dollar_format()) +
     scale_fill_paletteer_d("awtools::spalette") + 
     labs(title = top_sectors$chapter[i],
          subtitle = "Top 5 origin countries in $ of mis-invoiced trade",
-         y = "Yearly average outflow in billion USD") +
+         y = "Yearly average gross outflow (billion USD)") +
     theme(legend.position = "none")
   ggsave(g,
          file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Dollars_", top_sectors$code[i], ".png"),
@@ -3536,13 +3929,17 @@ for (i in 1:length(top_sectors$code)){
                 label = after_stat(stratum))) +
     geom_alluvium(aes(fill = reporter)) +
     geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    geom_richtext(stat = "stratum",
+                  aes(label = after_stat(stratum)),
+                  size = 9, family = "montserrat",
+                  hjust = "inward",
+                  label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
     scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
     scale_y_continuous(labels = dollar_format()) +
     scale_fill_paletteer_d("awtools::ppalette") + 
     labs(title = top_sectors$chapter[i],
          subtitle = "Top 5 origin countries by % of GDP",
-         y = "Yearly average outflow in billion USD") +
+         y = "Yearly average gross outflow (billion USD)") +
     theme(legend.position = "none")
   ggsave(g,
          file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent GDP_", top_sectors$code[i], ".png"),
@@ -3569,13 +3966,17 @@ g <- ggplot(viz,
                 label = after_stat(stratum))) +
   geom_alluvium(aes(fill = reporter)) +
   geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-  geom_label(stat = "stratum", size = 3, hjust = "inward") +
+  geom_richtext(stat = "stratum",
+                aes(label = after_stat(stratum)),
+                size = 9, family = "montserrat",
+                hjust = "inward",
+                label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
   scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
   scale_y_continuous(labels = dollar_format()) +
   scale_fill_paletteer_d("awtools::spalette") + 
   labs(title = top_sectors$chapter[i],
        subtitle = "Top 5 origin countries by % of GDP",
-       y = "Yearly average outflow in billion USD") +
+       y = "Yearly average gross outflow (billion USD)") +
   theme(legend.position = "none")
 ggsave(g,
        file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent GDP_", top_sectors$code[i], "_v2.png"),
@@ -3601,13 +4002,17 @@ for (i in 1:length(top_sectors$code)){
                   label = after_stat(stratum))) +
     geom_alluvium(aes(fill = reporter)) +
     geom_stratum(width = 1/12, color = "black", alpha = 0.5) +
-    geom_label(stat = "stratum", size = 3, hjust = "inward") +
+    geom_richtext(stat = "stratum",
+                  aes(label = after_stat(stratum)),
+                  size = 9, family = "montserrat",
+                  hjust = "inward",
+                  label.padding = unit(c(0.25, 0.20, 0.20, 0.25), "lines")) +
     scale_x_discrete(limits = c("Origin", "Destination"), expand = c(0.075, 0.075)) +
     scale_y_continuous(labels = dollar_format()) +
     scale_fill_paletteer_d("awtools::mpalette") + 
     labs(title = top_sectors$chapter[i],
          subtitle = "Top 5 origin countries by % of trade",
-         y = "Yearly average outflow in billion USD") +
+         y = "Yearly average gross outflow (billion USD)") +
     theme(legend.position = "none")
   ggsave(g,
          file = paste0("Figures/Sankey_Top 5 Reporters in top sector by Partner_Percent Trade_", top_sectors$code[i], ".png"),
@@ -3617,7 +4022,7 @@ for (i in 1:length(top_sectors$code)){
 
 
 ## ## ## ## ## ## ## ## ## ## ##
-# FINANCIAL SECRECY         ####
+# BUBBLE CHART              ####
 ## ## ## ## ## ## ## ## ## ## ##
 
 # .. Import FSI ####
@@ -3640,7 +4045,7 @@ FSI <- FSI %>%
   mutate(Rank = as.numeric(Rank))
 
 
-# .. Merge with top GER inflows recipients ##
+# .. Merge with top GER inflows recipients ####
 load("Results/Summary data-sets/Inflow_GER_Orig_Avg.Rdata")
 
 top_GERinflows_dollar <- Inflow_GER_Orig_Avg %>%
@@ -3667,7 +4072,7 @@ g <- ggplot(aes(x = Rank,
                           direction = -1,
                           na.value = "#808080") +
   geom_text_repel(aes(label = reporter),
-                  size = 4,
+                  size = 12, family = "montserrat",
                   point.padding = 5,
                   nudge_x = 4,
                   seed = 1509) +
@@ -3676,7 +4081,7 @@ g <- ggplot(aes(x = Rank,
   labs(title = "Illicit inflows and financial secrecy",
        subtitle = "Top recipients of gross inflows",
        x = "Rank on 2018 Financial Secrecy Index", 
-       y = "Yeary average illicit inflow (billion USD)")
+       y = "Yeary average gross inflow (billion USD)")
 ggsave(g,
        file = "Figures/FSI rank and GER In.png",
        width = 6, height = 5, units = "in")  
