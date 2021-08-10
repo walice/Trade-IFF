@@ -1233,6 +1233,23 @@ ggsave(g,
        file = "Figures/Choro_GER Out_Yearly Average_Percent GDP_World.png",
        width = 6, height = 5, units = "in")
 
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_GDP*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  my_theme +
+  scale_fill_viridis_c("IFF (% GDP)", 
+                       option = "rocket", direction = -1) +
+  labs(title = "Average annual gross outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Yearly Average_Percent GDP_World_v2.png",
+       width = 6, height = 5, units = "in")
+
 # Average gross IFF as % of trade
 g <- ggplot() + 
   geom_polygon(data = viz,
@@ -1248,6 +1265,23 @@ g <- ggplot() +
   guides(fill = guide_colourbar(title.vjust = 0.8))
 ggsave(g,
        file = "Figures/Choro_GER Out_Yearly Average_Percent Trade_World.png",
+       width = 6, height = 5, units = "in")
+
+g <- ggplot() + 
+  geom_polygon(data = viz,
+               aes(x = long, y = lat, group = group, 
+                   fill = Tot_IFF_trade*100), color = "white", lwd = 0.2) + 
+  coord_fixed(1.3) +
+  theme_bw() + 
+  ditch_axes +
+  my_theme +
+  scale_fill_viridis_c("IFF (% trade)",
+                       option = "rocket", direction = -1) +
+  labs(title = "Average annual gross outflows during 2000-2018") +
+  theme(legend.position = "bottom") + 
+  guides(fill = guide_colourbar(title.vjust = 0.8))
+ggsave(g,
+       file = "Figures/Choro_GER Out_Yearly Average_Percent Trade_World_v2.png",
        width = 6, height = 5, units = "in")
 
 load("Results/Summary data-sets/GER_Orig_Avg_last3.Rdata")
@@ -2190,6 +2224,13 @@ conduits_LMIC <- GER_Orig_Avg %>%
   select(reporter.ISO) %>%
   pull
 
+conduits_LMIC_trade <- GER_Orig_Avg %>%
+  filter(rIncome == "LIC" | rIncome == "LMC") %>%
+  arrange(desc(Tot_IFF_trade)) %>%
+  head(10) %>%
+  select(reporter.ISO) %>%
+  pull
+
 conduits_Developing <- GER_Orig_Avg %>%
   filter(rDev == "Developing") %>%
   arrange(desc(Tot_IFF_GDP)) %>%
@@ -2357,7 +2398,7 @@ g <- ggplot(viz,
             aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
   geom_bar(stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Top SITC sectors in conduit countries in LMIC",
+  labs(title = "Top SITC sectors in LMIC sources (as % of GDP)",
        subtitle = "Yearly average outflows during 2000-2018",
        x = NULL,
        y = "Illicit flow in billion USD",
@@ -2374,7 +2415,7 @@ g <- ggplot(viz,
        aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
   geom_bar(stat = "identity") +
   scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
-  labs(title = "Top SITC sectors in conduit countries in LMIC",
+  labs(title = "Top SITC sectors in LMIC sources (as % of GDP)",
        subtitle = "Yearly average outflows during 2000-2018",
        x = NULL,
        y = "Illicit flow in billion USD",
@@ -2386,6 +2427,36 @@ g <- ggplot(viz,
                                    lineheight = 0.3))
 ggsave(g,
        file = "Figures/Stacked_Top SITC sectors in GDP conduits_Yearly Average_Dollars_LMIC_v2.png",
+       width = 6, height = 5, units = "in")
+
+top <- GER_Orig_Sect_Avg_SITC %>%
+  filter(reporter.ISO %in% conduits_LMIC_trade) %>%
+  group_by(reporter) %>%
+  summarize(Tot_IFF = sum(Tot_IFF, na.rm = T)) %>%
+  arrange(Tot_IFF) %>%
+  pull(reporter)
+
+viz <- GER_Orig_Sect_Avg_SITC %>%
+  filter(reporter.ISO %in% conduits_LMIC_trade) %>%
+  mutate(reporter = factor(reporter,
+                           levels = top))
+
+g <- ggplot(viz,
+            aes(x = reporter, y = Tot_IFF, fill = str_wrap(SITC.section, 20))) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = dollar_format(scale = 1/10^9, accuracy = 1)) +
+  labs(title = "Top SITC sectors in LMIC sources (as % of trade)",
+       subtitle = "Yearly average outflows during 2000-2018",
+       x = NULL,
+       y = "Illicit flow in billion USD",
+       fill = NULL) +
+  coord_flip() +
+  scale_fill_manual(values = gdocs20) +
+  # scale_fill_paletteer_d("palettetown::charizard") +
+  theme(legend.text = element_text(size = 20,
+                                   lineheight = 0.3))
+ggsave(g,
+       file = "Figures/Stacked_Top SITC sectors in trade conduits_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 # World, SITC, last 3 years
@@ -3323,7 +3394,7 @@ g <- ggplot(GER_Orig_Avg %>%
   # geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "skyblue") +
   # geom_point(size = 4, color = "cornflowerblue") +
   coord_flip() +
-  labs(title = "Top origin countries worldwide",
+  labs(title = "Top source countries worldwide",
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
@@ -3337,7 +3408,7 @@ g <- ggplot(GER_Orig_Avg %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
   geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
-  labs(title = "Top origin countries worldwide",
+  labs(title = "Top source countries worldwide",
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
@@ -3355,7 +3426,7 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
   geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
-  labs(title = "Top origin countries in Africa",
+  labs(title = "Top source countries in Africa",
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
@@ -3369,7 +3440,7 @@ g <- ggplot(GER_Orig_Avg_Africa %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
   geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
-  labs(title = "Top origin countries in Africa",
+  labs(title = "Top source countries in Africa",
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
@@ -3392,7 +3463,7 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
   geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
-  labs(title = "Top origins in low and lower-middle income",
+  labs(title = "Top sources in low and lower-middle income",
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
@@ -3407,7 +3478,7 @@ g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#C77CFF") +
   geom_point(size = 4, color = "#C77CFF") +
   coord_flip() +
-  labs(title = "Top origins in low and lower-middle income",
+  labs(title = "Top sinks in low and lower-middle income",
        subtitle = "Average yearly gross inflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
@@ -3421,7 +3492,7 @@ g <- ggplot(GER_Orig_Avg_LMIC %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
   geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
-  labs(title = "Top origins in low and lower-middle income",
+  labs(title = "Top sources in low and lower-middle income",
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
@@ -3436,11 +3507,26 @@ g <- ggplot(Inflow_GER_Orig_Avg_LMIC %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#7CAE00") +
   geom_point(size = 4, color = "#7CAE00") +
   coord_flip() +
-  labs(title = "Top origins in low and lower-middle income",
+  labs(title = "Top sinks in low and lower-middle income",
        subtitle = "Average yearly gross inflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
        file = "Figures/Top 10 origin countries inflow_Yearly Average_Percent Trade_LMIC.png",
+       width = 6, height = 5, units = "in")
+
+load("Results/Summary data-sets/GER_Dest_Avg_LMIC.Rdata")
+g <- ggplot(GER_Dest_Avg_LMIC %>%
+              select(partner, Tot_IFF_bn) %>%
+              top_n(10, Tot_IFF_bn),
+            aes(x = fct_reorder(partner, Tot_IFF_bn), y = Tot_IFF_bn)) +
+  geom_segment(aes(xend = partner, y = 0, yend = Tot_IFF_bn), color = "#7CAE00") +
+  geom_point(size = 4, color = "#7CAE00") +
+  coord_flip() +
+  labs(title = "Top destinations of outflows from LMIC countries",
+       subtitle = "Average yearly gross outflow (billion USD)",
+       x = "", y = "Illicit flow in billion USD")
+ggsave(g,
+       file = "Figures/Top destination countries outflow_Yearly Average_Dollars_LMIC.png",
        width = 6, height = 5, units = "in")
 
 
@@ -3454,7 +3540,7 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_GDP*100), color = "#00BFC4") +
   geom_point(size = 4, color = "#00BFC4") +
   coord_flip() +
-  labs(title = "Top origins in developing countries",
+  labs(title = "Top sources in developing countries",
        subtitle = "Average yearly gross outflow as % of GDP",
        x = "", y = "Illicit flow as % of GDP")
 ggsave(g,
@@ -3468,7 +3554,7 @@ g <- ggplot(GER_Orig_Avg_Developing %>%
   geom_segment(aes(xend = reporter, y = 0, yend = Tot_IFF_trade*100), color = "#FF61CC") +
   geom_point(size = 4, color = "#FF61CC") +
   coord_flip() +
-  labs(title = "Top origins in developing countries",
+  labs(title = "Top sources in developing countries",
        subtitle = "Average yearly gross outflow as % of trade",
        x = "", y = "Illicit flow as % of trade")
 ggsave(g,
