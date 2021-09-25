@@ -389,6 +389,27 @@ summary(fit)
 mean(exp(fitted(fit)))
 # 1.730972
 
+panel <- panel %>%
+  mutate(dist_t = dist / 10^3,
+         dist_t.sq = dist_t * dist_t)
+summary(panel$dist_t)
+
+fit_paper <- lm(ln.ratio_CIF ~ dist_t + dist_t.sq +
+                  contig + 
+                  rLandlocked +
+                  pLandlocked +
+                  ln.FutImport_misrep +
+                  ihs.ReExport_misrep +
+                  ln.ratio_CIF_lag +
+                  tariff + 
+                  rCorruption + pCorruption +
+                  rPoorRegulation + pPoorRegulation +
+                  factor(year),
+                data = panel)
+summary(fit_paper)
+mean(exp(fitted(fit_paper)))
+# 1.730972
+
 fit_mirror <- lm(ln.ratio_CIF_mirror ~ dist + dist.sq +
             contig + 
             rLandlocked +
@@ -403,6 +424,22 @@ fit_mirror <- lm(ln.ratio_CIF_mirror ~ dist + dist.sq +
           data = panel)
 summary(fit_mirror)
 mean(exp(fitted(fit_mirror)))
+# 1.719214
+
+fit_mirror_paper <- lm(ln.ratio_CIF_mirror ~ dist_t + dist_t.sq +
+                         contig + 
+                         rLandlocked +
+                         pLandlocked +
+                         ln.FutImport_misrep_mirror +
+                         ihs.ReExport_misrep_mirror +
+                         ln.ratio_CIF_lag_mirror +
+                         tariff_mirror + 
+                         rCorruption + pCorruption +
+                         rPoorRegulation + pPoorRegulation +
+                         factor(year),
+                       data = panel)
+summary(fit_mirror_paper)
+mean(exp(fitted(fit_mirror_paper)))
 # 1.719214
 
 d <- panel %>% distinct(dist) %>%
@@ -420,6 +457,7 @@ stargazer(fit, type = "html", style = "aer",
           out = "Results/Regression table.html")
 stargazer(fit_mirror, type = "html", style = "aer",
           out = "Results/Regression table.html")
+stargazer(fit_paper, fit_mirror_paper, style = "aer")
 
 
 # .. Compute fitted values when predictors are 0 ####
