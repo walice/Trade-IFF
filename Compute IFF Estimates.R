@@ -35,6 +35,7 @@ setwd("/home/alepissier/IFFe/") # Virtual server
 data.disk <- "/scratch/alepissier/IFFe/"
 # source("Scripts/Data Preparation.R")
 library(car)
+library(GGally)
 library(ggridges)
 library(kableExtra)
 library(lfe)
@@ -394,6 +395,8 @@ panel <- panel %>%
          dist_t.sq = dist_t * dist_t)
 summary(panel$dist_t)
 
+# Final results will remain unchanged, but distance is taken in 1000s of km
+# rather than km to avoid tiny coefficients which are hard to read.
 fit_paper <- lm(ln.ratio_CIF ~ dist_t + dist_t.sq +
                   contig + 
                   rLandlocked +
@@ -426,6 +429,8 @@ summary(fit_mirror)
 mean(exp(fitted(fit_mirror)))
 # 1.719214
 
+# Final results will remain unchanged, but distance is taken in 1000s of km
+# rather than km to avoid tiny coefficients which are hard to read.
 fit_mirror_paper <- lm(ln.ratio_CIF_mirror ~ dist_t + dist_t.sq +
                          contig + 
                          rLandlocked +
@@ -442,13 +447,31 @@ summary(fit_mirror_paper)
 mean(exp(fitted(fit_mirror_paper)))
 # 1.719214
 
+# Check non-linear relationship with distance
 d <- panel %>% distinct(dist) %>%
   mutate(y = coef(fit)["dist"]*dist + coef(fit)["dist.sq"]*dist^2)
 ggplot(d, aes(x = dist, y = y)) + 
   geom_line()
 
+# Check for multicollinearity
 kable(vif(fit), digits = 3, format = "rst")
 kable(vif(fit_mirror), digits = 3, format = "rst")
+
+vars <- panel %>% 
+  select(all_of(c("dist", "dist.sq", 
+                  # "contig", 
+                  # "rLandlocked",
+                  # "pLandlocked",
+                  "ln.FutImport_misrep",
+                  "ihs.ReExport_misrep",
+                  "ln.ratio_CIF_lag",
+                  "tariff",
+                  "rCorruption", "pCorruption",
+                  "rPoorRegulation", "pPoorRegulation")))
+  # mutate(vars("contig", "rLandlocked", "pLandlocked"),
+  #           ~as.numeric(.))
+
+cor(vars)
 
 save(fit, file = "Results/fit")
 save(fit_mirror, file = "Results/fit_mirror")
